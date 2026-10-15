@@ -1,0 +1,53 @@
+<Window x:Class="HistoricEditor.HistoricPlaceEditorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Nuovo luogo storico"
+        SizeToContent="Height" Width="540"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource AppBackground}" Foreground="{DynamicResource InkBrush}"
+        FontFamily="Segoe UI" FontSize="13">
+    <StackPanel Margin="18">
+        <Label Content="Nome *" Target="{Binding ElementName=NomeBox}" />
+        <TextBox x:Name="NomeBox" Padding="8,6" Margin="0,0,0,10" AutomationProperties.Name="Nome del luogo storico" />
+
+        <Label Content="Tipo (es. Stato, Ducato, Contea)" Target="{Binding ElementName=TipoBox}" />
+        <ComboBox x:Name="TipoBox" IsEditable="True" IsTextSearchEnabled="True" Margin="0,0,0,10" AutomationProperties.Name="Tipo del luogo storico" />
+
+        <Label Content="Contenuto in" Target="{Binding ElementName=ParentText}" />
+        <DockPanel Margin="0,0,0,10">
+            <Button DockPanel.Dock="Right" Content="Scegli…" Click="ChooseParent_Click" Margin="8,0,0,0" Padding="10,6" AutomationProperties.Name="Scegli il luogo che lo contiene" />
+            <TextBox x:Name="ParentText" IsReadOnly="True" Padding="8,6" AutomationProperties.Name="Luogo che lo contiene" />
+        </DockPanel>
+
+        <Label Content="Periodo (es. 1115–1797)" Target="{Binding ElementName=PeriodoBox}" />
+        <TextBox x:Name="PeriodoBox" Padding="8,6" Margin="0,0,0,10" AutomationProperties.Name="Periodo" />
+
+        <Grid Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0">
+                <Label Content="Latitudine" Target="{Binding ElementName=LatBox}" />
+                <TextBox x:Name="LatBox" Padding="8,6" AutomationProperties.Name="Latitudine" />
+            </StackPanel>
+            <StackPanel Grid.Column="2">
+                <Label Content="Longitudine" Target="{Binding ElementName=LonBox}" />
+                <TextBox x:Name="LonBox" Padding="8,6" AutomationProperties.Name="Longitudine" />
+            </StackPanel>
+        </Grid>
+
+        <Label Content="Note" Target="{Binding ElementName=NoteBox}" />
+        <TextBox x:Name="NoteBox" Height="60" Padding="8,6" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top" AutomationProperties.Name="Note" />
+
+        <DockPanel Margin="0,16,0,0">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <Button Content="Annulla" IsCancel="True" Padding="14,7" Margin="0,0,8,0" />
+                <Button Content="Salva" IsDefault="True" Click="Save_Click" Padding="14,7" Style="{StaticResource PrimaryButton}" />
+            </StackPanel>
+            <TextBlock x:Name="EditorMessage" Foreground="{DynamicResource SignalBrush}" FontSize="11" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,12,0" />
+        </DockPanel>
+    </StackPanel>
+</Window>

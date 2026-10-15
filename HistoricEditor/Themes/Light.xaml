@@ -1,0 +1,35 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Tema CHIARO -->
+    <SolidColorBrush x:Key="AppBackground" Color="#F4F6F3" />
+    <SolidColorBrush x:Key="AppSurface" Color="#FBFCFA" />
+    <SolidColorBrush x:Key="AppSurfaceAlt" Color="#E9EFEB" />
+    <SolidColorBrush x:Key="AppBorder" Color="#DCE2DC" />
+    <SolidColorBrush x:Key="LineBrush" Color="#DCE2DC" />
+    <SolidColorBrush x:Key="AppControlBg" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="AppControlBorder" Color="#D5DBD5" />
+
+    <SolidColorBrush x:Key="InkBrush" Color="#1C3029" />
+    <SolidColorBrush x:Key="InkSoftBrush" Color="#58665E" />
+    <SolidColorBrush x:Key="QuietBrush" Color="#707D75" />
+
+    <SolidColorBrush x:Key="GreenBrush" Color="#387057" />
+    <SolidColorBrush x:Key="GreenHoverBrush" Color="#2E5E48" />
+    <SolidColorBrush x:Key="OnAccentBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="SignalBrush" Color="#B94F38" />
+    <SolidColorBrush x:Key="DangerBrush" Color="#B94F38" />
+
+    <SolidColorBrush x:Key="SelectionBrush" Color="#D8E6DE" />
+
+    <!-- Caselle dell'albero genealogico: azzurrino per i maschi, rosino per le femmine -->
+    <SolidColorBrush x:Key="MaleCardBrush" Color="#DCEBF7" />
+    <SolidColorBrush x:Key="FemaleCardBrush" Color="#F8E0EA" />
+
+    <!-- Barra del titolo e colonna laterale: scure in entrambi i temi -->
+    <SolidColorBrush x:Key="TitleBarBrush" Color="#14231E" />
+    <SolidColorBrush x:Key="TitleHoverBrush" Color="#2E4A40" />
+    <SolidColorBrush x:Key="TitleTextBrush" Color="#E6ECE8" />
+    <SolidColorBrush x:Key="SidebarBrush" Color="#1C3029" />
+    <SolidColorBrush x:Key="SidebarTextBrush" Color="#F4F4EE" />
+    <SolidColorBrush x:Key="SidebarFaintBrush" Color="#8D9D93" />
+</ResourceDictionary>

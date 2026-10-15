@@ -1,0 +1,89 @@
+﻿<Window x:Class="HistoricEditor.FamilyEditorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Famiglia"
+        Height="700" Width="620"
+        WindowStartupLocation="CenterOwner"
+        FontFamily="Segoe UI" FontSize="13">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+        <Style x:Key="SectionTitle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource SignalBrush}" />
+            <Setter Property="FontFamily" Value="Consolas" />
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="Margin" Value="0,18,0,6" />
+        </Style>
+        <DataTemplate x:Key="ChildTemplate">
+            <DockPanel Margin="0,2">
+                <Button DockPanel.Dock="Right" Content="Rimuovi" Click="RemoveChild_Click" Padding="8,2" AutomationProperties.Name="{Binding Nome, StringFormat=Rimuovi il figlio {0}}" />
+                <TextBlock Text="{Binding Etichetta}" VerticalAlignment="Center" TextWrapping="Wrap" />
+            </DockPanel>
+        </DataTemplate>
+    </Window.Resources>
+
+    <Grid Margin="18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock x:Name="HeaderText" Grid.Row="0" FontFamily="Georgia" FontSize="20" TextWrapping="Wrap" />
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="0,0,8,0">
+                <TextBlock Text="SESSO" Style="{StaticResource SectionTitle}" />
+                <StackPanel Orientation="Horizontal">
+                    <RadioButton x:Name="UnknownRadio" Content="Non indicato" Tag="" Margin="0,0,16,0" Checked="Sex_Checked" />
+                    <RadioButton x:Name="MaleRadio" Content="Maschio" Tag="M" Margin="0,0,16,0" Checked="Sex_Checked" />
+                    <RadioButton x:Name="FemaleRadio" Content="Femmina" Tag="F" Checked="Sex_Checked" />
+                </StackPanel>
+
+                <TextBlock Text="GENITORI" Style="{StaticResource SectionTitle}" />
+                <Label Content="Padre" Target="{Binding ElementName=FatherText}" Padding="0,0,0,4" />
+                <DockPanel Margin="0,0,0,10">
+                    <Button DockPanel.Dock="Right" Content="Rimuovi" Click="RemoveFather_Click" Margin="6,0,0,0" Padding="10,5" AutomationProperties.Name="Rimuovi padre" />
+                    <Button DockPanel.Dock="Right" Content="Scegli…" Click="ChooseFather_Click" Margin="6,0,0,0" Padding="10,5" AutomationProperties.Name="Scegli padre" />
+                    <TextBox x:Name="FatherText" IsReadOnly="True" Padding="8,5" AutomationProperties.Name="Padre" />
+                </DockPanel>
+                <Label Content="Madre" Target="{Binding ElementName=MotherText}" Padding="0,0,0,4" />
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Content="Rimuovi" Click="RemoveMother_Click" Margin="6,0,0,0" Padding="10,5" AutomationProperties.Name="Rimuovi madre" />
+                    <Button DockPanel.Dock="Right" Content="Scegli…" Click="ChooseMother_Click" Margin="6,0,0,0" Padding="10,5" AutomationProperties.Name="Scegli madre" />
+                    <TextBox x:Name="MotherText" IsReadOnly="True" Padding="8,5" AutomationProperties.Name="Madre" />
+                </DockPanel>
+
+                <TextBlock Text="CONIUGI E FIGLI" Style="{StaticResource SectionTitle}" />
+                <TextBlock x:Name="NoUnionsText" Text="Nessun coniuge registrato." Foreground="{DynamicResource QuietBrush}" />
+                <ItemsControl x:Name="UnionsList" AutomationProperties.Name="Coniugi e figli">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border BorderBrush="{DynamicResource AppBorder}" Background="{DynamicResource AppSurface}" CornerRadius="8" BorderThickness="1" Padding="10" Margin="0,0,0,8">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Intestazione}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                    <ItemsControl ItemsSource="{Binding Figli}" ItemTemplate="{StaticResource ChildTemplate}" Margin="14,6,0,0" />
+                                    <WrapPanel Margin="0,8,0,0">
+                                        <Button Content="Aggiungi figlio…" Click="AddChildToUnion_Click" Padding="8,3" Margin="0,0,6,0" />
+                                        <Button Content="Modifica unione…" Click="EditUnion_Click" Padding="8,3" Margin="0,0,6,0" Visibility="{Binding IsRegistered, Converter={StaticResource BoolToVisibility}}" />
+                                        <Button Content="Rimuovi unione" Click="RemoveUnion_Click" Padding="8,3" Margin="0,0,6,0" Visibility="{Binding IsRegistered, Converter={StaticResource BoolToVisibility}}" />
+                                        <Button Content="Registra unione…" Click="RegisterUnion_Click" Padding="8,3" Visibility="{Binding IsImplicit, Converter={StaticResource BoolToVisibility}}" />
+                                    </WrapPanel>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <Button Content="Aggiungi coniuge…" Click="AddSpouse_Click" HorizontalAlignment="Left" Padding="10,5" />
+
+                <TextBlock Text="FIGLI CON ALTRO GENITORE NON INDICATO" Style="{StaticResource SectionTitle}" />
+                <ItemsControl x:Name="OtherChildrenList" ItemTemplate="{StaticResource ChildTemplate}" AutomationProperties.Name="Figli con altro genitore non indicato" />
+                <Button Content="Aggiungi figlio…" Click="AddChild_Click" HorizontalAlignment="Left" Padding="10,5" Margin="0,6,0,0" />
+            </StackPanel>
+        </ScrollViewer>
+
+        <DockPanel Grid.Row="2" Margin="0,14,0,0">
+            <Button DockPanel.Dock="Right" Content="Chiudi" IsCancel="True" Padding="14,7" />
+            <TextBlock x:Name="FamilyMessage" Foreground="{DynamicResource DangerBrush}" FontSize="11" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,12,0" AutomationProperties.LiveSetting="Assertive" />
+        </DockPanel>
+    </Grid>
+</Window>

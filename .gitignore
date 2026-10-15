@@ -1,0 +1,8 @@
+bin
+obj
+.vs
+.user
+.github
+.vscode
+# Tracce vere per le prove: restano sul PC, non nel repository
+GpxEditor.Tests/TestFiles/

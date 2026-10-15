@@ -1,0 +1,45 @@
+<UserControl x:Class="HistoricEditor.PlaceTreeControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0">
+            <Label Content="Cerca per nome o tipo" Target="{Binding ElementName=SearchBox}" Padding="0,0,0,4" />
+            <TextBox x:Name="SearchBox" Padding="8,6" TextChanged="SearchBox_TextChanged" AutomationProperties.Name="Cerca luogo per nome o tipo" />
+        </StackPanel>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,8,0,8">
+            <RadioButton x:Name="CurrentRadio" Content="Luoghi attuali" IsChecked="True" Margin="0,0,16,0" Checked="Filter_Changed" />
+            <RadioButton x:Name="HistoricRadio" Content="Luoghi storici" Checked="Filter_Changed" />
+        </StackPanel>
+
+        <TreeView x:Name="Tree" Grid.Row="2" SelectedItemChanged="Tree_SelectedItemChanged" AutomationProperties.Name="Albero dei luoghi">
+            <TreeView.ItemContainerStyle>
+                <Style TargetType="TreeViewItem" BasedOn="{StaticResource {x:Type TreeViewItem}}">
+                    <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                    <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                    <Setter Property="AutomationProperties.Name" Value="{Binding AccessibleName}" />
+                    <EventSetter Event="MouseDoubleClick" Handler="TreeItem_MouseDoubleClick" />
+                    <EventSetter Event="Selected" Handler="TreeItem_Selected" />
+                </Style>
+            </TreeView.ItemContainerStyle>
+            <TreeView.ItemTemplate>
+                <HierarchicalDataTemplate ItemsSource="{Binding Figli}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding Icona}" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource SignalBrush}" Margin="0,2,4,0" />
+                        <TextBlock Text="{Binding Nome}" Foreground="{DynamicResource InkBrush}" />
+                        <TextBlock Text="{Binding Tipo}" Foreground="{DynamicResource QuietBrush}" FontSize="10" Margin="8,2,0,0" />
+                    </StackPanel>
+                </HierarchicalDataTemplate>
+            </TreeView.ItemTemplate>
+        </TreeView>
+
+        <TextBlock x:Name="CountText" Grid.Row="3" Foreground="{DynamicResource QuietBrush}" FontSize="11" Margin="0,6,0,0" AutomationProperties.LiveSetting="Polite" />
+    </Grid>
+</UserControl>

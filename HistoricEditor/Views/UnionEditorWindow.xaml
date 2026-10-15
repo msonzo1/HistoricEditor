@@ -1,0 +1,47 @@
+<Window x:Class="HistoricEditor.UnionEditorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Unione"
+        SizeToContent="Height" Width="460"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource AppBackground}" Foreground="{DynamicResource InkBrush}"
+        FontFamily="Segoe UI" FontSize="13">
+    <StackPanel Margin="18">
+        <TextBlock x:Name="HeaderText" FontWeight="SemiBold" FontSize="15" TextWrapping="Wrap" Margin="0,0,0,12" />
+
+        <Label Content="Tipo di unione" Target="{Binding ElementName=TipoBox}" />
+        <ComboBox x:Name="TipoBox" IsEditable="True" Margin="0,0,0,10" AutomationProperties.Name="Tipo di unione">
+            <ComboBoxItem Content="Matrimonio" />
+            <ComboBoxItem Content="Unione" />
+            <ComboBoxItem Content="Fidanzamento" />
+        </ComboBox>
+
+        <Grid Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0">
+                <Label Content="Inizio" Target="{Binding ElementName=InizioBox}" />
+                <TextBox x:Name="InizioBox" Padding="8,6" AutomationProperties.Name="Inizio dell’unione" />
+            </StackPanel>
+            <StackPanel Grid.Column="2">
+                <Label Content="Fine" Target="{Binding ElementName=FineBox}" />
+                <TextBox x:Name="FineBox" Padding="8,6" AutomationProperties.Name="Fine dell’unione" />
+            </StackPanel>
+        </Grid>
+
+        <Label Content="Note" Target="{Binding ElementName=NoteBox}" />
+        <TextBox x:Name="NoteBox" Height="60" Padding="8,6" AcceptsReturn="True" TextWrapping="Wrap" VerticalContentAlignment="Top" AutomationProperties.Name="Note sull’unione" />
+
+        <DockPanel Margin="0,16,0,0">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <Button Content="Annulla" IsCancel="True" Padding="14,7" Margin="0,0,8,0" />
+                <Button Content="Salva" IsDefault="True" Click="Save_Click" Padding="14,7" Style="{StaticResource PrimaryButton}" />
+            </StackPanel>
+            <TextBlock x:Name="EditorMessage" Foreground="{DynamicResource SignalBrush}" FontSize="11" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,12,0" />
+        </DockPanel>
+    </StackPanel>
+</Window>

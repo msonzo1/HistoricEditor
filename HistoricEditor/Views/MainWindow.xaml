@@ -1,0 +1,408 @@
+﻿<Window x:Class="HistoricEditor.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:HistoricEditor"
+        Title="Alberi Storici" Height="780" Width="1240"
+        MinHeight="680" MinWidth="960"
+        Background="{DynamicResource AppBackground}" FontFamily="Segoe UI"
+        Icon="{StaticResource AppLogo}"
+        StateChanged="Window_StateChanged"
+        WindowStartupLocation="CenterScreen">
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="32" ResizeBorderThickness="6" GlassFrameThickness="0" CornerRadius="0" UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
+    <Window.Resources>
+        <local:TreeIndentCompensationConverter x:Key="TreeIndentCompensation" />
+        <Style x:Key="CaptionButton" TargetType="Button">
+            <Setter Property="Width" Value="46" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="Foreground" Value="{DynamicResource TitleTextBrush}" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="IsTabStop" Value="False" />
+            <Setter Property="WindowChrome.IsHitTestVisibleInChrome" Value="True" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource TitleHoverBrush}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="CloseCaptionButton" TargetType="Button" BasedOn="{StaticResource CaptionButton}">
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#C42B1C" />
+                    <Setter Property="Foreground" Value="White" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Voci di primo livello della barra dei menu, scure come la barra del titolo. -->
+        <ControlTemplate x:Key="TitleMenuItemTemplate" TargetType="MenuItem">
+            <Border x:Name="Bd" Background="Transparent" Padding="10,0">
+                <Grid>
+                    <ContentPresenter ContentSource="Header" RecognizesAccessKey="True" VerticalAlignment="Center" />
+                    <Popup x:Name="PART_Popup" Placement="Bottom" IsOpen="{TemplateBinding IsSubmenuOpen}" AllowsTransparency="True" Focusable="False" PopupAnimation="Fade">
+                        <Border Background="{DynamicResource AppSurface}" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" Padding="4" MinWidth="220" CornerRadius="8">
+                            <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle" />
+                        </Border>
+                    </Popup>
+                </Grid>
+            </Border>
+            <ControlTemplate.Triggers>
+                <Trigger Property="IsHighlighted" Value="True">
+                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource TitleHoverBrush}" />
+                </Trigger>
+                <Trigger Property="IsSubmenuOpen" Value="True">
+                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource TitleHoverBrush}" />
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+        <Style x:Key="TitleMenuItem" TargetType="MenuItem">
+            <Setter Property="Foreground" Value="{DynamicResource TitleTextBrush}" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Template" Value="{StaticResource TitleMenuItemTemplate}" />
+        </Style>
+
+        <!-- Schede di navigazione nella colonna laterale: l'icona (Segoe MDL2) va in Tag, l'etichetta in Content. -->
+        <Style x:Key="NavTab" TargetType="RadioButton">
+            <Setter Property="Foreground" Value="{DynamicResource SidebarFaintBrush}" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Margin" Value="8,0,8,6" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Grid>
+                            <Border x:Name="Bd" CornerRadius="8" Background="Transparent" BorderBrush="Transparent" BorderThickness="1" Padding="0,10">
+                                <StackPanel HorizontalAlignment="Center">
+                                    <TextBlock Text="{TemplateBinding Tag}" FontFamily="Segoe MDL2 Assets" FontSize="18" HorizontalAlignment="Center" />
+                                    <ContentPresenter HorizontalAlignment="Center" Margin="0,6,0,0" />
+                                </StackPanel>
+                            </Border>
+                            <Border x:Name="Accent" Width="3" HorizontalAlignment="Left" Margin="-8,10,0,10" CornerRadius="2" Background="{DynamicResource SignalBrush}" Visibility="Collapsed" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource TitleHoverBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource TitleHoverBrush}" />
+                                <Setter TargetName="Accent" Property="Visibility" Value="Visible" />
+                                <Setter Property="Foreground" Value="{DynamicResource SidebarTextBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource SignalBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+		  <!-- Pulsanti piatti della barra comandi della scheda Persone. -->
+		  <Style x:Key="ToolButton" TargetType="ButtonBase">
+				<Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
+				<Setter Property="Background" Value="Transparent" />
+				<Setter Property="Padding" Value="10,6" />
+				<Setter Property="Margin" Value="0,0,2,0" />
+				<Setter Property="FontSize" Value="12" />
+				<Setter Property="Cursor" Value="Hand" />
+				<Setter Property="FocusVisualStyle" Value="{x:Null}" />
+				<Setter Property="Template">
+					 <Setter.Value>
+						  <ControlTemplate TargetType="ButtonBase">
+								<Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="Transparent" BorderThickness="1" CornerRadius="6" Padding="{TemplateBinding Padding}">
+									 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+								</Border>
+								<ControlTemplate.Triggers>
+									 <Trigger Property="IsMouseOver" Value="True">
+										  <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SelectionBrush}" />
+									 </Trigger>
+									 <Trigger Property="IsKeyboardFocused" Value="True">
+										  <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource SignalBrush}" />
+									 </Trigger>
+									 <Trigger Property="ToggleButton.IsChecked" Value="True">
+										  <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SelectionBrush}" />
+										  <Setter Property="Foreground" Value="{DynamicResource SignalBrush}" />
+									 </Trigger>
+									 <Trigger Property="IsEnabled" Value="False">
+										  <Setter Property="Foreground" Value="{DynamicResource QuietBrush}" />
+										  <Setter Property="Opacity" Value="0.55" />
+									 </Trigger>
+								</ControlTemplate.Triggers>
+						  </ControlTemplate>
+					 </Setter.Value>
+				</Setter>
+		  </Style>
+		  <Style x:Key="ViewToggle" TargetType="RadioButton" BasedOn="{StaticResource ToolButton}" />
+
+		  <!-- Casella dell'albero genealogico: piena (persona) oppure trasparente con il + per aggiungere. -->
+		  <Style x:Key="PedigreeCard" TargetType="Button">
+				<Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
+				<Setter Property="Background" Value="{DynamicResource AppSurfaceAlt}" />
+				<Setter Property="Cursor" Value="Hand" />
+				<Setter Property="FocusVisualStyle" Value="{x:Null}" />
+				<Setter Property="Template">
+					 <Setter.Value>
+						  <ControlTemplate TargetType="Button">
+								<Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" CornerRadius="8" Padding="10,6">
+									 <ContentPresenter VerticalAlignment="Center" />
+								</Border>
+								<ControlTemplate.Triggers>
+									 <Trigger Property="Tag" Value="Empty">
+										  <Setter TargetName="Bd" Property="Background" Value="Transparent" />
+										  <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource LineBrush}" />
+										  <Setter Property="Foreground" Value="{DynamicResource QuietBrush}" />
+									 </Trigger>
+									 <Trigger Property="Tag" Value="Root">
+										  <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource SignalBrush}" />
+										  <Setter TargetName="Bd" Property="BorderThickness" Value="2" />
+									 </Trigger>
+									 <Trigger Property="IsMouseOver" Value="True">
+										  <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource SignalBrush}" />
+										  <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
+									 </Trigger>
+									 <Trigger Property="IsKeyboardFocused" Value="True">
+										  <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource SignalBrush}" />
+										  <Setter TargetName="Bd" Property="BorderThickness" Value="2" />
+									 </Trigger>
+								</ControlTemplate.Triggers>
+						  </ControlTemplate>
+					 </Setter.Value>
+				</Setter>
+		  </Style>
+	 </Window.Resources>
+
+    <Border x:Name="RootBorder" BorderBrush="{DynamicResource TitleBarBrush}" BorderThickness="1">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="32" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Background="{DynamicResource TitleBarBrush}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Image Grid.Column="0" Source="{StaticResource AppLogo}" Width="18" Height="18" Margin="12,0,6,0" VerticalAlignment="Center" AutomationProperties.Name="Logo Alberi Storici" />
+            <Menu Grid.Column="1" Background="Transparent" VerticalAlignment="Center" WindowChrome.IsHitTestVisibleInChrome="True" AutomationProperties.Name="Barra dei menu">
+                <Menu.Resources>
+                    <Style TargetType="MenuItem">
+                        <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
+                        <Setter Property="Padding" Value="6,4" />
+                    </Style>
+                </Menu.Resources>
+                <MenuItem Header="_File" Style="{StaticResource TitleMenuItem}">
+                    <MenuItem Header="_Importa archivio…" Click="ImportDatabase_Click" />
+                    <MenuItem Header="_Esporta archivio…" Click="ExportDatabase_Click" />
+                    <Separator />
+                    <MenuItem Header="Es_ci" Click="Close_Click" />
+                </MenuItem>
+                <MenuItem Header="_Modifica" Style="{StaticResource TitleMenuItem}">
+                    <MenuItem Header="Annulla" Command="ApplicationCommands.Undo" />
+                    <MenuItem Header="Ripeti" Command="ApplicationCommands.Redo" />
+                    <Separator />
+                    <MenuItem Header="Taglia" Command="ApplicationCommands.Cut" />
+                    <MenuItem Header="Copia" Command="ApplicationCommands.Copy" />
+                    <MenuItem Header="Incolla" Command="ApplicationCommands.Paste" />
+                    <Separator />
+                    <MenuItem Header="Gestisci _luoghi…" Click="ManagePlaces_Click" />
+                </MenuItem>
+                <MenuItem Header="_Visualizza" Style="{StaticResource TitleMenuItem}">
+                    <MenuItem x:Name="ThemeLightMenuItem" Header="Tema _chiaro" Click="ThemeLight_Click" IsCheckable="True" />
+                    <MenuItem x:Name="ThemeDarkMenuItem" Header="Tema _scuro" Click="ThemeDark_Click" IsCheckable="True" />
+                </MenuItem>
+            </Menu>
+            <TextBlock Grid.Column="2" Text="Alberi Storici" Foreground="{DynamicResource TitleTextBrush}" Opacity="0.75" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            <StackPanel Grid.Column="3" Orientation="Horizontal">
+                <Button Style="{StaticResource CaptionButton}" Content="&#xE921;" Click="Minimize_Click" AutomationProperties.Name="Riduci a icona" />
+                <Button x:Name="MaximizeButton" Style="{StaticResource CaptionButton}" Content="&#xE922;" Click="Maximize_Click" AutomationProperties.Name="Ingrandisci" />
+                <Button Style="{StaticResource CloseCaptionButton}" Content="&#xE8BB;" Click="Close_Click" AutomationProperties.Name="Chiudi" />
+            </StackPanel>
+        </Grid>
+
+    <Grid Grid.Row="1">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="96" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Border Grid.Column="0" Background="{DynamicResource SidebarBrush}">
+            <DockPanel Margin="0,22,0,22">
+                <Border DockPanel.Dock="Top" Width="38" Height="38" BorderBrush="#E8795E" BorderThickness="1" HorizontalAlignment="Center" CornerRadius="8">
+                    <Image Source="{StaticResource AppLogo}" Width="22" Height="22" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+                <TextBlock DockPanel.Dock="Bottom" Text="ARCHIVIO STORICO" Foreground="{DynamicResource SidebarFaintBrush}" FontFamily="Consolas" FontSize="9" HorizontalAlignment="Center" />
+                <StackPanel Margin="0,28,0,0" AutomationProperties.Name="Sezioni dell'archivio">
+                    <RadioButton x:Name="PeopleTab" GroupName="Sections" Style="{StaticResource NavTab}" Tag="&#xE716;" Content="Persone" Checked="SectionTab_Checked" AutomationProperties.Name="Scheda Persone" />
+                    <RadioButton x:Name="PlacesTab" GroupName="Sections" Style="{StaticResource NavTab}" Tag="&#xE707;" Content="Luoghi" Checked="SectionTab_Checked" AutomationProperties.Name="Scheda Luoghi" />
+                    <RadioButton x:Name="EventsTab" GroupName="Sections" Style="{StaticResource NavTab}" Tag="&#xE787;" Content="Eventi" Checked="SectionTab_Checked" AutomationProperties.Name="Scheda Eventi" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="58" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="42" />
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,0,1">
+                <DockPanel Margin="46,0">
+                    <TextBlock Text="ARCHIVIO LOCALE" DockPanel.Dock="Right" VerticalAlignment="Center" Foreground="{DynamicResource QuietBrush}" FontFamily="Consolas" FontSize="10" />
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="COLLEZIONE" Foreground="{DynamicResource QuietBrush}" FontFamily="Consolas" FontSize="10" />
+                        <TextBlock Text="   /   " Foreground="{DynamicResource QuietBrush}" FontFamily="Consolas" FontSize="10" />
+                        <TextBlock x:Name="SectionTitle" Text="PERSONAGGI" Foreground="{DynamicResource InkBrush}" FontFamily="Consolas" FontSize="10" />
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+				<Grid x:Name="PeoplePanel" Grid.Row="1" Margin="46,18,46,12">
+					 <Grid.RowDefinitions>
+						  <RowDefinition Height="Auto" />
+						  <RowDefinition Height="*" />
+					 </Grid.RowDefinitions>
+
+					 <Border Grid.Row="0" Background="{DynamicResource AppSurfaceAlt}" CornerRadius="8" Padding="6" Margin="0,0,0,14">
+						  <DockPanel LastChildFill="False">
+								<StackPanel DockPanel.Dock="Left" Orientation="Horizontal" AutomationProperties.Name="Comandi persone">
+									 <Button x:Name="NewPersonButton" Style="{StaticResource ToolButton}" Click="NewPerson_Click" ToolTip="Nuovo personaggio" AutomationProperties.Name="Nuovo personaggio">
+										  <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" VerticalAlignment="Center" /><TextBlock Text="Nuovo" /></StackPanel>
+									 </Button>
+									 <Button x:Name="EditPersonButton" Style="{StaticResource ToolButton}" Click="EditPerson_Click" IsEnabled="False" ToolTip="Apri la scheda del personaggio selezionato" AutomationProperties.Name="Apri scheda">
+										  <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" VerticalAlignment="Center" /><TextBlock Text="Apri scheda" /></StackPanel>
+									 </Button>
+									 <Button x:Name="DeleteButton" Style="{StaticResource ToolButton}" Click="DeletePerson_Click" IsEnabled="False" ToolTip="Elimina il personaggio selezionato" AutomationProperties.Name="Elimina personaggio">
+										  <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE74D;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" VerticalAlignment="Center" /><TextBlock Text="Elimina" /></StackPanel>
+									 </Button>
+									 <Rectangle Width="1" Margin="6,4" Fill="{DynamicResource AppBorder}" />
+									 <Button x:Name="FamilyButton" Style="{StaticResource ToolButton}" Click="EditFamily_Click" IsEnabled="False" ToolTip="Genitori, coniugi e figli del personaggio selezionato" AutomationProperties.Name="Famiglia del personaggio">
+										  <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE716;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" VerticalAlignment="Center" /><TextBlock Text="Famiglia…" /></StackPanel>
+									 </Button>
+									 <Button x:Name="AddSpouseButton" Style="{StaticResource ToolButton}" Click="AddSpouse_Click" IsEnabled="False" ToolTip="Aggiungi un coniuge al personaggio selezionato" AutomationProperties.Name="Aggiungi coniuge">
+										  <StackPanel Orientation="Horizontal"><TextBlock Text="&#xEB51;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" VerticalAlignment="Center" /><TextBlock Text="Coniuge" /></StackPanel>
+									 </Button>
+									 <Button x:Name="AddChildButton" Style="{StaticResource ToolButton}" Click="AddChild_Click" IsEnabled="False" ToolTip="Aggiungi un figlio al personaggio selezionato" AutomationProperties.Name="Aggiungi figlio">
+										  <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8FA;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" VerticalAlignment="Center" /><TextBlock Text="Figlio" /></StackPanel>
+									 </Button>
+									 <Rectangle Width="1" Margin="6,4" Fill="{DynamicResource AppBorder}" />
+									 <Button x:Name="DynastiesButton" Style="{StaticResource ToolButton}" Click="EditDynasties_Click" ToolTip="Dinastie e loro rami (es. Asburgo di Spagna sotto Asburgo)" AutomationProperties.Name="Gestisci dinastie">
+										  <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8B7;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" VerticalAlignment="Center" /><TextBlock Text="Dinastie…" /></StackPanel>
+									 </Button>
+									 <Rectangle Width="1" Margin="6,4" Fill="{DynamicResource AppBorder}" />
+									 <RadioButton x:Name="FamiliesViewToggle" GroupName="PeopleView" Style="{StaticResource ViewToggle}" Checked="PeopleView_Checked" ToolTip="Persone raggruppate per famiglia" AutomationProperties.Name="Vista famiglie">
+										  <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8FD;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" VerticalAlignment="Center" /><TextBlock Text="Famiglie" /></StackPanel>
+									 </RadioButton>
+									 <RadioButton x:Name="PedigreeViewToggle" GroupName="PeopleView" Style="{StaticResource ViewToggle}" Checked="PeopleView_Checked" ToolTip="Albero genealogico del personaggio selezionato, fino ai trisnonni" AutomationProperties.Name="Vista albero genealogico">
+										  <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE9D5;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" VerticalAlignment="Center" /><TextBlock Text="Albero genealogico" /></StackPanel>
+									 </RadioButton>
+								</StackPanel>
+						  </DockPanel>
+					 </Border>
+
+					 <Grid Grid.Row="1">
+						  <TextBlock x:Name="EmptyMessage" Text="L’archivio comincia da qui&#10;&#10;Usa «Nuovo» nella barra in alto per creare una scheda (anche importandola da Wikipedia)." Foreground="{DynamicResource QuietBrush}" FontSize="14" TextAlignment="Center" TextWrapping="Wrap" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="320" />
+						  <Grid x:Name="PeopleContent" Visibility="Collapsed">
+								<DockPanel x:Name="FamiliesView">
+									<Grid DockPanel.Dock="Top" Margin="40,0,0,6" AutomationProperties.Name="Intestazioni delle colonne">
+										 <Grid.ColumnDefinitions>
+											  <ColumnDefinition Width="2*" MinWidth="120" MaxWidth="360" />
+											  <ColumnDefinition Width="80" />
+											  <ColumnDefinition Width="120" />
+											  <ColumnDefinition Width="*" MinWidth="140" />
+											  <ColumnDefinition Width="120" />
+											  <ColumnDefinition Width="*" MinWidth="140" />
+											  <ColumnDefinition Width="Auto" />
+										 </Grid.ColumnDefinitions>
+										 <TextBlock Grid.Column="0" Text="NOME" Foreground="{DynamicResource SignalBrush}" FontFamily="Consolas" FontSize="10" />
+										 <TextBlock Grid.Column="1" Text="SESSO" Foreground="{DynamicResource SignalBrush}" FontFamily="Consolas" FontSize="10" />
+										 <TextBlock Grid.Column="2" Text="DATA DI NASCITA" Foreground="{DynamicResource SignalBrush}" FontFamily="Consolas" FontSize="10" />
+										 <TextBlock Grid.Column="3" Text="LUOGO DI NASCITA" Foreground="{DynamicResource SignalBrush}" FontFamily="Consolas" FontSize="10" />
+										 <TextBlock Grid.Column="4" Text="DATA DI MORTE" Foreground="{DynamicResource SignalBrush}" FontFamily="Consolas" FontSize="10" />
+										 <TextBlock Grid.Column="5" Text="LUOGO DI MORTE" Foreground="{DynamicResource SignalBrush}" FontFamily="Consolas" FontSize="10" />
+										 <Border Grid.Column="6" Width="{x:Static SystemParameters.VerticalScrollBarWidth}" Margin="2,0,0,0" />
+									</Grid>
+									<TreeView x:Name="PeopleTree" ScrollViewer.VerticalScrollBarVisibility="Visible" SelectedItemChanged="PeopleTree_SelectedItemChanged" MouseDoubleClick="PeopleTree_MouseDoubleClick" KeyDown="PeopleTree_KeyDown" BorderThickness="0" Background="Transparent" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="Persone raggruppate per famiglia">
+									 <TreeView.ItemContainerStyle>
+										  <Style TargetType="TreeViewItem" BasedOn="{StaticResource {x:Type TreeViewItem}}">
+												<Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+												<Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+												<Setter Property="AutomationProperties.Name" Value="{Binding AccessibleName}" />
+										  </Style>
+									 </TreeView.ItemContainerStyle>
+									 <TreeView.Resources>
+										  <HierarchicalDataTemplate DataType="{x:Type local:PersonGroup}" ItemsSource="{Binding Elementi}">
+												<DockPanel Margin="0,6,0,6">
+													 <TextBlock DockPanel.Dock="Right" Text="{Binding Conteggio}" Foreground="{DynamicResource QuietBrush}" FontFamily="Consolas" FontSize="9" VerticalAlignment="Center" Margin="12,0,4,0" />
+													 <TextBlock Text="&#xE716;" FontFamily="Segoe MDL2 Assets" FontSize="13" Foreground="{DynamicResource SignalBrush}" VerticalAlignment="Center" Margin="0,0,8,0" AutomationProperties.Name="Famiglia" />
+													 <TextBlock Text="{Binding Famiglia}" Foreground="{DynamicResource SignalBrush}" FontFamily="Georgia" FontSize="17" FontStyle="Italic" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+												</DockPanel>
+										  </HierarchicalDataTemplate>
+										  <DataTemplate DataType="{x:Type local:PersonEntry}">
+												<Border Margin="{Binding RelativeSource={RelativeSource AncestorType=TreeViewItem}, Converter={StaticResource TreeIndentCompensation}}">
+												<Grid Margin="0,4,0,4">
+														<Grid.ColumnDefinitions>
+															 <ColumnDefinition Width="2*" MinWidth="120" MaxWidth="360" />
+															 <ColumnDefinition Width="80" />
+															 <ColumnDefinition Width="120" />
+															 <ColumnDefinition Width="*" MinWidth="140" />
+															 <ColumnDefinition Width="120" />
+															 <ColumnDefinition Width="*" MinWidth="140" />
+														</Grid.ColumnDefinitions>
+														<TextBlock Grid.Column="0" Text="{Binding Nome}" Foreground="{DynamicResource InkBrush}" FontFamily="Georgia" FontSize="15" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="{Binding RelativeSource={RelativeSource AncestorType=TreeViewItem}, Converter={StaticResource TreeIndentCompensation}, ConverterParameter=Name}" ToolTip="{Binding Nome}" />
+														<TextBlock Grid.Column="1" Text="{Binding Sesso}" Foreground="{DynamicResource QuietBrush}" FontSize="12" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="0,0,8,0" />
+														<TextBlock Grid.Column="2" Text="{Binding Nascita}" Foreground="{DynamicResource QuietBrush}" FontFamily="Consolas" FontSize="11" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="0,0,8,0" ToolTip="{Binding Nascita}" />
+														<TextBlock Grid.Column="3" Text="{Binding LuogoNascita}" Foreground="{DynamicResource QuietBrush}" FontSize="12" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="0,0,8,0" ToolTip="{Binding LuogoNascita}" />
+														<TextBlock Grid.Column="4" Text="{Binding Morte}" Foreground="{DynamicResource QuietBrush}" FontFamily="Consolas" FontSize="11" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="0,0,8,0" ToolTip="{Binding Morte}" />
+														<TextBlock Grid.Column="5" Text="{Binding LuogoMorte}" Foreground="{DynamicResource QuietBrush}" FontSize="12" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" ToolTip="{Binding LuogoMorte}" />
+												</Grid>
+												</Border>
+										  </DataTemplate>
+									 </TreeView.Resources>
+								</TreeView>
+									</DockPanel>
+
+								<ScrollViewer x:Name="PedigreeView" Visibility="Collapsed" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Focusable="False">
+									 <Grid x:Name="PedigreeGrid" Margin="0,0,0,12" AutomationProperties.Name="Albero genealogico" />
+								</ScrollViewer>
+								<TextBlock x:Name="PedigreeHint" Visibility="Collapsed" Text="Seleziona un personaggio nella vista Famiglie per vederne l’albero genealogico." Foreground="{DynamicResource QuietBrush}" FontSize="14" TextWrapping="Wrap" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="320" TextAlignment="Center" />
+						  </Grid>
+					 </Grid>
+				</Grid>
+
+            <local:PlacesView x:Name="PlacesPanel" Grid.Row="1" Margin="46,32,46,20" Visibility="Collapsed" />
+
+            <StackPanel x:Name="EventsPanel" Grid.Row="1" Margin="46,40,46,32" Visibility="Collapsed">
+                <TextBlock Text="CRONOLOGIA" Foreground="{DynamicResource SignalBrush}" FontFamily="Consolas" FontSize="10" />
+                <TextBlock Text="Gli eventi" Foreground="{DynamicResource InkBrush}" FontFamily="Georgia" FontSize="23" Margin="0,5,0,0" />
+                <TextBlock Text="La gestione degli eventi (collegati a persone, luoghi e fonti) arriverà in una prossima versione." Foreground="{DynamicResource QuietBrush}" FontSize="13" TextWrapping="Wrap" Margin="0,24,0,0" MaxWidth="420" HorizontalAlignment="Left" />
+            </StackPanel>
+
+            <Border Grid.Row="2" Margin="46,0" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,1,0,0">
+                <DockPanel>
+                    <TextBlock Text="HEREDITAS" Foreground="{DynamicResource GreenBrush}" FontFamily="Consolas" FontSize="9" VerticalAlignment="Center" />
+                    <TextBlock DockPanel.Dock="Right" Text="I dati restano su questo dispositivo" Foreground="{DynamicResource QuietBrush}" FontFamily="Consolas" FontSize="9" VerticalAlignment="Center" />
+                    <TextBlock x:Name="StatusMessage" Foreground="{DynamicResource SignalBrush}" FontSize="11" Margin="24,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" AutomationProperties.LiveSetting="Polite" />
+                </DockPanel>
+            </Border>
+        </Grid>
+    </Grid>
+    </Grid>
+    </Border>
+</Window>
