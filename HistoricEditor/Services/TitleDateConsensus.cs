@@ -110,6 +110,31 @@ public static partial class TitleDateConsensus
         return (level, differs);
     }
 
+    // Completa una data con quella più precisa riportata dalle fonti («1519» → «28/06/1519»), solo se tutte le fonti
+    // compatibili concordano: con due giorni diversi nello stesso anno resta la data attuale e il LED segnala la differenza.
+    // Una data mancante si riempie solo se tutte le fonti che la riportano concordano.
+    public static string Refine(string current, IEnumerable<string> candidates, Func<TitleDate, string> format)
+    {
+        var parsed = Parse(current);
+        if (parsed is null && !string.IsNullOrWhiteSpace(current))
+        {
+            return current;
+        }
+
+        var compatible = candidates.Select(Parse).Where(d => d is not null).Select(d => d!.Value)
+            .Where(d => parsed is not { } p || p.AgreesWith(d))
+            .ToList();
+        if (compatible.Count == 0)
+        {
+            return current;
+        }
+
+        var best = compatible.OrderByDescending(d => d.Precision).First();
+        return best.Precision > (parsed?.Precision ?? 0) && compatible.All(d => d.AgreesWith(best))
+            ? format(best)
+            : current;
+    }
+
     private static string Show(string text) => string.IsNullOrWhiteSpace(text) ? "—" : text.Trim();
 
     // «25/12/800», «12/800», «800», «44 a.C.», «50 d.C.».

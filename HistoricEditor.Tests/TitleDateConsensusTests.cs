@@ -72,4 +72,20 @@ public class TitleRankingTests
         Assert.Equal("Q2", TitleRanking.ChooseMain(titles[..2], new HashSet<string>())!.WikidataId);
         Assert.Equal("Q1", TitleRanking.ChooseMain([new() { Titolo = "Senatore", WikidataId = "Q4" }, titles[0]], new HashSet<string>())!.WikidataId);
     }
+
+    [Theory]
+    // Carlo V imperatore: Wikidata dà solo l'anno, le infobox il giorno (lo spagnolo 1520 è di un altro anno e non conta).
+    [InlineData("1519", new[] { "1519", "28/06/1519", "28/06/1519", "23/10/1520", "1519" }, "28/06/1519")]
+    [InlineData("1519", new[] { "06/1519", "1519" }, "06/1519")]
+    // Due giorni diversi nello stesso anno: la data resta com'è e il LED segnala la differenza.
+    [InlineData("1519", new[] { "28/06/1519", "23/10/1519" }, "1519")]
+    // Già più precisa delle fonti, o fonti di un altro anno.
+    [InlineData("26/01/1556", new[] { "27/08/1556", "1556" }, "26/01/1556")]
+    [InlineData("1519", new[] { "1520" }, "1519")]
+    // Data mancante: si riempie solo se le fonti concordano.
+    [InlineData("", new[] { "28/06/1519", "1519" }, "28/06/1519")]
+    [InlineData("", new[] { "1519", "1520" }, "")]
+    [InlineData("anni 1510", new[] { "1519" }, "anni 1510")]
+    public void Refine_CompletesWithAgreeingSources(string current, string[] candidates, string expected)
+        => Assert.Equal(expected, TitleDateConsensus.Refine(current, candidates, InfoboxReignParser.Format));
 }
