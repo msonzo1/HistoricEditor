@@ -57,6 +57,28 @@ public class DuplicateTests
         });
 
     [Fact]
+    public void RejectsCertainDuplicatesOnAddAndUpdate()
+        => WithStore(store =>
+        {
+            var carlo = new HistoricalPerson { Name = "Carlo V", WikidataId = "Q32500", WikipediaTitle = "Carlo V d'Asburgo", WikiTreeId = "Habsburg-105" };
+            store.Add(carlo);
+
+            Assert.Throws<InvalidOperationException>(() => store.Add(new HistoricalPerson { Name = "Carlo V", WikidataId = "q32500" }));
+            Assert.Throws<InvalidOperationException>(() => store.Add(new HistoricalPerson { Name = "Carlo", WikipediaTitle = "Carlo V d'Asburgo" }));
+            Assert.Throws<InvalidOperationException>(() => store.Add(new HistoricalPerson { Name = "Karl", WikiTreeId = "Habsburg-105" }));
+
+            var altro = new HistoricalPerson { Name = "Filippo II" };
+            store.Add(altro);
+            altro.WikidataId = "Q32500";
+            Assert.Throws<InvalidOperationException>(() => store.Update(altro));
+
+            // La scheda stessa si può salvare di nuovo, e gli omonimi senza identificativi restano ammessi.
+            store.Update(carlo);
+            store.Add(new HistoricalPerson { Name = "Carlo V" });
+            Assert.Equal(3, store.LoadAll().Count);
+        });
+
+    [Fact]
     public void FindPeopleByWikidataIds_IgnoresCase()
         => WithStore(store =>
         {
