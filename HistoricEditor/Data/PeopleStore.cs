@@ -203,6 +203,7 @@ public sealed partial class PeopleStore : IDisposable
 
     public void Add(HistoricalPerson person)
     {
+        EnsureNotDuplicate(person, 0);
         context.People.Add(person);
         LinkDynasties(person);
         SaveOrRevert();
@@ -213,6 +214,7 @@ public sealed partial class PeopleStore : IDisposable
     {
         var existing = context.People.Find(person.Id)
             ?? throw new InvalidOperationException("Scheda non trovata.");
+        EnsureNotDuplicate(person, person.Id);
         if (existing.Sesso != person.Sesso)
         {
             EnsureSexCompatibleWithParentRole(person.Id, person.Sesso);
@@ -1066,6 +1068,21 @@ public sealed partial class PeopleStore : IDisposable
         return [.. result.OrderByDescending(d => d.Certa).ThenBy(d => d.Etichetta, StringComparer.CurrentCultureIgnoreCase)];
 
         static bool YearsCompatible(int? a, int? b) => a is null || b is null || a == b;
+    }
+
+    // Doppioni certi (stesso Q-id Wikidata, stessa voce Wikipedia o stesso profilo WikiTree) non sono ammessi.
+    private void EnsureNotDuplicate(HistoricalPerson person, int excludeId)
+    {
+        if (FindPossibleDuplicates(person, excludeId).FirstOrDefault(d => d.Certa) is { } duplicate)
+        {
+            throw new InvalidOperationException($"Il personaggio è già in archivio: {duplicate.Descrizione}.");
+        }
+
+        var wikiTree = (person.WikiTreeId ?? string.Empty).Trim();
+        if (wikiTree.Length > 0 && FindPeopleByWikiTreeIds([wikiTree]).TryGetValue(wikiTree, out var other) && other != excludeId)
+        {
+            throw new InvalidOperationException($"Il personaggio è già in archivio: la scheda {Summary(other)?.Etichetta ?? $"n. {other}"} ha lo stesso profilo WikiTree ({wikiTree}).");
+        }
     }
 
     // Schede collegate agli elementi Wikidata indicati (Q-id → Id della scheda).

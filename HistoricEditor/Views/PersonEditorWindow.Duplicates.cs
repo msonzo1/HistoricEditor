@@ -28,10 +28,24 @@ public partial class PersonEditorWindow
     private static string DescribeDuplicates(IEnumerable<PersonDuplicate> duplicates)
         => string.Join(Environment.NewLine, duplicates.Take(5).Select(d => $"• {d.Descrizione}"));
 
-    // Prima del salvataggio: per le schede nuove si cercano anche gli omonimi, per quelle esistenti solo i doppioni certi.
+    // Prima del salvataggio: i doppioni certi (stesso Wikidata, voce Wikipedia o profilo WikiTree) bloccano il salvataggio;
+    // per le schede nuove gli omonimi con date compatibili richiedono conferma, perché possono essere persone diverse.
     private bool ConfirmNoDuplicates(HistoricalPerson person)
     {
         var duplicates = FindDuplicates(person, onlyCertain: editingPerson is not null);
+        var certain = duplicates.Where(d => d.Certa).ToList();
+        if (certain.Count > 0)
+        {
+            MessageBox.Show(
+                this,
+                $"Questo personaggio è già in archivio:{Environment.NewLine}{Environment.NewLine}{DescribeDuplicates(certain)}{Environment.NewLine}{Environment.NewLine}Non è possibile salvare un doppione: modifica la scheda esistente.",
+                "Doppione",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+            Feedback.Error(EditorMessage, "Salvataggio non eseguito: il personaggio è già in archivio.");
+            return false;
+        }
+
         if (duplicates.Count == 0)
         {
             return true;
@@ -54,8 +68,8 @@ public partial class PersonEditorWindow
         return true;
     }
 
-    // Dopo l'import: se la stessa voce o lo stesso elemento Wikidata è già in archivio si propone di aprire quella scheda.
-    // Restituisce false se l'import non va applicato.
+    // Dopo l'import: se la stessa voce, lo stesso elemento Wikidata o lo stesso profilo WikiTree è già in archivio
+    // l'import non viene applicato e si propone di aprire quella scheda. Restituisce false se l'import non va applicato.
     private bool ConfirmImportNotDuplicate(WikipediaImportResult import)
     {
         var candidate = new HistoricalPerson
@@ -67,6 +81,13 @@ public partial class PersonEditorWindow
             WikipediaTitle = import.ArticleTitle,
         };
         var duplicates = FindDuplicates(candidate, onlyCertain: true);
+        if (duplicates.Count == 0 && import.WikiTreeId.Trim().Length > 0
+            && store.FindPeopleByWikiTreeIds([import.WikiTreeId.Trim()]).TryGetValue(import.WikiTreeId.Trim(), out var byWikiTree)
+            && byWikiTree != (editingPerson?.Id ?? 0))
+        {
+            duplicates = [new PersonDuplicate(byWikiTree, $"scheda n. {byWikiTree}", true, $"stesso profilo WikiTree ({import.WikiTreeId.Trim()})")];
+        }
+
         if (duplicates.Count == 0)
         {
             return true;
@@ -74,25 +95,21 @@ public partial class PersonEditorWindow
 
         var answer = MessageBox.Show(
             this,
-            $"Questo personaggio è già in archivio:{Environment.NewLine}{Environment.NewLine}{DescribeDuplicates(duplicates)}{Environment.NewLine}{Environment.NewLine}Sì: apri la scheda esistente.{Environment.NewLine}No: importa comunque in una nuova scheda.{Environment.NewLine}Annulla: non importare.",
+            $"Questo personaggio è già in archivio:{Environment.NewLine}{Environment.NewLine}{DescribeDuplicates(duplicates)}{Environment.NewLine}{Environment.NewLine}Non è possibile importarlo una seconda volta. Aprire la scheda esistente?",
             "Personaggio già presente",
-            MessageBoxButton.YesNoCancel,
+            MessageBoxButton.YesNo,
             MessageBoxImage.Warning,
             MessageBoxResult.Yes);
-        switch (answer)
+        if (answer == MessageBoxResult.Yes)
         {
-            case MessageBoxResult.Yes:
-                OpenExistingId = duplicates[0].Id;
-                closingToOpenExisting = true;
-                DialogResult = Saved;
-                return false;
-            case MessageBoxResult.No:
-                acknowledgedDuplicates.UnionWith(duplicates.Select(d => d.Id));
-                return true;
-            default:
-                Feedback.Info(WikipediaStatus, "Importazione annullata: il personaggio è già in archivio.");
-                return false;
+            OpenExistingId = duplicates[0].Id;
+            closingToOpenExisting = true;
+            DialogResult = Saved;
+            return false;
         }
+
+        Feedback.Info(WikipediaStatus, "Importazione annullata: il personaggio è già in archivio.");
+        return false;
     }
 
     // Avviso immediato quando il risultato scelto corrisponde a una voce già importata.
