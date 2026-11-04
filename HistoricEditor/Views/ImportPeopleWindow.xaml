@@ -15,6 +15,7 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <TextBlock x:Name="IntroText" Grid.Row="0" TextWrapping="Wrap" FontWeight="SemiBold" />
@@ -51,7 +52,12 @@
             </ListBox.ItemTemplate>
         </ListBox>
 
-        <StackPanel x:Name="ProgressPanel" Grid.Row="3" Margin="0,12,0,0" Visibility="Collapsed">
+        <CheckBox x:Name="ImportEventsCheck" Grid.Row="3" Margin="0,12,0,0" Visibility="Collapsed"
+                  Checked="ImportEvents_Changed" Unchecked="ImportEvents_Changed">
+            <TextBlock x:Name="ImportEventsText" TextWrapping="Wrap" />
+        </CheckBox>
+
+        <StackPanel x:Name="ProgressPanel" Grid.Row="4" Margin="0,12,0,0" Visibility="Collapsed">
             <DockPanel>
                 <Button x:Name="CancelWorkButton" DockPanel.Dock="Right" Content="_Annulla" Click="CancelWork_Click" Padding="12,4" Margin="8,0,0,0"
                         AutomationProperties.Name="Annulla l’importazione" />
@@ -61,10 +67,10 @@
             <TextBlock x:Name="StageText" Margin="0,6,0,0" TextWrapping="Wrap" FontSize="12" AutomationProperties.LiveSetting="Polite" />
         </StackPanel>
 
-        <DockPanel Grid.Row="4" Margin="0,14,0,0">
+        <DockPanel Grid.Row="5" Margin="0,14,0,0">
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                 <Button x:Name="SkipButton" Content="_Salta" Click="Skip_Click" Padding="14,7" Margin="0,0,8,0"
-                        ToolTip="Non creare altre schede" />
+                        ToolTip="Chiudi senza importare nulla" />
                 <Button x:Name="ImportButton" Content="_Importa selezionati" IsDefault="True" Click="Import_Click" Padding="14,7"
                         Style="{StaticResource PrimaryButton}" AutomationProperties.Name="Importa i personaggi selezionati" />
                 <Button x:Name="CloseButton" Content="_Chiudi" Click="Close_Click" Padding="22,7" Visibility="Collapsed" />

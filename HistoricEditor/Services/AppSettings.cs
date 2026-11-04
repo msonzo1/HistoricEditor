@@ -22,6 +22,9 @@ public sealed class AppSettings
     // Chiave personale delle API di Europeana; vuota = chiave dimostrativa pubblica.
     public string EuropeanaKey { get; set; } = string.Empty;
 
+    // Dopo l'import di un personaggio, importa anche i suoi eventi da Wikidata (operazione lunga: disattivata in modo predefinito).
+    public bool ImportPersonEvents { get; set; }
+
     public PersonOpenMode PersonOpenMode
         => Enum.TryParse<PersonOpenMode>(OpenMode, ignoreCase: true, out var mode) && Enum.IsDefined(mode) ? mode : PersonOpenMode.Edit;
 }

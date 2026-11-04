@@ -519,19 +519,32 @@ public partial class PersonEditorWindow : Window
         var message = parts.Count > 0
             ? $"Scheda salvata. Collegati {string.Join(" e ", parts)} con personaggi già in archivio: controlla la tab «Parentele e relazioni»."
             : "Scheda salvata.";
-        var followUp = CompleteImport(person, import);
-        if (parts.Count > 0 || followUp.Length > 0)
+        // I parenti mancanti non vengono più proposti in automatico: l'utente li apre dal pulsante nella tab.
+        UpdateMissingRelativesAccess();
+        if (MissingRelativesPanel.Visibility == Visibility.Visible)
         {
-            Feedback.Success(EditorMessage, followUp.Length > 0 ? $"{message} {followUp}" : message);
+            message += " Usa «Importa parenti mancanti…» nella tab «Parentele e relazioni» per completare l'importazione.";
+        }
+
+        if (parts.Count > 0 || MissingRelativesPanel.Visibility == Visibility.Visible)
+        {
+            Feedback.Success(EditorMessage, message);
         }
     }
 
-    // Parenti senza scheda (con conferma, da Wikidata e WikiTree) ed eventi del personaggio.
-    private string CompleteImport(HistoricalPerson person, WikipediaImportResult import)
+    // Mostra il pulsante dei parenti mancanti solo se c'è ancora qualcosa da proporre dall'import.
+    private void UpdateMissingRelativesAccess()
+    {
+        var available = relativesLinked && editingPerson is { } person && pendingImport is { } import
+            && PendingCompletion(person, import) is not null;
+        MissingRelativesPanel.Visibility = available ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private (IReadOnlyList<MissingRelative> Missing, bool UseWikiTree)? PendingCompletion(HistoricalPerson person, WikipediaImportResult import)
     {
         if (import.WikidataId.Length == 0 && person.WikiTreeId.Length == 0)
         {
-            return string.Empty;
+            return null;
         }
 
         IReadOnlyList<MissingRelative> missing;
@@ -547,18 +560,47 @@ public partial class PersonEditorWindow : Window
         var useWikiTree = person.WikiTreeId.Length > 0;
         if (missing.Count == 0 && import.EventIds.Count == 0 && !useWikiTree)
         {
+            return null;
+        }
+
+        return (missing, useWikiTree);
+    }
+
+    private void MissingRelatives_Click(object sender, RoutedEventArgs e)
+    {
+        if (editingPerson is not { } person || pendingImport is not { } import)
+        {
+            return;
+        }
+
+        var summary = CompleteImport(person, import);
+        RefreshFamily();
+        UpdateMissingRelativesAccess();
+        if (summary.Length > 0)
+        {
+            Saved = true;
+            Feedback.Success(EditorMessage, summary);
+        }
+    }
+
+    // Parenti senza scheda (con conferma, da Wikidata e WikiTree) ed eventi del personaggio.
+    private string CompleteImport(HistoricalPerson person, WikipediaImportResult import)
+    {
+        if (PendingCompletion(person, import) is not { } pending)
+        {
             return string.Empty;
         }
 
+        var (missing, useWikiTree) = pending;
+
         var intro = missing.Count == 0 && !useWikiTree
-            ? $"Importazione degli eventi di {person.DisplayName} indicati da Wikidata."
+            ? $"Wikidata indica eventi di {person.DisplayName} non ancora in archivio."
             : (missing.Count == 0
                 ? $"Ricerca su WikiTree dei parenti di {person.DisplayName} senza scheda in archivio. "
                 : $"Wikidata indica {(missing.Count == 1 ? "1 parente" : $"{missing.Count} parenti")} di {person.DisplayName} senza scheda in archivio"
                     + (useWikiTree ? "; altri possono venire da WikiTree. " : ". "))
                 + "Scegli quali importare: avranno una scheda, collegata a questa."
-                + (useWikiTree ? " Le parentele indicate da WikiTree tra schede già in archivio vengono completate in automatico." : string.Empty)
-                + (import.EventIds.Count > 0 ? " Gli eventi del personaggio vengono importati in automatico." : string.Empty);
+                + (useWikiTree ? " Con «Importa» vengono completate anche le parentele indicate da WikiTree tra schede già in archivio." : string.Empty);
         var window = new ImportPeopleWindow(store, wikipediaService, intro, missing, person.Id, import, importEvents: true, wikiTreeId: person.WikiTreeId)
         {
             Owner = this,

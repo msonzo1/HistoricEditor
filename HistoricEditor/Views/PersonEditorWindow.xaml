@@ -296,6 +296,11 @@
                     <ScrollViewer x:Name="FamilyScroll" VerticalScrollBarVisibility="Auto" Visibility="Collapsed" Padding="0,0,10,0">
                         <Border Style="{StaticResource Card}" Margin="0,0,0,4">
                             <StackPanel>
+                                <DockPanel x:Name="MissingRelativesPanel" Visibility="Collapsed" Margin="0,0,0,12">
+                                    <Button DockPanel.Dock="Right" Content="Importa parenti _mancanti…" Click="MissingRelatives_Click" Padding="12,4" Margin="8,0,0,0"
+                                            AutomationProperties.Name="Importa i parenti mancanti indicati da Wikidata e WikiTree" />
+                                    <TextBlock Text="Wikidata o WikiTree indicano parenti o eventi non ancora in archivio." Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                                </DockPanel>
                                 <TextBlock Text="GENITORI" Style="{StaticResource SectionTitle}" Margin="0,0,0,8" />
                                 <Label Content="Padre" Target="{Binding ElementName=FatherText}" Padding="0,0,0,4" />
                                 <DockPanel Margin="0,0,0,10">
