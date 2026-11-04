@@ -33,6 +33,9 @@ public sealed partial class WikipediaImportService
         public int? BirthDay { get; init; }
         public int? DeathMonth { get; init; }
         public int? DeathDay { get; init; }
+
+        // Periodi di regno dell'infobox, per completare le date dei titoli.
+        public IReadOnlyList<InfoboxReign> Reigns { get; init; } = [];
     }
 
     public async Task<IReadOnlyList<WikipediaSearchResult>> SearchAsync(string searchText, IProgress<string>? progress = null, CancellationToken cancellationToken = default)
@@ -285,6 +288,8 @@ public sealed partial class WikipediaImportService
                 ],
             };
         }), titleSuperclasses);
+        progress.Sub(0.5, "periodi di regno dalle infobox");
+        await AddInfoboxReignSourcesAsync(titles, leadDates, cancellationToken);
         var mainTitle = TitleRanking.ChooseMain(titles, rawTitles.Where(t => t.Preferred).Select(t => t.EntityId).ToHashSet(StringComparer.Ordinal));
         var nicknames = ReadMonolingualTexts(claims, "P1449");
         var parsedName = PersonNameParser.Split(labels.GetValueOrDefault("it", labels.GetValueOrDefault("en", title)), nicknames);
@@ -1122,11 +1127,12 @@ public sealed partial class WikipediaImportService
             using var document = await GetJsonAsync(url, cancellationToken);
             var page = document.RootElement.GetProperty("query").GetProperty("pages").EnumerateObject().FirstOrDefault().Value;
             var info = ExtractLead(GetString(page, "extract"));
+            // L'infobox serve per i periodi di regno e, quando l'introduzione li omette
+            // («Charles V (24 February 1500 – 21 September 1558)»), per i luoghi di nascita e morte.
+            var wikitext = await ReadInfoboxWikitextAsync(code, title, cancellationToken);
             if (info.BirthPlace.Length == 0 || info.DeathPlace.Length == 0)
             {
-                // L'introduzione inglese di solito omette i luoghi («Charles V (24 February 1500 – 21 September 1558)»):
-                // si leggono dall'infobox a destra.
-                var (infoboxBirth, infoboxDeath) = await ReadInfoboxPlacesAsync(code, title, cancellationToken);
+                var (infoboxBirth, infoboxDeath) = ExtractInfoboxPlaces(wikitext);
                 info = info with
                 {
                     BirthPlace = info.BirthPlace.Length > 0 ? info.BirthPlace : infoboxBirth,
@@ -1141,6 +1147,7 @@ public sealed partial class WikipediaImportService
                 BirthDay = info.BirthDay,
                 DeathMonth = info.DeathMonth,
                 DeathDay = info.DeathDay,
+                Reigns = InfoboxReignParser.Parse(wikitext),
             });
         }
         catch (Exception ex) when (IsOptionalFetchFailure(ex, cancellationToken))
@@ -1150,18 +1157,18 @@ public sealed partial class WikipediaImportService
         }
     }
 
-    private static async Task<(string Birth, string Death)> ReadInfoboxPlacesAsync(string code, string title, CancellationToken cancellationToken)
+    // Testo della sezione iniziale della voce, dove si trova l'infobox; vuoto se non leggibile.
+    private static async Task<string> ReadInfoboxWikitextAsync(string code, string title, CancellationToken cancellationToken)
     {
         try
         {
             var url = $"https://{code}.wikipedia.org/w/api.php?action=parse&prop=wikitext&section=0&redirects=1&page={Uri.EscapeDataString(title)}&format=json&formatversion=2";
             using var document = await GetJsonAsync(url, cancellationToken);
-            var wikitext = document.RootElement.GetProperty("parse").GetProperty("wikitext").GetString();
-            return ExtractInfoboxPlaces(wikitext);
+            return document.RootElement.GetProperty("parse").GetProperty("wikitext").GetString() ?? string.Empty;
         }
         catch (Exception ex) when (IsOptionalFetchFailure(ex, cancellationToken))
         {
-            return (string.Empty, string.Empty);
+            return string.Empty;
         }
     }
 
@@ -1200,7 +1207,7 @@ public sealed partial class WikipediaImportService
         return string.Empty;
     }
 
-    private static string CleanWikitext(string value)
+    internal static string CleanWikitext(string value)
     {
         var text = Regex.Replace(value, @"<ref[^>/]*/>|<ref[^>]*>.*?</ref>", string.Empty, RegexOptions.Singleline | RegexOptions.IgnoreCase);
         text = Regex.Replace(text, @"<br\s*/?>", ", ", RegexOptions.IgnoreCase);
