@@ -1,5 +1,7 @@
 # TODO
 
+> Le scelte di progetto sono in [DECISIONI.md](DECISIONI.md). Quando un punto viene completato con una scelta (comportamento, dati, interfaccia, tecnica), registrala lì con data e motivo.
+
 ## Personaggi
 - [x] Modificare una scheda esistente (editor a tab «Modifica scheda»).
 - [x] Eliminare una scheda.
@@ -108,7 +110,7 @@
 - [x] Menu contestuale sui personaggi (elenco e albero genealogico).
 - [x] Cronologia nella scheda laterale Eventi.
 - [x] Import di un evento da Wikipedia/Wikidata: tipo da P31, date da P585/P580/P582/P1319/P1326, partecipanti da P710 (+P4791 comandanti), P1891, P1344/P793 inversi.
-- [x] Import automatico degli eventi di una persona (P793, P1344, P607) durante l'import del personaggio (esclusi concetti generici ed elementi senza data; gli altri partecipanti collegati solo se già in archivio).
+- [x] Import degli eventi di una persona (P793, P1344, P607) durante l'import del personaggio, su richiesta (opzione nella finestra dei parenti mancanti, ricordata in `settings.json`) (esclusi concetti generici ed elementi senza data; gli altri partecipanti collegati solo se già in archivio).
 - [x] Creare le schede dei partecipanti mancanti durante l'import di un evento (e dei parenti mancanti durante l'import di un personaggio), con elenco di conferma e import completo.
 - [x] Controllo doppioni dei personaggi (Wikidata, voce Wikipedia, nome e anni).
 - [ ] Gerarchia di eventi (es. battaglia parte di una guerra, P361).
