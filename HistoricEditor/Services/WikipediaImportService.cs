@@ -1122,6 +1122,18 @@ public sealed partial class WikipediaImportService
             using var document = await GetJsonAsync(url, cancellationToken);
             var page = document.RootElement.GetProperty("query").GetProperty("pages").EnumerateObject().FirstOrDefault().Value;
             var info = ExtractLead(GetString(page, "extract"));
+            if (info.BirthPlace.Length == 0 || info.DeathPlace.Length == 0)
+            {
+                // L'introduzione inglese di solito omette i luoghi («Charles V (24 February 1500 – 21 September 1558)»):
+                // si leggono dall'infobox a destra.
+                var (infoboxBirth, infoboxDeath) = await ReadInfoboxPlacesAsync(code, title, cancellationToken);
+                info = info with
+                {
+                    BirthPlace = info.BirthPlace.Length > 0 ? info.BirthPlace : infoboxBirth,
+                    DeathPlace = info.DeathPlace.Length > 0 ? info.DeathPlace : infoboxDeath,
+                };
+            }
+
             var articleUrl = $"https://{code}.wikipedia.org/wiki/{Uri.EscapeDataString(title.Replace(' ', '_'))}";
             return (code, new LeadDate(info.BirthYear, info.DeathYear, info.BirthPlace, info.DeathPlace, title, articleUrl)
             {
@@ -1136,6 +1148,78 @@ public sealed partial class WikipediaImportService
             // Edizione non leggibile: si prosegue con le altre.
             return (code, null);
         }
+    }
+
+    private static async Task<(string Birth, string Death)> ReadInfoboxPlacesAsync(string code, string title, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var url = $"https://{code}.wikipedia.org/w/api.php?action=parse&prop=wikitext&section=0&redirects=1&page={Uri.EscapeDataString(title)}&format=json&formatversion=2";
+            using var document = await GetJsonAsync(url, cancellationToken);
+            var wikitext = document.RootElement.GetProperty("parse").GetProperty("wikitext").GetString();
+            return ExtractInfoboxPlaces(wikitext);
+        }
+        catch (Exception ex) when (IsOptionalFetchFailure(ex, cancellationToken))
+        {
+            return (string.Empty, string.Empty);
+        }
+    }
+
+    // Parametri dell'infobox con il luogo di nascita/morte nelle lingue importate.
+    private static readonly string[] InfoboxBirthPlaceParams =
+        ["birth_place", "luogo di nascita", "LuogoNascita", "lieu de naissance", "lugar de nacimiento", "geboorteplaats", "Geburtsort", "GEBURTSORT"];
+
+    private static readonly string[] InfoboxDeathPlaceParams =
+        ["death_place", "luogo di morte", "LuogoMorte", "lieu de décès", "lieu de mort", "lugar de defunción", "lugar de fallecimiento", "lugar de muerte",
+         "overlijdensplaats", "sterfplaats", "Sterbeort", "STERBEORT"];
+
+    // Luoghi di nascita/morte dai parametri dell'infobox, ripuliti dal markup:
+    // «| birth_place = [[Prinsenhof, Ghent]], Flanders» → «Prinsenhof, Ghent, Flanders».
+    internal static (string Birth, string Death) ExtractInfoboxPlaces(string? wikitext)
+    {
+        if (string.IsNullOrWhiteSpace(wikitext))
+        {
+            return (string.Empty, string.Empty);
+        }
+
+        var text = Regex.Replace(wikitext, @"<!--.*?-->", string.Empty, RegexOptions.Singleline);
+        return (InfoboxParam(text, InfoboxBirthPlaceParams), InfoboxParam(text, InfoboxDeathPlaceParams));
+    }
+
+    private static string InfoboxParam(string wikitext, IEnumerable<string> names)
+    {
+        foreach (var name in names)
+        {
+            var match = Regex.Match(wikitext, $@"^\s*\|\s*{Regex.Escape(name)}\s*=(?<value>[^\n]*)", RegexOptions.Multiline | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+            if (match.Success && CleanWikitext(match.Groups["value"].Value) is { Length: >= 2 and <= 120 } place)
+            {
+                return place;
+            }
+        }
+
+        return string.Empty;
+    }
+
+    private static string CleanWikitext(string value)
+    {
+        var text = Regex.Replace(value, @"<ref[^>/]*/>|<ref[^>]*>.*?</ref>", string.Empty, RegexOptions.Singleline | RegexOptions.IgnoreCase);
+        text = Regex.Replace(text, @"<br\s*/?>", ", ", RegexOptions.IgnoreCase);
+        text = Regex.Replace(text, @"<[^>]+>", string.Empty);
+        // Template annidati: si tolgono dall'interno verso l'esterno.
+        string previous;
+        do
+        {
+            previous = text;
+            text = Regex.Replace(text, @"\{\{[^{}]*\}\}", string.Empty);
+        }
+        while (text != previous);
+        text = Regex.Replace(text, @"\[\[(?:[^|\]]*\|)?([^\]]*)\]\]", "$1");
+        text = Regex.Replace(text, @"\[https?://\S+\s*([^\]]*)\]", "$1");
+        text = text.Replace("'''", string.Empty).Replace("''", string.Empty).Replace("&nbsp;", " ");
+        text = Regex.Replace(text, @"\s+", " ");
+        text = Regex.Replace(text, @"\s*,(\s*,)+", ",");
+        text = Regex.Replace(text, @"\(\s*\)", string.Empty);
+        return text.Trim().Trim(',', ';', ' ');
     }
 
     // Errore di una richiesta accessoria (rete, timeout, risposta inattesa): si ignora senza interrompere l'import.
@@ -1226,8 +1310,9 @@ public sealed partial class WikipediaImportService
         RegexOptions.CultureInvariant | RegexOptions.Multiline);
 
     // Luogo dopo la data, introdotto da una preposizione: «in Eisenach», «à Amboise», «en Roma», «te Delft».
+    // Le virgole restano nel luogo: in «im Prinzenhof, Gent, Burgundische Niederlande» la città viene dopo l'edificio.
     private static readonly Regex PlaceAfterDate = new(
-        @"(?:^|\s)(?:in|im|bei|à|a|en|te|at|near)\s+(?<place>\p{Lu}[^,;()\[\]\d.]*)",
+        @"(?:^|\s)(?:in|im|bei|à|a|en|te|at|near)\s+(?<place>\p{Lu}[^;()\[\]\d.]*)",
         RegexOptions.CultureInvariant);
 
     // «ebenda», «ibidem», «ivi»: la morte è avvenuta nello stesso luogo della nascita.
@@ -1290,7 +1375,12 @@ public sealed partial class WikipediaImportService
         var after = PlaceAfterDate.Match(part[Math.Min(yearEnd, part.Length)..]);
         if (after.Success)
         {
-            var place = after.Groups["place"].Value.Trim();
+            var place = after.Groups["place"].Value.Trim().TrimEnd(',').Trim();
+            if (place.Length > 80 && place.IndexOf(',') is var cut and > 0)
+            {
+                place = place[..cut].Trim();
+            }
+
             return place.Length is >= 2 and <= 80 ? place : string.Empty;
         }
 

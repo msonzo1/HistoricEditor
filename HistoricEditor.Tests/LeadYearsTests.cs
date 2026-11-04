@@ -54,6 +54,7 @@ public class LeadYearsTests
     [InlineData("Leonardo da Vinci (Anchiano, 15 de abril de 1452-Amboise, 2 de mayo de 1519) fue un polímata.", 1452, 1519, "Anchiano", "Amboise", "4/15", "5/2")]
     [InlineData("Léonard de Vinci (en italien : Leonardo da Vinci), né le 14 avril 1452 à Vinci (Toscane) et mort le 2 mai 1519 à Amboise (Touraine), est un peintre.", 1452, 1519, "Vinci", "Amboise", "4/14", "5/2")]
     [InlineData("Gaius Iulius Caesar (* 13. Juli 100 v. Chr. in Rom; † 15. März 44 v. Chr. ebenda) war ein Politiker.", -100, -44, "Rom", "Rom", "7/13", "3/15")]
+    [InlineData("Karl V. (spanisch Carlos I; * 24. Februar 1500 im Prinzenhof, Gent, Burgundische Niederlande; † 21. September 1558 in Cuacos de Yuste, Spanien) war ein Kaiser.", 1500, 1558, "Prinzenhof, Gent, Burgundische Niederlande", "Cuacos de Yuste, Spanien", "2/24", "9/21")]
     [InlineData("Leonardo da Vinci (April 15, 1452 – 2 May 1519) was a polymath.", 1452, 1519, "", "", "4/15", "5/2")]
     [InlineData("Napoleon Bonaparte (Ajaccio, 15 augustus 1769 – Sint-Helena, mei 1821) was een Frans staatsman.", 1769, 1821, "Ajaccio", "Sint-Helena", "8/15", "5/")]
     [InlineData("Carlo Magno (742 – Aquisgrana, 28 gennaio 814) è stato re.", 742, 814, "", "Aquisgrana", "/", "1/28")]
@@ -79,5 +80,24 @@ public class LeadYearsTests
     {
         Assert.Equal(expected, WikipediaImportService.FormatDate(raw, precision));
         Assert.NotNull(HistoricalYear.Parse(expected));
+    }
+
+    [Fact]
+    public void ReadsPlacesFromEnglishInfobox()
+    {
+        var wikitext = "{{Infobox royalty\n| birth_date   = {{birth date|1500|2|24|df=yes}}\n| birth_place  = [[Prinsenhof, Ghent]], Flanders<ref>Note</ref>\n"
+            + "| death_date   = {{death date and age|1558|9|21|1500|2|24|df=yes}}\n| death_place  = [[Monastery of Yuste]], Castile\n| burial_place = [[El Escorial]], Spain\n}}";
+
+        Assert.Equal(("Prinsenhof, Ghent, Flanders", "Monastery of Yuste, Castile"), WikipediaImportService.ExtractInfoboxPlaces(wikitext));
+    }
+
+    [Theory]
+    [InlineData("|luogo di nascita = [[Gand]]\n|luogo di morte = [[Monastero di Yuste]], [[Cuacos de Yuste]]", "Gand", "Monastero di Yuste, Cuacos de Yuste")]
+    [InlineData("| lieu de naissance = [[Gand]] ([[comté de Flandre|Flandre]])\n| lieu de décès = [[Monastère de Yuste]] ({{Espagne}})", "Gand (Flandre)", "Monastère de Yuste")]
+    [InlineData("| lugar de nacimiento = [[Gante]]<br />[[Condado de Flandes]]\n| lugar de defunción = <!-- x -->[[Cuacos de Yuste]]", "Gante, Condado de Flandes", "Cuacos de Yuste")]
+    [InlineData("| birth_place = \n| death_place = {{flagicon|ESP}}", "", "")]
+    public void ReadsPlacesFromOtherInfoboxes(string wikitext, string birth, string death)
+    {
+        Assert.Equal((birth, death), WikipediaImportService.ExtractInfoboxPlaces(wikitext));
     }
 }
