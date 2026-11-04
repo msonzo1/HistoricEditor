@@ -13,7 +13,7 @@ public static class ImportedEventCreator
         PeopleStore store,
         int personId,
         IEnumerable<string> eventIds,
-        IProgress<string>? progress = null,
+        IProgress<(double Fraction, string Text)>? progress = null,
         CancellationToken cancellationToken = default)
     {
         int created = 0, linked = 0, skipped = 0;
@@ -36,7 +36,7 @@ public static class ImportedEventCreator
                 continue;
             }
 
-            progress?.Report($"Evento {i + 1} di {ids.Count}: lettura da Wikipedia e Wikidata…");
+            progress?.Report(((double)i / ids.Count, $"Evento {i + 1} di {ids.Count}: lettura da Wikipedia e Wikidata…"));
             var import = await service.ImportEventByIdAsync(qid, null, cancellationToken);
             if (import is null)
             {

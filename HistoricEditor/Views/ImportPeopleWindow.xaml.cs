@@ -85,8 +85,35 @@ public partial class ImportPeopleWindow : Window
         this.wikiTreeId = mainPersonId is null ? string.Empty : WikiTreeLinks.Normalize(wikiTreeId);
         IntroText.Text = intro;
         CandidatesList.ItemsSource = candidates;
+        if (EventsOffered)
+        {
+            var count = mainImport!.EventIds.Count;
+            ImportEventsText.Text = $"Importa anche gli _eventi del personaggio indicati da Wikidata ({(count == 1 ? "1 evento" : $"{count} eventi")}): può richiedere diversi minuti.";
+            ImportEventsCheck.IsChecked = SettingsStore.Load().ImportPersonEvents;
+            ImportEventsCheck.Visibility = Visibility.Visible;
+        }
+
         Loaded += OnLoaded;
         Closing += (_, _) => cancellation?.Cancel();
+    }
+
+    // Gli eventi del personaggio si importano solo su richiesta (opzione ricordata nelle impostazioni).
+    private bool EventsOffered => importEvents && mainPersonId is not null && mainImport?.EventIds.Count > 0;
+
+    private bool EventsRequested => EventsOffered && ImportEventsCheck.IsChecked == true;
+
+    private bool CanRun => candidates.Any(c => c.CanImport) || EventsRequested || wikiTreeFamily is not null;
+
+    private void ImportEvents_Changed(object sender, RoutedEventArgs e)
+    {
+        if (!IsLoaded)
+        {
+            return;
+        }
+
+        var requested = ImportEventsCheck.IsChecked == true;
+        SettingsStore.Update(s => s.ImportPersonEvents = requested);
+        ImportButton.IsEnabled = !working && CanRun;
     }
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
@@ -94,7 +121,16 @@ public partial class ImportPeopleWindow : Window
         Loaded -= OnLoaded;
         if (missing.Count == 0 && wikiTreeId.Length == 0)
         {
-            await RunAsync([]);
+            if (!EventsOffered)
+            {
+                DialogResult = false;
+                return;
+            }
+
+            // Solo eventi: si importano se l'utente lo chiede.
+            ImportButton.IsEnabled = CanRun;
+            Feedback.Info(StatusText, "Spunta l'opzione per importare gli eventi, oppure Salta.");
+            ImportEventsCheck.Focus();
             return;
         }
 
@@ -165,9 +201,14 @@ public partial class ImportPeopleWindow : Window
         {
             CandidatesList.Focus();
         }
+        else if (EventsOffered)
+        {
+            // Nessun parente da proporre: gli eventi (e le parentele WikiTree) si completano solo con «Importa».
+            ImportEventsCheck.Focus();
+        }
         else if (loaded)
         {
-            // Nessun parente da proporre: restano il completamento delle parentele con WikiTree e gli eventi.
+            // Nessun parente da proporre: resta il completamento delle parentele tra schede già in archivio con WikiTree.
             await RunAsync([]);
         }
     }
@@ -247,7 +288,8 @@ public partial class ImportPeopleWindow : Window
         ProgressPanel.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
         CandidatesList.IsEnabled = !busy;
         SelectAllButton.IsEnabled = !busy;
-        ImportButton.IsEnabled = !busy && candidates.Any(c => c.CanImport);
+        ImportButton.IsEnabled = !busy && CanRun;
+        ImportEventsCheck.IsEnabled = !busy;
         SkipButton.IsEnabled = !busy;
         if (!busy)
         {
@@ -274,11 +316,12 @@ public partial class ImportPeopleWindow : Window
         }
     }
 
-    private async void Skip_Click(object sender, RoutedEventArgs e)
+    // «Salta» chiude senza importare né collegare nulla.
+    private void Skip_Click(object sender, RoutedEventArgs e)
     {
         if (!working)
         {
-            await RunAsync([]);
+            DialogResult = false;
         }
     }
 
@@ -297,7 +340,7 @@ public partial class ImportPeopleWindow : Window
     // Importa i personaggi scelti, li collega (anche con i legami WikiTree) e, se richiesto, importa gli eventi.
     private async Task RunAsync(IReadOnlyList<Candidate> selected)
     {
-        if (selected.Count == 0 && wikiTreeFamily is null && !(importEvents && mainPersonId is not null && mainImport?.EventIds.Count > 0))
+        if (selected.Count == 0 && wikiTreeFamily is null && !EventsRequested)
         {
             DialogResult = false;
             return;
@@ -378,7 +421,7 @@ public partial class ImportPeopleWindow : Window
                 wikiTreeLinks = WikiTreeLinker.Link(store, personId, wikiTreeFamily, wikiTreeWikidataIds);
             }
 
-            if (importEvents)
+            if (EventsRequested)
             {
                 var people = new List<(int Id, string Name, List<string> EventIds)>();
                 if (mainPersonId is int main && mainImport is not null)
@@ -395,8 +438,8 @@ public partial class ImportPeopleWindow : Window
                         continue;
                     }
 
-                    var basePercent = 100.0 * i / people.Count;
-                    var progress = new Progress<string>(text => ReportProgress(basePercent, $"{personName}: {text}"));
+                    var index = i;
+                    var progress = new Progress<(double Fraction, string Text)>(p => ReportProgress(100.0 * (index + p.Fraction) / people.Count, $"{personName}: {p.Text}"));
                     var summary = await ImportedEventCreator.ImportForPersonAsync(service, store, id, eventIds, progress, cts.Token);
                     events = new EventImportSummary(events.Created + summary.Created, events.Linked + summary.Linked, events.Skipped + summary.Skipped);
                 }
