@@ -6,6 +6,8 @@ public sealed class HistoricalPerson
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
+    // Cognome dei personaggi moderni; facoltativo e indipendente da suffisso e famiglia.
+    public string Surname { get; set; } = string.Empty;
     public string Suffix { get; set; } = string.Empty;
     public string Family { get; set; } = string.Empty;
     public string Sesso { get; set; } = string.Empty;
@@ -25,6 +27,12 @@ public sealed class HistoricalPerson
     public HistoricalPerson? Mother { get; set; }
     public string Birth { get; set; } = string.Empty;
     public string Death { get; set; } = string.Empty;
+
+    // Calendario (giuliano/gregoriano) e stile di inizio dell'anno in cui sono scritte le date: vedi HistoricalCalendar.
+    public string BirthCalendario { get; set; } = string.Empty;
+    public string BirthStile { get; set; } = string.Empty;
+    public string DeathCalendario { get; set; } = string.Empty;
+    public string DeathStile { get; set; } = string.Empty;
     public string BirthPlace { get; set; } = string.Empty;
     public string DeathPlace { get; set; } = string.Empty;
     public string BurialPlace { get; set; } = string.Empty;
@@ -32,11 +40,18 @@ public sealed class HistoricalPerson
     public string WikipediaUrl { get; set; } = string.Empty;
     public string WikipediaExtract { get; set; } = string.Empty;
     public string WikidataId { get; set; } = string.Empty;
+
+    // Identificativo del profilo WikiTree (es. «Habsburg-105»).
+    public string WikiTreeId { get; set; } = string.Empty;
+
+    // Note libere formattate (FlowDocument XAML, vedi RichNotes).
+    public string Note { get; set; } = string.Empty;
     public List<HistoricalDateEvidence> BirthDateEvidence { get; set; } = [];
     public List<HistoricalDateEvidence> DeathDateEvidence { get; set; } = [];
     public List<HistoricalPlaceRecord> BirthPlaces { get; set; } = [];
     public List<HistoricalPlaceRecord> DeathPlaces { get; set; } = [];
     public List<HistoricalPlaceRecord> BurialPlaces { get; set; } = [];
+    public List<WikipediaLeadRecord> WikipediaLeads { get; set; } = [];
 
     // Se è indicato un luogo specifico, il luogo amministrativo si ricava da quello.
     public int? BirthLuogoId { get; set; }
@@ -64,7 +79,11 @@ public sealed class HistoricalPerson
     [JsonIgnore]
     public LuogoSpecifico? BurialLuogoSpecifico { get; set; }
 
-    public string DisplayName => string.IsNullOrWhiteSpace(Suffix) ? Name : $"{Name} {Suffix}";
+    public string DisplayName => ComposeName(Name, Surname, Suffix);
+
+    // Ordine «Nome Cognome Suffisso», saltando le parti vuote.
+    public static string ComposeName(string? name, string? surname, string? suffix)
+        => string.Join(' ', new[] { name, surname, suffix }.Where(p => !string.IsNullOrWhiteSpace(p)).Select(p => p!.Trim()));
 
     public string LifeSpan => $"{(string.IsNullOrWhiteSpace(Birth) ? "—" : Birth)}  /  {(string.IsNullOrWhiteSpace(Death) ? "—" : Death)}";
 }

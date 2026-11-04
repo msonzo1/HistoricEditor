@@ -29,6 +29,29 @@ public class PersonNameParserTests
         Assert.Equal("il Bello", result.Nickname);
     }
 
+    [Theory]
+    [InlineData("Benito Mussolini", "Mussolini", "Benito", "Mussolini")]
+    [InlineData("Gabriel García Márquez", "García|Márquez", "Gabriel", "García Márquez")]
+    [InlineData("Ludwig van Beethoven", "Beethoven", "Ludwig", "van Beethoven")]
+    [InlineData("Charles de Gaulle", "de Gaulle", "Charles", "de Gaulle")]
+    [InlineData("Mussolini", "Mussolini", "Mussolini", "")]
+    [InlineData("Dante Alighieri", "", "Dante Alighieri", "")]
+    [InlineData("Papa Giovanni Paolo II", "Wojtyła", "Papa Giovanni Paolo II", "")]
+    public void SplitSurname_SeparatesTrailingFamilyName(string label, string surnames, string name, string surname)
+    {
+        var result = PersonNameParser.SplitSurname(label, surnames.Split('|', StringSplitOptions.RemoveEmptyEntries));
+
+        Assert.Equal((name, surname), result);
+    }
+
+    [Fact]
+    public void DisplayName_PutsSurnameBeforeSuffix()
+    {
+        Assert.Equal("Benito Mussolini", new HistoricalPerson { Name = "Benito", Surname = "Mussolini" }.DisplayName);
+        Assert.Equal("Carlo V d'Asburgo", new HistoricalPerson { Name = "Carlo V", Suffix = "d'Asburgo" }.DisplayName);
+        Assert.Equal("Martin Luther King Jr.", new HistoricalPerson { Name = "Martin Luther", Surname = "King", Suffix = "Jr." }.DisplayName);
+    }
+
     [Fact]
     public void Split_ExtractsNicknameAndSuffix()
     {

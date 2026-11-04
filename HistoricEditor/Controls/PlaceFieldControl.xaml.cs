@@ -76,9 +76,7 @@ public partial class PlaceFieldControl : UserControl
         ClearSpecificButton.Visibility = hasSpecific ? Visibility.Visible : Visibility.Collapsed;
         ClassicText.ToolTip = ClassicText.Text;
         SpecificText.ToolTip = SpecificText.Text;
-        DisplayText = description.Specific.Length == 0
-            ? description.Classic
-            : description.Classic.Length == 0 ? description.Specific : $"{description.Specific} ({description.Classic})";
+        DisplayText = description.DisplayText;
     }
 
     public void Clear()

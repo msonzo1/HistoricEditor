@@ -1,0 +1,232 @@
+<Window x:Class="HistoricEditor.ArtworksWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:HistoricEditor"
+        Title="Opere d'arte"
+        Width="1040" Height="780" MinWidth="820" MinHeight="580"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource AppBackground}" Foreground="{DynamicResource InkBrush}"
+        FontFamily="Segoe UI" FontSize="13">
+    <Grid Margin="18">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="320" />
+            <ColumnDefinition Width="18" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Grid.ColumnSpan="3" Text="Dipinti, sculture, affreschi… Ogni opera può avere autori, botteghe, attribuzioni, committenti e personaggi raffigurati presi dall’archivio. Le immagini vengono copiate compresse nell’archivio: il file originale non viene modificato." Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" Margin="0,0,0,12" />
+
+        <DockPanel Grid.Row="1" Grid.Column="0">
+            <Label DockPanel.Dock="Top" Content="_Cerca opera" Target="{Binding ElementName=SearchBox}" />
+            <TextBox DockPanel.Dock="Top" x:Name="SearchBox" Padding="8,6" Margin="0,0,0,6" TextChanged="Filter_Changed" AutomationProperties.Name="Cerca opera per titolo, tipo, artista o tecnica" />
+            <CheckBox DockPanel.Dock="Top" x:Name="PersonFilter" Visibility="Collapsed" Margin="0,0,0,6" Checked="Filter_Changed" Unchecked="Filter_Changed" />
+            <Button DockPanel.Dock="Bottom" Content="_Nuova opera" Click="New_Click" Padding="14,7" Margin="0,8,0,0" HorizontalAlignment="Left" AutomationProperties.Name="Nuova opera" />
+            <ListBox x:Name="ArtworkList" SelectionChanged="ArtworkList_SelectionChanged" AutomationProperties.Name="Opere registrate" HorizontalContentAlignment="Stretch">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                        <Setter Property="AutomationProperties.Name" Value="{Binding Etichetta}" />
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Margin="2,3">
+                            <TextBlock Text="{Binding Opera.Titolo}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="{Binding Dettaglio}" Foreground="{DynamicResource QuietBrush}" FontSize="11" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </DockPanel>
+
+        <ScrollViewer Grid.Row="1" Grid.Column="2" VerticalScrollBarVisibility="Auto">
+            <Grid Margin="0,0,8,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="14" />
+                    <ColumnDefinition Width="220" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <Expander Grid.Row="0" Grid.ColumnSpan="3" x:Name="ImportExpander" Margin="0,0,0,12" Expanded="ImportExpander_Expanded" AutomationProperties.Name="Importa un’opera da Wikipedia o da un museo online">
+                    <Expander.Header>
+                        <AccessText Text="Importa da Wi_kipedia o da un museo online" FontWeight="SemiBold" />
+                    </Expander.Header>
+                    <Border BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,6,0,0" Background="{DynamicResource AppSurfaceAlt}">
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="230" />
+                                    <ColumnDefinition Width="10" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <Label Content="_Banca dati" Target="{Binding ElementName=ImportSourceBox}" />
+                                    <ComboBox x:Name="ImportSourceBox" SelectionChanged="ImportSource_Changed" AutomationProperties.Name="Banca dati da cui importare" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <Label Content="_Quale opera cercare" Target="{Binding ElementName=ImportSearchBox}" />
+                                    <TextBox x:Name="ImportSearchBox" Padding="8,6" KeyDown="ImportSearchBox_KeyDown" AutomationProperties.Name="Titolo o artista da cercare online" ToolTip="Titolo, artista o entrambi; per i musei stranieri conviene il titolo in inglese" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Bottom" Margin="8,0,0,0">
+                                    <Button x:Name="ImportSearchButton" Content="Cerca online" Click="ImportSearch_Click" Padding="12,6" Margin="0,0,6,0" AutomationProperties.Name="Cerca l’opera nella banca dati scelta" />
+                                    <Button x:Name="ImportButton" Content="Importa" Click="Import_Click" Padding="12,6" IsEnabled="False" AutomationProperties.Name="Importa l’opera scelta nei risultati" />
+                                </StackPanel>
+                            </Grid>
+                            <TextBlock x:Name="ImportSourceInfo" Foreground="{DynamicResource QuietBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,6,0,0" />
+                            <DockPanel x:Name="EuropeanaKeyPanel" Visibility="Collapsed" Margin="0,6,0,0">
+                                <Label DockPanel.Dock="Left" Content="Chiave Europeana (facoltativa)" Target="{Binding ElementName=EuropeanaKeyBox}" VerticalAlignment="Center" />
+                                <Button DockPanel.Dock="Right" Content="Salva chiave" Click="SaveEuropeanaKey_Click" Padding="12,4" Margin="6,0,0,0" AutomationProperties.Name="Salva la chiave Europeana" />
+                                <TextBox x:Name="EuropeanaKeyBox" Padding="8,4" AutomationProperties.Name="Chiave personale delle API di Europeana" ToolTip="Gratuita su pro.europeana.eu; senza chiave si usa quella dimostrativa, con limiti di traffico" />
+                            </DockPanel>
+                            <ListBox x:Name="ImportResults" Height="150" Margin="0,8,0,0" Visibility="Collapsed" SelectionChanged="ImportResults_SelectionChanged" MouseDoubleClick="ImportResults_MouseDoubleClick" KeyDown="ImportResults_KeyDown" AutomationProperties.Name="Opere trovate online" HorizontalContentAlignment="Stretch">
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                                        <Setter Property="AutomationProperties.Name" Value="{Binding Etichetta}" />
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Margin="2,3">
+                                            <TextBlock Text="{Binding Titolo}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Text="{Binding Dettaglio}" Foreground="{DynamicResource QuietBrush}" FontSize="11" TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                            <CheckBox x:Name="DownloadImageCheck" Content="Scarica anche l’immagine, se libera (copia compressa)" IsChecked="True" Margin="0,8,0,0" />
+                            <DockPanel x:Name="ImportBusyPanel" Visibility="Collapsed" Margin="0,8,0,0">
+                                <Button DockPanel.Dock="Right" Content="Annulla" Click="ImportCancel_Click" Padding="12,4" Margin="8,0,0,0" AutomationProperties.Name="Annulla la richiesta online" />
+                                <StackPanel>
+                                    <ProgressBar x:Name="ImportProgressBar" Height="8" IsIndeterminate="True" AutomationProperties.Name="Avanzamento dell’importazione" />
+                                    <TextBlock x:Name="ImportStage" FontSize="11" Foreground="{DynamicResource QuietBrush}" Margin="0,4,0,0" AutomationProperties.LiveSetting="Polite" />
+                                </StackPanel>
+                            </DockPanel>
+                            <TextBlock x:Name="ImportStatus" TextWrapping="Wrap" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite" />
+                        </StackPanel>
+                    </Border>
+                </Expander>
+
+                <Border Grid.Row="1" Grid.ColumnSpan="3" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" CornerRadius="8" Padding="10" Margin="0,0,0,12" Background="{DynamicResource AppSurfaceAlt}">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Right" Margin="12,0,0,0" Width="190">
+                            <Label Content="Immagine" Target="{Binding ElementName=ChooseImageButton}" Padding="0,0,0,4" FontWeight="SemiBold" />
+                            <Button x:Name="ChooseImageButton" Content="Scegli _immagine…" Click="ChooseImage_Click" Padding="12,6" Margin="0,0,0,6" AutomationProperties.Name="Scegli l’immagine dell’opera" ToolTip="Viene salvata una copia compressa (JPEG, lato massimo 2000 pixel)" />
+                            <Button x:Name="OpenImageButton" Content="Apri a grande_zza piena" Click="OpenImage_Click" Padding="12,6" Margin="0,0,0,6" IsEnabled="False" AutomationProperties.Name="Apri l’immagine a grandezza piena nel visualizzatore di Windows" />
+                            <Button x:Name="RemoveImageButton" Content="Rimuovi immagine" Click="RemoveImage_Click" Padding="12,6" IsEnabled="False" AutomationProperties.Name="Rimuovi l’immagine dell’opera" />
+                            <TextBlock x:Name="ImageInfo" Foreground="{DynamicResource QuietBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite" />
+                        </StackPanel>
+                        <Grid Height="260">
+                            <TextBlock x:Name="NoImageText" Text="Nessuna immagine" Foreground="{DynamicResource QuietBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Image x:Name="Preview" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" AutomationProperties.Name="Anteprima dell’immagine dell’opera" />
+                        </Grid>
+                    </DockPanel>
+                </Border>
+
+                <StackPanel Grid.Row="2" Grid.Column="0">
+                    <Label Content="_Titolo" Target="{Binding ElementName=TitleBox}" />
+                    <TextBox x:Name="TitleBox" Padding="8,6" Margin="0,0,0,10" AutomationProperties.Name="Titolo dell’opera" ToolTip="Es. La Gioconda, David, Cenacolo" />
+                </StackPanel>
+                <StackPanel Grid.Row="2" Grid.Column="2">
+                    <Label Content="Ti_po" Target="{Binding ElementName=TypeBox}" />
+                    <ComboBox x:Name="TypeBox" IsEditable="True" Margin="0,0,0,10" AutomationProperties.Name="Tipo di opera" ToolTip="Scegli un tipo o scrivine uno nuovo" />
+                </StackPanel>
+
+                <Grid Grid.Row="3" Grid.ColumnSpan="3" Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="14" />
+                        <ColumnDefinition Width="2*" />
+                        <ColumnDefinition Width="14" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <Label Content="_Data" Target="{Binding ElementName=DateBox}" />
+                        <TextBox x:Name="DateBox" Padding="8,6" AutomationProperties.Name="Data dell’opera" ToolTip="Testo libero: es. 1503-1519, circa 1490, XV secolo" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <Label Content="Tecnica e mat_eriali" Target="{Binding ElementName=TechniqueBox}" />
+                        <TextBox x:Name="TechniqueBox" Padding="8,6" AutomationProperties.Name="Tecnica e materiali" ToolTip="Es. olio su tavola di pioppo, marmo di Carrara" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="4">
+                        <Label Content="Di_mensioni" Target="{Binding ElementName=SizeBox}" />
+                        <TextBox x:Name="SizeBox" Padding="8,6" AutomationProperties.Name="Dimensioni" ToolTip="Es. 77 × 53 cm" />
+                    </StackPanel>
+                </Grid>
+
+                <StackPanel Grid.Row="4" Grid.ColumnSpan="3" Margin="0,0,0,10">
+                    <Label Content="Collocazione _attuale" Target="{Binding ElementName=PlaceBox}" />
+                    <DockPanel>
+                        <Button x:Name="ClearPlaceButton" DockPanel.Dock="Right" Content="Rimuovi" Click="ClearPlace_Click" Padding="12,6" Margin="6,0,0,0" IsEnabled="False" AutomationProperties.Name="Rimuovi la collocazione" />
+                        <Button DockPanel.Dock="Right" Content="Scegli luo_go…" Click="ChoosePlace_Click" Padding="12,6" Margin="6,0,0,0" AutomationProperties.Name="Scegli la collocazione attuale dell’opera" />
+                        <TextBox x:Name="PlaceBox" IsReadOnly="True" Padding="8,6" AutomationProperties.Name="Collocazione attuale" ToolTip="Museo, chiesa, palazzo… (luogo specifico) o città" />
+                    </DockPanel>
+                </StackPanel>
+
+                <StackPanel Grid.Row="5" Grid.ColumnSpan="3">
+                    <Label Content="Pe_rsone collegate (autori, botteghe, committenti, soggetti)" Target="{Binding ElementName=PeopleList}" />
+                    <ListBox x:Name="PeopleList" Height="170" HorizontalContentAlignment="Stretch" SelectionChanged="PeopleList_SelectionChanged" AutomationProperties.Name="Persone collegate all’opera" KeyboardNavigation.TabNavigation="Continue">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                                <Setter Property="AutomationProperties.Name" Value="{Binding Descrizione}" />
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="2,2">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="200" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{Binding Nome}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Grid.Column="1" Text="Ruolo" Foreground="{DynamicResource QuietBrush}" FontSize="11" VerticalAlignment="Center" Margin="8,0,6,0" />
+                                    <ComboBox Grid.Column="2" ItemsSource="{Binding Source={x:Static local:OperaRuoli.Tutti}}" SelectedValuePath="Codice" DisplayMemberPath="Etichetta" SelectedValue="{Binding Ruolo}" AutomationProperties.Name="{Binding Nome, StringFormat=Ruolo di {0}}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <StackPanel Orientation="Horizontal" Margin="0,6,0,10">
+                        <Button Content="Aggi_ungi persona…" Click="AddPerson_Click" Padding="12,6" Margin="0,0,8,0" AutomationProperties.Name="Aggiungi una persona collegata all’opera" />
+                        <Button x:Name="RemovePersonButton" Content="Rimuovi" Click="RemovePerson_Click" Padding="12,6" Margin="0,0,8,0" IsEnabled="False" AutomationProperties.Name="Rimuovi la persona selezionata" />
+                        <Button x:Name="ViewPersonButton" Content="_Visualizza scheda" Click="ViewPerson_Click" Padding="12,6" IsEnabled="False" AutomationProperties.Name="Apri la scheda di lettura della persona selezionata" />
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel Grid.Row="6" Grid.ColumnSpan="3">
+                    <Label Content="N_ote" Target="{Binding ElementName=NotesBox}" />
+                    <local:RichNoteEditor x:Name="NotesBox" EditorHeight="120" Margin="0,0,0,10" AccessibleName="Note sull’opera" />
+                </StackPanel>
+
+                <StackPanel Grid.Row="7" Grid.ColumnSpan="3">
+                    <Label Content="_Fonti (una per riga)" Target="{Binding ElementName=SourcesBox}" />
+                    <TextBox x:Name="SourcesBox" Height="70" Padding="8,6" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top" AutomationProperties.Name="Fonti, una per riga" ToolTip="Bibliografia o indirizzi web; gli indirizzi diventano collegamenti nella scheda di lettura" />
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+
+        <DockPanel Grid.Row="2" Grid.ColumnSpan="3" Margin="0,16,0,0">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <Button x:Name="AttachmentsButton" Content="Allega_ti…" Click="Attachments_Click" Padding="14,7" Margin="0,0,8,0" IsEnabled="False" ToolTip="Altre immagini (dettagli, restauri) e documenti dell’opera" AutomationProperties.Name="Gestisci gli allegati dell’opera" />
+                <Button x:Name="DeleteButton" Content="E_limina" Click="Delete_Click" Padding="14,7" Margin="0,0,8,0" IsEnabled="False" AutomationProperties.Name="Elimina opera" />
+                <Button Content="_Salva" IsDefault="True" Click="Save_Click" Padding="14,7" Margin="0,0,8,0" Style="{StaticResource PrimaryButton}" AutomationProperties.Name="Salva opera" />
+                <Button Content="Chiudi" IsCancel="True" Padding="14,7" />
+            </StackPanel>
+            <TextBlock x:Name="EditorMessage" Foreground="{DynamicResource SignalBrush}" FontSize="11" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,12,0" AutomationProperties.LiveSetting="Polite" />
+        </DockPanel>
+    </Grid>
+</Window>

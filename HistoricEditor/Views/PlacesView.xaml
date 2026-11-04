@@ -65,10 +65,35 @@
                         <TextBox x:Name="PeriodoBox" Margin="0,0,0,10" />
                     </StackPanel>
 
-                    <Label Content="Note" Target="{Binding ElementName=NoteBox}" />
-                    <TextBox x:Name="NoteBox" Height="60" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top" Margin="0,0,0,12" />
+                    <DockPanel Margin="0,4,0,0">
+                        <Button x:Name="WikidataNamesButton" DockPanel.Dock="Right" Content="Da _Wikidata…" Click="WikidataNames_Click" Padding="10,4" Margin="6,0,0,0"
+                                ToolTip="Cerca su Wikidata i nomi che il luogo ha avuto nel tempo e li aggiunge all’elenco" AutomationProperties.Name="Importa i nomi storici da Wikidata" />
+                        <Button DockPanel.Dock="Right" Content="Rimuovi" Click="RemoveHistoricName_Click" Padding="10,4" Margin="6,0,0,0" AutomationProperties.Name="Rimuovi il nome storico selezionato" />
+                        <Button DockPanel.Dock="Right" Content="Aggiungi" Click="AddHistoricName_Click" Padding="10,4" AutomationProperties.Name="Aggiungi un nome storico" />
+                        <Label Content="Nomi _storici" Target="{Binding ElementName=HistoricNamesGrid}" VerticalAlignment="Center" />
+                    </DockPanel>
+                    <TextBlock Text="Nomi usati in passato, es. «Costantinopoli» dal 330 al 1922. Anni a.C. come «667 a.C.» o «-667». Nelle schede compare il nome dell’epoca."
+                               Foreground="{DynamicResource QuietBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,2,0,6" />
+                    <DataGrid x:Name="HistoricNamesGrid" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="True" HeadersVisibility="Column" SelectionMode="Single"
+                              MinHeight="60" MaxHeight="200" Margin="0,0,0,12" AutomationProperties.Name="Nomi storici del luogo">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Nome" Binding="{Binding Nome, UpdateSourceTrigger=PropertyChanged}" Width="2*" />
+                            <DataGridTextColumn Header="Dal" Binding="{Binding Dal, UpdateSourceTrigger=PropertyChanged}" Width="*" />
+                            <DataGridTextColumn Header="Al" Binding="{Binding Al, UpdateSourceTrigger=PropertyChanged}" Width="*" />
+                            <DataGridTextColumn Header="Fonte" Binding="{Binding Fonte, UpdateSourceTrigger=PropertyChanged}" Width="*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <Label Content="_Note" Target="{Binding ElementName=NoteEditor}" />
+                    <local:RichNoteEditor x:Name="NoteEditor" AccessibleName="Note sul luogo" EditorHeight="110" Margin="0,0,0,12" />
 
                     <Button Content="Salva modifiche" Click="Save_Click" Padding="12,7" HorizontalAlignment="Left" Style="{StaticResource PrimaryButton}" />
+
+                    <DockPanel Margin="0,18,0,8">
+                        <Button DockPanel.Dock="Right" Content="_Allegati…" Click="Attachments_Click" Padding="10,4" AutomationProperties.Name="Gestisci gli allegati del luogo" />
+                        <TextBlock Text="ALLEGATI" Foreground="{DynamicResource SignalBrush}" FontFamily="Consolas" FontSize="10" VerticalAlignment="Center" AutomationProperties.HeadingLevel="Level3" />
+                    </DockPanel>
+                    <local:AttachmentsGallery x:Name="AttachmentsView" />
                 </StackPanel>
             </ScrollViewer>
         </Border>

@@ -1,5 +1,7 @@
 ﻿using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Controls;
+using System.Windows.Media;
 using Microsoft.EntityFrameworkCore;
 
 namespace HistoricEditor;
@@ -13,6 +15,7 @@ public partial class PersonEditorWindow : Window
 
     // Fonti modificate nella finestra «Fonti…».
     private string sourceUrl = string.Empty;
+    private string wikiTreeId = string.Empty;
     private string birthSources = string.Empty;
     private string deathSources = string.Empty;
 
@@ -28,6 +31,7 @@ public partial class PersonEditorWindow : Window
     public PersonEditorWindow(PeopleStore store, HistoricalPerson? existing = null, WikipediaImportResult? import = null)
     {
         InitializeComponent();
+        InitializeCalendarInputs();
         this.store = store;
         editingPerson = existing;
         pendingImport = import;
@@ -37,6 +41,7 @@ public partial class PersonEditorWindow : Window
         DeathPlaceField.Store = store;
         BurialPlaceField.Store = store;
         LoadDynastyChoices();
+        RebuildLanguageOptions(null);
 
         if (existing is not null)
         {
@@ -47,7 +52,7 @@ public partial class PersonEditorWindow : Window
         }
         else if (import is not null)
         {
-            HeaderText.Text = string.IsNullOrWhiteSpace(import.Name) ? "Nuova scheda" : import.Name;
+            HeaderText.Text = string.IsNullOrWhiteSpace(import.Name) ? "Nuova scheda" : HistoricalPerson.ComposeName(import.Name, import.Surname, import.Suffix);
             HeaderSubtitle.Text = import.WikidataId.Length == 0
                 ? "Importata da Wikipedia (senza collegamento a Wikidata): verifica i dati."
                 : "Importata da Wikipedia: verifica i dati prima di salvare.";
@@ -76,16 +81,16 @@ public partial class PersonEditorWindow : Window
         // Se è mostrata un'altra lingua, il confronto usa i valori modificabili della scheda.
         var (name, suffix, nickname, mainTitle) = workingValues ?? (NameInput.Text, SuffixInput.Text, NicknameInput.Text, MainTitleInput.Text);
         return string.Join("\u001f",
-            name.Trim(), suffix.Trim(), FamilyInput.Text.Trim(), SelectedSex,
-            nickname.Trim(), mainTitle.Trim(), TitlesSnapshot(),
-            BirthInput.Text.Trim(), DeathInput.Text.Trim(), birthSources, deathSources, sourceUrl,
-            Place(BirthPlaceField), Place(DeathPlaceField), Place(BurialPlaceField));
+            name.Trim(), SurnameInput.Text.Trim(), suffix.Trim(), FamilyInput.Text.Trim(), SelectedSex,
+            nickname.Trim(), mainTitle.Trim(), TitlesSnapshot(), LocalizedNamesSnapshot(),
+            BirthInput.Text.Trim(), DeathInput.Text.Trim(), DateCalendarsSnapshot(), birthSources, deathSources, sourceUrl, wikiTreeId,
+            Place(BirthPlaceField), Place(DeathPlaceField), Place(BurialPlaceField), NoteEditor.Text);
     }
 
     protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
     {
         base.OnClosing(e);
-        if (e.Cancel || Deleted || savedSnapshot == FormSnapshot())
+        if (e.Cancel || Deleted || closingToOpenExisting || savedSnapshot == FormSnapshot())
         {
             return;
         }
@@ -114,6 +119,7 @@ public partial class PersonEditorWindow : Window
 
     private void UpdateDateNotice()
     {
+        UpdateConsensusLed();
         var (birth, death) = CurrentDateEvidence();
         var show = DateDiscrepancy.HasAny(birth, death);
         DateNoticePanel.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
@@ -121,6 +127,41 @@ public partial class PersonEditorWindow : Window
         {
             DateNoticeText.Text = "Le date di nascita/morte differiscono tra le fonti o le edizioni linguistiche di Wikipedia.";
         }
+    }
+
+    private void UpdateConsensusLed()
+    {
+        var leads = pendingImport is not null ? pendingImport.WikipediaLeads : editingPerson?.WikipediaLeads;
+        var result = WikipediaConsensus.Evaluate(leads);
+        if (result.Level == ConsensusLevel.Hidden)
+        {
+            ConsensusLed.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        var (color, state) = result.Level switch
+        {
+            ConsensusLevel.Green => ((Brush)FindResource("GreenBrush"), "verde"),
+            ConsensusLevel.Orange => (new SolidColorBrush(Color.FromRgb(0xE0, 0x8A, 0x1E)), "arancione"),
+            _ => ((Brush)FindResource("DangerBrush"), "rosso"),
+        };
+        ConsensusLight.Fill = color;
+        ConsensusDetails.Text = result.Details;
+        AutomationProperties.SetName(ConsensusLed, $"Concordanza tra le edizioni di Wikipedia: {state}. {result.Summary}");
+        AutomationProperties.SetHelpText(ConsensusLed, result.Details + Environment.NewLine + "Premi per vedere le edizioni confrontate e aprire i collegamenti.");
+        ConsensusLed.Visibility = Visibility.Visible;
+    }
+
+    private void ConsensusLed_Click(object sender, RoutedEventArgs e)
+    {
+        var leads = pendingImport is not null ? pendingImport.WikipediaLeads : editingPerson?.WikipediaLeads;
+        var result = WikipediaConsensus.Evaluate(leads);
+        if (result.Level == ConsensusLevel.Hidden)
+        {
+            return;
+        }
+
+        new WikipediaConsensusWindow(result) { Owner = this }.ShowDialog();
     }
 
     private (IReadOnlyList<HistoricalDateEvidence> Birth, IReadOnlyList<HistoricalDateEvidence> Death) CurrentDateEvidence()
@@ -152,20 +193,55 @@ public partial class PersonEditorWindow : Window
 
     private void Sources_Click(object sender, RoutedEventArgs e)
     {
-        var window = new SourcesWindow(sourceUrl, birthSources, deathSources) { Owner = this };
+        var window = new SourcesWindow(sourceUrl, birthSources, deathSources, wikiTreeId) { Owner = this };
         if (window.ShowDialog() == true)
         {
             sourceUrl = window.SourceUrl;
             birthSources = window.BirthSources;
             deathSources = window.DeathSources;
+            wikiTreeId = window.WikiTreeId;
             UpdateSourcesSummary();
         }
     }
 
     private void UpdateSourcesSummary()
     {
-        var count = (sourceUrl.Length > 0 ? 1 : 0) + SplitUserValues(birthSources).Count + SplitUserValues(deathSources).Count;
+        var count = (sourceUrl.Length > 0 ? 1 : 0) + (wikiTreeId.Length > 0 ? 1 : 0) + SplitUserValues(birthSources).Count + SplitUserValues(deathSources).Count;
         SourcesSummary.Text = count == 0 ? "Nessuna fonte indicata." : count == 1 ? "1 fonte indicata." : $"{count} fonti indicate.";
+        var link = SourceLinkUri(sourceUrl);
+        SourceLinkButton.Content = link?.AbsoluteUri ?? string.Empty;
+        SourceLinkButton.ToolTip = link is null ? null : "Apri la fonte nel browser";
+        SourceLinkButton.Visibility = link is null ? Visibility.Collapsed : Visibility.Visible;
+        WikiTreeLinkButton.Content = wikiTreeId.Length > 0 ? $"WikiTree: {wikiTreeId}" : string.Empty;
+        WikiTreeLinkButton.ToolTip = wikiTreeId.Length > 0 ? WikiTreeLinks.ProfileUrl(wikiTreeId) : null;
+        WikiTreeLinkButton.Visibility = wikiTreeId.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void WikiTreeLink_Click(object sender, RoutedEventArgs e) => OpenInBrowser(SourceLinkUri(WikiTreeLinks.ProfileUrl(wikiTreeId)));
+
+    // Solo indirizzi web: un testo libero non diventa un collegamento.
+    internal static Uri? SourceLinkUri(string text)
+        => Uri.TryCreate(text.Trim(), UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)
+            ? uri
+            : null;
+
+    private void SourceLink_Click(object sender, RoutedEventArgs e) => OpenInBrowser(SourceLinkUri(sourceUrl));
+
+    private void OpenInBrowser(Uri? uri)
+    {
+        if (uri is null)
+        {
+            return;
+        }
+
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(uri.AbsoluteUri) { UseShellExecute = true });
+        }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException)
+        {
+            Feedback.Error(EditorMessage, "Impossibile aprire il collegamento nel browser.");
+        }
     }
 
     private void Tabs_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -247,6 +323,10 @@ public partial class PersonEditorWindow : Window
         // Si compila una copia: se il salvataggio fallisce, la scheda originale (mostrata nell'elenco) resta invariata.
         var person = editingPerson is null ? new HistoricalPerson() : CopyForEdit(editingPerson);
         FillPersonFromForm(person);
+        if (!ConfirmNoDuplicates(person))
+        {
+            return false;
+        }
 
         try
         {
@@ -261,7 +341,12 @@ public partial class PersonEditorWindow : Window
                 FillPersonFromForm(editingPerson);
             }
         }
-        catch (Exception ex) when (ex is DbUpdateException or InvalidOperationException)
+        catch (InvalidOperationException ex)
+        {
+            Feedback.Error(EditorMessage, ex.Message);
+            return false;
+        }
+        catch (DbUpdateException)
         {
             Feedback.Error(EditorMessage, "Impossibile salvare il personaggio nel database.");
             return false;
@@ -277,6 +362,7 @@ public partial class PersonEditorWindow : Window
         {
             RegisterImportedDynasties(pendingImport);
             LinkImportedRelatives();
+            RefreshInheritedFamily();
         }
 
         UpdateFamilyAccess();
@@ -304,11 +390,26 @@ public partial class PersonEditorWindow : Window
 
     private IReadOnlyList<Dinastia> dynasties = [];
 
-    // Mostra sotto il campo la posizione della famiglia nella gerarchia, es. «Ramo di: Asburgo».
+    // Mostra sotto il campo la posizione di ciascuna famiglia nella gerarchia, es. «Ramo di: Asburgo».
     private void UpdateDynastyPath()
     {
-        var name = FamilyInput.Text.Trim();
-        var dynasty = dynasties.FirstOrDefault(d => string.Equals(d.Nome, name, StringComparison.CurrentCultureIgnoreCase));
+        var names = PeopleGrouping.FamilyNames(FamilyInput.Text);
+        DynastyPathText.Text = names.Count switch
+        {
+            0 => string.Empty,
+            1 => DescribeDynasty(names[0]),
+            _ => string.Join(" · ", names.Select(n => $"{n} – {DescribeDynasty(n)}")),
+        };
+    }
+
+    private string DescribeDynasty(string name)
+    {
+        var dynasty = dynasties.FirstOrDefault(d => PeopleGrouping.FamilyComparer.Equals(d.Nome.Trim(), name));
+        if (dynasty is null)
+        {
+            return "Nuova dinastia: verrà registrata al salvataggio";
+        }
+
         var parents = new List<string>();
         var visited = new HashSet<int>();
         while (dynasty?.ParentId is int p && visited.Add(p) && dynasties.FirstOrDefault(d => d.Id == p) is { } parent)
@@ -317,22 +418,23 @@ public partial class PersonEditorWindow : Window
             dynasty = parent;
         }
 
-        DynastyPathText.Text = name.Length == 0 ? string.Empty
-            : parents.Count > 0 ? $"Ramo di: {string.Join(" › ", parents)}"
-            : dynasties.Any(d => string.Equals(d.Nome, name, StringComparison.CurrentCultureIgnoreCase)) ? "Dinastia principale"
-            : "Nuova dinastia: verrà registrata al salvataggio";
+        return parents.Count > 0 ? $"Ramo di: {string.Join(" › ", parents)}" : "Dinastia principale";
     }
 
     private void FamilyInput_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e) => UpdateDynastyPath();
 
     private void EditDynasty_Click(object sender, RoutedEventArgs e)
     {
-        var text = FamilyInput.Text.Trim();
-        var window = new DynastiesWindow(store, text) { Owner = this };
+        var names = PeopleGrouping.FamilyNames(FamilyInput.Text);
+        var window = new DynastiesWindow(store, names.FirstOrDefault()) { Owner = this };
         window.ShowDialog();
         LoadDynastyChoices();
-        // Se la dinastia è stata rinominata nella finestra, la scheda segue il nuovo nome.
-        FamilyInput.Text = window.ResolveRename(text);
+        // Se una dinastia è stata rinominata nella finestra, la scheda segue il nuovo nome.
+        if (names.Count > 0)
+        {
+            FamilyInput.Text = PeopleGrouping.JoinFamilyNames(names.Select(window.ResolveRename).Distinct(PeopleGrouping.FamilyComparer));
+        }
+
         UpdateDynastyPath();
     }
 
@@ -358,17 +460,7 @@ public partial class PersonEditorWindow : Window
     // Registra le famiglie importate come dinastie, collegandole alla dinastia di cui sono ramo.
     private void RegisterImportedDynasties(WikipediaImportResult import)
     {
-        try
-        {
-            foreach (var dynasty in import.Dynasties.Where(d => d.Nome.Trim().Length > 0))
-            {
-                int? parentId = dynasty.ParentNome.Trim().Length > 0
-                    ? store.EnsureDynasty(dynasty.ParentNome, dynasty.ParentWikidataId, null)
-                    : null;
-                store.EnsureDynasty(dynasty.Nome, dynasty.WikidataId, parentId);
-            }
-        }
-        catch (Exception ex) when (ex is DbUpdateException or InvalidOperationException)
+        if (!ImportedPersonCreator.RegisterDynasties(store, string.Empty, import))
         {
             Feedback.Error(EditorMessage, "Scheda salvata, ma non è stato possibile registrare le dinastie.");
         }
@@ -383,9 +475,26 @@ public partial class PersonEditorWindow : Window
         WikipediaUrl = source.WikipediaUrl,
         WikipediaExtract = source.WikipediaExtract,
         WikidataId = source.WikidataId,
+        WikiTreeId = source.WikiTreeId,
     };
 
-    // Collega i parenti letti da Wikidata solo se già presenti in archivio (match per WikidataId).
+    // La famiglia ereditata dal padre durante il collegamento dei parenti va riportata nel modulo,
+    // altrimenti un nuovo salvataggio la cancellerebbe.
+    private void RefreshInheritedFamily()
+    {
+        if (editingPerson is not { } person || FamilyInput.Text.Trim().Length > 0
+            || store.GetPerson(person.Id)?.Family is not { Length: > 0 } family)
+        {
+            return;
+        }
+
+        FamilyInput.Text = family;
+        person.Family = family;
+        savedSnapshot = FormSnapshot();
+        LoadDynastyChoices();
+    }
+
+    // Collega i parenti già in archivio; poi propone quelli mancanti e importa gli eventi del personaggio.
     private void LinkImportedRelatives()
     {
         relativesLinked = true;
@@ -394,60 +503,71 @@ public partial class PersonEditorWindow : Window
             return;
         }
 
-        var linked = 0;
-        foreach (var fatherId in pendingImport.FatherIds)
+        var import = pendingImport;
+        var result = ImportedPersonCreator.LinkRelatives(store, person.Id, import);
+        var parts = new List<string>();
+        if (result.Relatives > 0)
         {
-            linked += TryLink(fatherId, id => store.SetParent(person.Id, id, mother: false));
+            parts.Add($"{result.Relatives} parenti");
         }
 
-        foreach (var motherId in pendingImport.MotherIds)
+        if (result.Relations > 0)
         {
-            linked += TryLink(motherId, id => store.SetParent(person.Id, id, mother: true));
+            parts.Add(result.Relations == 1 ? "1 relazione (maestri, allievi, influenze)" : $"{result.Relations} relazioni (maestri, allievi, influenze)");
         }
 
-        foreach (var spouseId in pendingImport.SpouseIds)
+        var message = parts.Count > 0
+            ? $"Scheda salvata. Collegati {string.Join(" e ", parts)} con personaggi già in archivio: controlla la tab «Parentele e relazioni»."
+            : "Scheda salvata.";
+        var followUp = CompleteImport(person, import);
+        if (parts.Count > 0 || followUp.Length > 0)
         {
-            linked += TryLink(spouseId, id => store.SaveUnion(new Unione { Persona1Id = person.Id, Persona2Id = id }));
-        }
-
-        var ownSex = store.GetSex(person.Id);
-        if (ownSex is Sessi.Maschio or Sessi.Femmina)
-        {
-            foreach (var childId in pendingImport.ChildIds)
-            {
-                linked += TryLink(childId, id => store.AssignChild(person.Id, id, null));
-            }
-        }
-
-        if (linked > 0)
-        {
-            Feedback.Success(EditorMessage, $"Scheda salvata. Collegati {linked} parenti già in archivio: controllali nella tab «Parentele».");
+            Feedback.Success(EditorMessage, followUp.Length > 0 ? $"{message} {followUp}" : message);
         }
     }
 
-    // Restituisce 1 solo se il parente era in archivio ed è stato collegato.
-    private int TryLink(string wikidataId, Action<int> link)
+    // Parenti senza scheda (con conferma, da Wikidata e WikiTree) ed eventi del personaggio.
+    private string CompleteImport(HistoricalPerson person, WikipediaImportResult import)
     {
-        if (store.FindPersonIdByWikidataId(wikidataId) is not int id)
+        if (import.WikidataId.Length == 0 && person.WikiTreeId.Length == 0)
         {
-            return 0;
+            return string.Empty;
         }
 
+        IReadOnlyList<MissingRelative> missing;
         try
         {
-            link(id);
-            return 1;
+            missing = import.WikidataId.Length == 0 ? [] : ImportedPersonCreator.MissingRelatives(store, import);
         }
-        catch (InvalidOperationException)
+        catch (Exception ex) when (ex is DbUpdateException or InvalidOperationException)
         {
-            return 0;
+            missing = [];
         }
-        catch (DbUpdateException)
-        {
-            return 0;
-        }
-    }
 
+        var useWikiTree = person.WikiTreeId.Length > 0;
+        if (missing.Count == 0 && import.EventIds.Count == 0 && !useWikiTree)
+        {
+            return string.Empty;
+        }
+
+        var intro = missing.Count == 0 && !useWikiTree
+            ? $"Importazione degli eventi di {person.DisplayName} indicati da Wikidata."
+            : (missing.Count == 0
+                ? $"Ricerca su WikiTree dei parenti di {person.DisplayName} senza scheda in archivio. "
+                : $"Wikidata indica {(missing.Count == 1 ? "1 parente" : $"{missing.Count} parenti")} di {person.DisplayName} senza scheda in archivio"
+                    + (useWikiTree ? "; altri possono venire da WikiTree. " : ". "))
+                + "Scegli quali importare: avranno una scheda, collegata a questa."
+                + (useWikiTree ? " Le parentele indicate da WikiTree tra schede già in archivio vengono completate in automatico." : string.Empty)
+                + (import.EventIds.Count > 0 ? " Gli eventi del personaggio vengono importati in automatico." : string.Empty);
+        var window = new ImportPeopleWindow(store, wikipediaService, intro, missing, person.Id, import, importEvents: true, wikiTreeId: person.WikiTreeId)
+        {
+            Owner = this,
+            Title = missing.Count == 0 && !useWikiTree ? "Eventi del personaggio" : "Parenti mancanti",
+        };
+        window.ShowDialog();
+        LoadDynastyChoices();
+        return window.Summary;
+    }
     private void UpdateFamilyAccess()
     {
         var available = editingPerson is not null;
@@ -458,6 +578,44 @@ public partial class PersonEditorWindow : Window
         {
             RefreshFamily();
         }
+
+        UpdateEventsAccess();
+        UpdateAttachmentsSummary();
+    }
+
+    private void UpdateAttachmentsSummary()
+    {
+        AttachmentsButton.IsEnabled = editingPerson is not null;
+        if (editingPerson is null)
+        {
+            return;
+        }
+
+        var count = store.GetAttachments(AmbitiAllegato.Persona, editingPerson.Id).Count;
+        var portrait = store.GetPortrait(editingPerson.Id) is not null ? " (con ritratto)" : string.Empty;
+        AttachmentsSummary.Text = count switch
+        {
+            0 => "Nessun allegato: aggiungi ritratti, immagini o documenti.",
+            1 => $"1 allegato{portrait}.",
+            _ => $"{count} allegati{portrait}.",
+        };
+    }
+
+    private void Attachments_Click(object sender, RoutedEventArgs e)
+    {
+        if (editingPerson is null)
+        {
+            return;
+        }
+
+        var window = new AttachmentsWindow(store, AmbitiAllegato.Persona, editingPerson.Id, editingPerson.DisplayName) { Owner = this };
+        window.ShowDialog();
+        if (window.Changed)
+        {
+            Saved = true;
+        }
+
+        UpdateAttachmentsSummary();
     }
 
     private void DeletePerson_Click(object sender, RoutedEventArgs e)
@@ -501,11 +659,45 @@ public partial class PersonEditorWindow : Window
         }
 
         var family = store.GetFamily(person.Id);
-        FatherText.Text = family.Padre?.Etichetta ?? "Non indicato";
-        MotherText.Text = family.Madre?.Etichetta ?? "Non indicata";
+        SetRelativeLink(FatherText, family.Padre, "Non indicato");
+        SetRelativeLink(MotherText, family.Madre, "Non indicata");
         UnionsList.ItemsSource = family.Unioni;
         NoUnionsText.Visibility = family.Unioni.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         OtherChildrenList.ItemsSource = family.AltriFigli;
+        RefreshRelations(person.Id);
+    }
+
+    private static void SetRelativeLink(Button link, PersonSummary? relative, string empty)
+    {
+        link.Content = relative?.Etichetta ?? empty;
+        link.Tag = relative?.Id;
+        link.IsEnabled = relative is not null;
+    }
+
+    // Apre la scheda del parente sopra a questa; alla chiusura le parentele vengono ricaricate.
+    private void OpenRelative_Click(object sender, RoutedEventArgs e)
+    {
+        var id = (sender as FrameworkElement)?.Tag as int? ?? ((sender as FrameworkElement)?.DataContext as PersonSummary)?.Id;
+        if (id is not int relativeId || relativeId == editingPerson?.Id)
+        {
+            return;
+        }
+
+        if (store.GetPerson(relativeId) is not { } relative)
+        {
+            Feedback.Error(FamilyMessage, "La scheda del parente non è più in archivio.");
+            RefreshFamily();
+            return;
+        }
+
+        var editor = new PersonEditorWindow(store, relative) { Owner = this };
+        editor.ShowDialog();
+        if (editor.Saved)
+        {
+            Saved = true;
+            LoadDynastyChoices();
+            RefreshFamily();
+        }
     }
 
     private void RunFamily(Action action, string? success = null)
@@ -570,7 +762,8 @@ public partial class PersonEditorWindow : Window
         }
 
         var picker = new PersonPickerWindow(store, "Scegli il coniuge", person.Id, Sessi.Opposto(store.GetSex(person.Id))) { Owner = this };
-        if (picker.ShowDialog() == true && picker.SelectedId is int spouseId)
+        if (picker.ShowDialog() == true && picker.SelectedId is int spouseId
+            && FamilyActions.ConfirmNewUnion(this, store, person.Id, spouseId, store.GetPersonSummaries().FirstOrDefault(p => p.Id == spouseId)?.Nome ?? "il coniuge"))
         {
             EditUnion(new Unione { Persona1Id = person.Id, Persona2Id = spouseId });
         }
@@ -658,16 +851,7 @@ public partial class PersonEditorWindow : Window
             return;
         }
 
-        var (motherId, fatherId) = store.GetParents(childId);
-        var ownSlot = sesso == Sessi.Femmina ? motherId : fatherId;
-        var otherSlot = sesso == Sessi.Femmina ? fatherId : motherId;
-        var replaces = (ownSlot is int own && own != person.Id) || (otherParentId is int other && otherSlot is int existing && existing != other);
-        if (replaces && MessageBox.Show(
-                this,
-                "Questa persona ha già un altro genitore registrato. Sostituirlo?",
-                "Aggiungi figlio",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning) != MessageBoxResult.Yes)
+        if (!FamilyActions.ConfirmParentReplacement(this, store, person.Id, childId, otherParentId))
         {
             return;
         }

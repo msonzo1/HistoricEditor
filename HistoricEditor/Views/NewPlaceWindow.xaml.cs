@@ -1,4 +1,5 @@
 using System.Windows;
+using Microsoft.EntityFrameworkCore;
 
 namespace HistoricEditor;
 
@@ -54,9 +55,17 @@ public static class PlaceCreation
                     return null;
                 }
 
-                return store.EnsurePlace(editor.ResultLevels, editor.ResultLatitude, editor.ResultLongitude) is int id
-                    ? new CreatedPlace(id, false)
-                    : null;
+                try
+                {
+                    return store.EnsurePlace(editor.ResultLevels, editor.ResultLatitude, editor.ResultLongitude) is int id
+                        ? new CreatedPlace(id, false)
+                        : null;
+                }
+                catch (Exception ex) when (ex is DbUpdateException or InvalidOperationException)
+                {
+                    MessageBox.Show(owner, "Impossibile salvare il luogo nel database.", "Nuovo luogo", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return null;
+                }
             }
 
             case NewPlaceKind.Historic:

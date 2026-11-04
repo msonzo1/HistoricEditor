@@ -23,6 +23,11 @@ public static class FamilyActions
         }
 
         var spouse = store.GetPersonSummaries().FirstOrDefault(p => p.Id == spouseId)?.Nome ?? "coniuge";
+        if (!ConfirmNewUnion(owner, store, personId, spouseId, spouse))
+        {
+            return false;
+        }
+
         var editor = new UnionEditorWindow(store, new Unione { Persona1Id = personId, Persona2Id = spouseId }, $"Unione tra {personName} e {spouse}") { Owner = owner };
         return editor.ShowDialog() == true;
     }
@@ -31,8 +36,29 @@ public static class FamilyActions
     {
         var picker = new PersonPickerWindow(store, "Scegli il figlio", parentId, string.Empty) { Owner = owner };
         return picker.ShowDialog() == true && picker.SelectedId is int childId
+            && ConfirmParentReplacement(owner, store, parentId, childId, null)
             && Run(owner, () => store.AssignChild(parentId, childId, null));
     }
+
+    // Una seconda unione con la stessa persona è ammessa (es. nuove nozze), ma va confermata per evitare duplicati.
+    public static bool ConfirmNewUnion(Window owner, PeopleStore store, int personId, int spouseId, string spouseName)
+        => !store.HasUnion(personId, spouseId)
+            || MessageBox.Show(
+                owner,
+                $"Esiste già un’unione con {spouseName}. Registrarne un’altra?",
+                "Aggiungi coniuge",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning) == MessageBoxResult.Yes;
+
+    // Avvisa prima di sostituire un genitore già registrato.
+    public static bool ConfirmParentReplacement(Window owner, PeopleStore store, int parentId, int childId, int? otherParentId)
+        => !store.WouldReplaceParent(parentId, childId, otherParentId)
+            || MessageBox.Show(
+                owner,
+                "Questa persona ha già un altro genitore registrato. Sostituirlo?",
+                "Aggiungi figlio",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning) == MessageBoxResult.Yes;
 
     public static bool EditFamily(Window owner, PeopleStore store, int personId, string personName)
     {

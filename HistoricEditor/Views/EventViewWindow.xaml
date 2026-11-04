@@ -1,0 +1,81 @@
+<Window x:Class="HistoricEditor.EventViewWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:HistoricEditor"
+        Title="Evento"
+        Height="680" Width="780"
+        MinHeight="420" MinWidth="540"
+        WindowStartupLocation="CenterOwner"
+        FontFamily="Segoe UI" FontSize="13">
+    <Grid Background="{DynamicResource AppBackground}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="26,24,26,16">
+            <TextBlock Text="EVENTO" Style="{StaticResource SectionKicker}" />
+            <TextBlock x:Name="HeaderText" FontFamily="Georgia" FontSize="26" Foreground="{DynamicResource InkBrush}" TextWrapping="Wrap" Margin="0,4,0,0" AutomationProperties.HeadingLevel="Level1" />
+            <TextBlock x:Name="HeaderSubtitle" Foreground="{DynamicResource QuietBrush}" FontSize="13" Margin="0,4,0,0" TextWrapping="Wrap" />
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="26,0,16,0" Focusable="False">
+            <StackPanel Margin="0,0,10,0">
+                <Border Style="{StaticResource SheetCard}">
+                    <StackPanel>
+                        <TextBlock Text="DATI PRINCIPALI" Style="{StaticResource SheetSectionTitle}" AutomationProperties.HeadingLevel="Level2" />
+                        <ItemsControl x:Name="MainList" ItemTemplate="{StaticResource SheetFieldTemplate}" Focusable="False" />
+                        <TextBlock x:Name="MainEmptyText" Text="Nessun dato oltre al titolo." Style="{StaticResource SheetEmpty}" />
+                    </StackPanel>
+                </Border>
+
+                <Border x:Name="DescriptionCard" Style="{StaticResource SheetCard}">
+                    <StackPanel>
+                        <TextBlock Text="DESCRIZIONE" Style="{StaticResource SheetSectionTitle}" AutomationProperties.HeadingLevel="Level2" />
+                        <local:RichNoteEditor x:Name="DescriptionText" IsReadOnly="True" AccessibleName="Descrizione dell'evento" />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource SheetCard}">
+                    <StackPanel>
+                        <DockPanel Margin="0,0,0,8">
+                            <Button DockPanel.Dock="Right" Content="_Gestisci allegati…" Click="ManageAttachments_Click" Style="{StaticResource GhostButton}" Padding="10,4" AutomationProperties.Name="Gestisci gli allegati dell'evento" />
+                            <TextBlock Text="ALLEGATI" Style="{StaticResource SheetSectionTitle}" Margin="0" VerticalAlignment="Center" AutomationProperties.HeadingLevel="Level2" />
+                        </DockPanel>
+                        <local:AttachmentsGallery x:Name="AttachmentsView" />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource SheetCard}">
+                    <StackPanel>
+                        <TextBlock Text="PARTECIPANTI" Style="{StaticResource SheetSectionTitle}" AutomationProperties.HeadingLevel="Level2" />
+                        <TextBlock x:Name="NoPeopleText" Text="Nessun partecipante registrato." Style="{StaticResource SheetEmpty}" />
+                        <ItemsControl x:Name="PeopleList" Focusable="False" AutomationProperties.Name="Partecipanti all'evento">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Content="{Binding Etichetta}" Style="{StaticResource LinkButton}" Click="OpenPerson_Click" Tag="{Binding Id}" Margin="0,2" ToolTip="Apri la scheda del personaggio" AutomationProperties.Name="{Binding Etichetta, StringFormat=Apri la scheda di {0}}" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <Border x:Name="SourcesCard" Style="{StaticResource SheetCard}">
+                    <StackPanel>
+                        <TextBlock Text="FONTI" Style="{StaticResource SheetSectionTitle}" AutomationProperties.HeadingLevel="Level2" />
+                        <Button x:Name="WikidataLink" Style="{StaticResource LinkButton}" Click="OpenWikidata_Click" HorizontalAlignment="Left" AutomationProperties.Name="Apri l'evento su Wikidata" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <Border Grid.Row="2" BorderBrush="{DynamicResource AppBorder}" BorderThickness="0,1,0,0" Padding="26,14">
+            <DockPanel>
+                <Button DockPanel.Dock="Right" Content="Chiudi" Click="Close_Click" IsCancel="True" Style="{StaticResource GhostButton}" Padding="16,9" Margin="8,0,0,0" />
+                <Button x:Name="EditButton" DockPanel.Dock="Right" Content="_Modifica…" Click="Edit_Click" Style="{StaticResource PrimaryButton}" Padding="20,9" ToolTip="Apre l'evento nel gestore degli eventi" AutomationProperties.Name="Modifica l'evento" />
+                <TextBlock x:Name="StatusMessage" Foreground="{DynamicResource SignalBrush}" FontSize="11" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,12,0" AutomationProperties.LiveSetting="Assertive" />
+            </DockPanel>
+        </Border>
+    </Grid>
+</Window>

@@ -1,0 +1,60 @@
+<Window x:Class="HistoricEditor.WikipediaConsensusWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Edizioni di Wikipedia confrontate"
+        Height="480" Width="680"
+        MinHeight="320" MinWidth="460"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResizeWithGrip"
+        FontFamily="Segoe UI" FontSize="13">
+    <Grid Background="{DynamicResource AppBackground}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <TextBlock x:Name="SummaryText" Grid.Row="0" Margin="20,18,20,8" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{DynamicResource InkBrush}" />
+        <ListBox x:Name="EditionsList" Grid.Row="1" Margin="20,0,20,0" HorizontalContentAlignment="Stretch"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                 KeyboardNavigation.TabNavigation="Continue"
+                 AutomationProperties.Name="Edizioni di Wikipedia confrontate">
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="ListBoxItem">
+                    <Setter Property="AutomationProperties.Name" Value="{Binding AccessibleName}" />
+                    <Setter Property="Padding" Value="8,6" />
+                </Style>
+            </ListBox.ItemContainerStyle>
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel>
+                        <TextBlock TextWrapping="Wrap" FontWeight="SemiBold">
+                            <Run Text="{Binding Mark, Mode=OneWay}" Foreground="{Binding MarkBrush, Mode=OneWay}" />
+                            <Run Text="{Binding Edition.LanguageName, Mode=OneWay}" />
+                            <Run Text="—" Foreground="{DynamicResource QuietBrush}" />
+                            <Run Text="{Binding Edition.Title, Mode=OneWay}" />
+                        </TextBlock>
+                        <TextBlock TextWrapping="Wrap" FontSize="12" Margin="0,2,0,0">
+                            <Run Text="Nascita:" Foreground="{DynamicResource QuietBrush}" />
+                            <Run Text="{Binding Edition.Birth, Mode=OneWay}" />
+                        </TextBlock>
+                        <TextBlock TextWrapping="Wrap" FontSize="12">
+                            <Run Text="Morte:" Foreground="{DynamicResource QuietBrush}" />
+                            <Run Text="{Binding Edition.Death, Mode=OneWay}" />
+                        </TextBlock>
+                        <TextBlock Text="{Binding Edition.DifferencesText}" TextWrapping="Wrap" FontSize="12" Foreground="{Binding MarkBrush}" />
+                        <Button Style="{StaticResource LinkButton}" FontSize="12" HorizontalAlignment="Left" Margin="0,2,0,0"
+                                Content="{Binding Edition.Url}" Tag="{Binding Edition.Url}" Click="OpenLink_Click"
+                                Visibility="{Binding LinkVisibility}"
+                                ToolTip="Apri la pagina nel browser"
+                                AutomationProperties.Name="{Binding LinkName}" />
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+        <DockPanel Grid.Row="2" Margin="20,12,20,18" LastChildFill="True">
+            <Button DockPanel.Dock="Right" Content="_Chiudi" IsCancel="True" IsDefault="True" Padding="22,6" Margin="8,0,0,0" />
+            <Button DockPanel.Dock="Right" x:Name="CopyLinksButton" Content="Co_pia collegamenti" AutomationProperties.Name="Copia collegamenti" Click="CopyLinks_Click" Padding="14,6" ToolTip="Copia negli appunti gli indirizzi di tutte le edizioni" />
+            <TextBlock x:Name="StatusText" VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12" AutomationProperties.LiveSetting="Polite" />
+        </DockPanel>
+    </Grid>
+</Window>

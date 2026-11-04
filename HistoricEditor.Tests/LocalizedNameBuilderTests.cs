@@ -34,6 +34,16 @@ public class LocalizedNameBuilderTests
     }
 
     [Fact]
+    public void Build_RemovesSurnameFromEveryLanguage()
+    {
+        var labels = new Dictionary<string, string> { ["it"] = "Benito Mussolini", ["de"] = "Benito Mussolini" };
+
+        var result = LocalizedNameBuilder.Build(Languages, labels, [], new Dictionary<string, string>(), ["Mussolini"]);
+
+        Assert.All(result, name => Assert.Equal("Benito", name.Nome));
+    }
+
+    [Fact]
     public void Build_SkipsLanguagesWithoutData()
     {
         var result = LocalizedNameBuilder.Build(Languages, new Dictionary<string, string> { ["it"] = "Dante" }, [], new Dictionary<string, string>());

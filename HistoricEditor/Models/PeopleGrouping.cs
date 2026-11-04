@@ -76,8 +76,8 @@ public sealed class PersonGroup(string famiglia, IReadOnlyList<PersonEntry> pers
 
     public IReadOnlyList<PeopleTreeNode> Elementi => [.. Rami, .. Persone];
 
-    // Persone della dinastia e di tutti i suoi rami.
-    public int Totale => Persone.Count + Rami.Sum(r => r.Totale);
+    // Persone distinte della dinastia e di tutti i suoi rami (chi ha più dinastie conta una volta).
+    public int Totale => SelfAndDescendants().SelectMany(g => g.Persone).Select(p => p.Person.Id).Distinct().Count();
 
     public string Conteggio => Totale == 1 ? "1 PERSONA" : $"{Totale} PERSONE";
 
@@ -101,18 +101,57 @@ public static class PeopleGrouping
 
     private static readonly StringComparer Comparer = StringComparer.Create(CultureInfo.GetCultureInfo("it-IT"), ignoreCase: true);
 
-    // Raggruppa per famiglia (senza distinguere maiuscole); le famiglie registrate come rami
-    // di una dinastia vengono annidate sotto di essa. Le persone senza famiglia vanno in fondo.
-    public static List<PersonGroup> Build(IEnumerable<HistoricalPerson> people, IEnumerable<Dinastia>? dynasties = null)
-    {
-        var byFamily = people
-            .GroupBy(p => (p.Family ?? string.Empty).Trim(), Comparer)
-            .ToDictionary(g => g.Key, g => g.OrderBy(p => p.DisplayName, Comparer).Select(p => new PersonEntry(p)).ToList(), Comparer);
+    public static StringComparer FamilyComparer => Comparer;
 
+    // Nomi delle famiglie indicate in una scheda: più dinastie sono separate da «;».
+    public static List<string> FamilyNames(string? family)
+        => [.. (family ?? string.Empty).Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Distinct(Comparer)];
+
+    public static string JoinFamilyNames(IEnumerable<string> names) => string.Join("; ", names);
+
+    // Raggruppa per dinastia: le persone collegate (links) vanno sotto ciascuna delle loro dinastie,
+    // quelle non collegate secondo i nomi scritti nel campo «Famiglia» (senza distinguere maiuscole).
+    // Le famiglie registrate come rami di una dinastia vengono annidate sotto di essa; le persone senza famiglia vanno in fondo.
+    public static List<PersonGroup> Build(IEnumerable<HistoricalPerson> people, IEnumerable<Dinastia>? dynasties = null, IEnumerable<PersonaDinastia>? links = null)
+    {
         var dynastyList = (dynasties ?? []).Where(d => !string.IsNullOrWhiteSpace(d.Nome)).ToList();
         var byId = dynastyList.ToDictionary(d => d.Id);
+        var linksByPerson = (links ?? []).Where(l => byId.ContainsKey(l.DinastiaId)).ToLookup(l => l.PersonaId, l => l.DinastiaId);
+
+        var byDynasty = new Dictionary<int, List<HistoricalPerson>>();
+        var byFamily = new Dictionary<string, List<HistoricalPerson>>(Comparer);
+        foreach (var person in people)
+        {
+            var linked = linksByPerson[person.Id].Distinct().ToList();
+            if (linked.Count > 0)
+            {
+                foreach (var id in linked)
+                {
+                    Members(byDynasty, id).Add(person);
+                }
+
+                // Le famiglie scritte nella scheda ma non (ancora) registrate restano raggruppate per nome.
+                var linkedNames = new HashSet<string>(linked.Select(id => byId[id].Nome.Trim()), Comparer);
+                foreach (var name in FamilyNames(person.Family).Where(n => !linkedNames.Contains(n)))
+                {
+                    Members(byFamily, name).Add(person);
+                }
+
+                continue;
+            }
+
+            var names = GroupKeys(person);
+            foreach (var name in names)
+            {
+                Members(byFamily, name).Add(person);
+            }
+        }
+
         var childrenOf = dynastyList.ToLookup(d => d.ParentId is int p && byId.ContainsKey(p) && p != d.Id ? p : (int?)null);
         var used = new HashSet<string>(Comparer);
+
+        List<PersonEntry> Entries(IEnumerable<HistoricalPerson> list)
+            => [.. list.DistinctBy(p => p.Id).OrderBy(p => p.DisplayName, Comparer).Select(p => new PersonEntry(p))];
 
         PersonGroup? BuildDynasty(Dinastia dynasty, HashSet<int> path)
         {
@@ -129,8 +168,18 @@ public static class PeopleGrouping
                 .ToList();
             path.Remove(dynasty.Id);
 
-            List<PersonEntry> members = byFamily.TryGetValue(name, out var found) && used.Add(name) ? found : [];
-            return members.Count == 0 && rami.Count == 0 ? null : new PersonGroup(name, members, rami);
+            var members = new List<HistoricalPerson>();
+            if (byDynasty.TryGetValue(dynasty.Id, out var linked))
+            {
+                members.AddRange(linked);
+            }
+
+            if (used.Add(name) && byFamily.TryGetValue(name, out var named))
+            {
+                members.AddRange(named);
+            }
+
+            return members.Count == 0 && rami.Count == 0 ? null : new PersonGroup(name, Entries(members), rami);
         }
 
         var roots = childrenOf[null]
@@ -140,15 +189,34 @@ public static class PeopleGrouping
 
         roots.AddRange(byFamily
             .Where(kv => kv.Key.Length > 0 && !used.Contains(kv.Key))
-            .Select(kv => new PersonGroup(kv.Key, kv.Value)));
+            .Select(kv => new PersonGroup(kv.Key, Entries(kv.Value))));
 
         var result = roots.OrderBy(g => g.Famiglia, Comparer).ToList();
         if (byFamily.TryGetValue(string.Empty, out var noFamily))
         {
-            result.Add(new PersonGroup(NoFamily, noFamily));
+            result.Add(new PersonGroup(NoFamily, Entries(noFamily)));
         }
 
         return result;
+    }
+
+    private static List<HistoricalPerson> Members<TKey>(Dictionary<TKey, List<HistoricalPerson>> groups, TKey key)
+        where TKey : notnull
+    {
+        if (!groups.TryGetValue(key, out var list))
+        {
+            list = [];
+            groups[key] = list;
+        }
+
+        return list;
+    }
+
+    // Senza famiglia (dinastia) i personaggi moderni si raggruppano per cognome.
+    private static List<string> GroupKeys(HistoricalPerson person)
+    {
+        var names = FamilyNames(person.Family);
+        return names.Count > 0 ? names : [(person.Surname ?? string.Empty).Trim()];
     }
 
     public static string DescribeDates(string? birth, string? death)

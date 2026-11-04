@@ -9,6 +9,7 @@
         FontFamily="Segoe UI" FontSize="13">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+        <local:TitleDateLedConverter x:Key="TitleDateLed" />
         <Style x:Key="SectionTitle" TargetType="TextBlock">
             <Setter Property="Foreground" Value="{DynamicResource SignalBrush}" />
             <Setter Property="FontFamily" Value="Consolas" />
@@ -25,7 +26,7 @@
         <DataTemplate x:Key="ChildTemplate">
             <DockPanel Margin="0,3">
                 <Button DockPanel.Dock="Right" Content="Rimuovi" Click="RemoveChild_Click" Padding="9,3" AutomationProperties.Name="{Binding Nome, StringFormat=Rimuovi il figlio {0}}" />
-                <TextBlock Text="{Binding Etichetta}" VerticalAlignment="Center" TextWrapping="Wrap" Foreground="{DynamicResource InkBrush}" />
+                <Button Content="{Binding Etichetta}" Style="{StaticResource LinkButton}" Click="OpenRelative_Click" Tag="{Binding Id}" ToolTip="Apri la scheda" AutomationProperties.Name="{Binding Etichetta, StringFormat=Apri la scheda di {0}}" />
             </DockPanel>
         </DataTemplate>
     </Window.Resources>
@@ -64,7 +65,7 @@
             <Border x:Name="Seg3" Grid.Row="0" Grid.Column="4" Height="4" CornerRadius="2" Background="{DynamicResource AppBorder}" />
             <Border x:Name="Seg4" Grid.Row="0" Grid.Column="6" Height="4" CornerRadius="2" Background="{DynamicResource AppBorder}" />
             <TextBlock x:Name="Step1Label" Grid.Row="1" Grid.Column="0" Text="1 · Dati principali" Margin="0,7,0,0" FontSize="11" Foreground="{DynamicResource InkBrush}" />
-            <TextBlock x:Name="Step2Label" Grid.Row="1" Grid.Column="2" Text="2 · Parentele" Margin="0,7,0,0" FontSize="11" Foreground="{DynamicResource QuietBrush}" />
+            <TextBlock x:Name="Step2Label" Grid.Row="1" Grid.Column="2" Text="2 · Parentele e relazioni" Margin="0,7,0,0" FontSize="11" Foreground="{DynamicResource QuietBrush}" />
             <TextBlock x:Name="Step3Label" Grid.Row="1" Grid.Column="4" Text="3 · Titoli" Margin="0,7,0,0" FontSize="11" Foreground="{DynamicResource QuietBrush}" />
             <TextBlock x:Name="Step4Label" Grid.Row="1" Grid.Column="6" Text="4 · Altri eventi" Margin="0,7,0,0" FontSize="11" Foreground="{DynamicResource QuietBrush}" />
         </Grid>
@@ -79,6 +80,7 @@
                             <TextBlock Text="IMPORTA DA WIKIPEDIA" Style="{StaticResource SectionTitle}" Margin="0,0,0,8" />
                             <Label Content="_Cerca su Wikipedia in italiano" Target="{Binding ElementName=WikipediaSearchInput}" />
                             <DockPanel>
+                                <Button x:Name="UndoImportButton" DockPanel.Dock="Right" Content="Annulla import" Click="UndoImport_Click" Visibility="Collapsed" Margin="6,0,0,0" Padding="12,5" ToolTip="Scarta i dati importati e svuota la scheda" AutomationProperties.Name="Annulla import da Wikipedia" />
                                 <Button x:Name="ImportWikipediaButton" DockPanel.Dock="Right" Content="Importa" Click="ImportWikipedia_Click" IsEnabled="False" Margin="6,0,0,0" Padding="12,5" ToolTip="Compila la scheda con i dati della pagina scelta" AutomationProperties.Name="Importa da Wikipedia" />
                                 <Button x:Name="SearchWikipediaButton" DockPanel.Dock="Right" Content="Cerca" Click="SearchWikipedia_Click" Margin="6,0,0,0" Padding="12,5" AutomationProperties.Name="Cerca su Wikipedia" />
                                 <TextBox x:Name="WikipediaSearchInput" Height="34" AutomationProperties.Name="Cerca un personaggio su Wikipedia" ToolTip="Scrivi il nome e premi Invio" TextChanged="WikipediaSearchInput_TextChanged" KeyDown="WikipediaSearchInput_KeyDown" />
@@ -94,7 +96,7 @@
                                 </ListBox.ItemTemplate>
                             </ListBox>
                             <StackPanel x:Name="LoadingPanel" Visibility="Collapsed" Margin="0,8,0,0">
-                                <ProgressBar IsIndeterminate="True" Height="4" Background="{DynamicResource AppBorder}" Foreground="{DynamicResource GreenBrush}" BorderThickness="0" AutomationProperties.Name="Caricamento in corso" />
+                                <ProgressBar x:Name="LoadingBar" IsIndeterminate="True" Minimum="0" Maximum="100" Height="4" Background="{DynamicResource AppBorder}" Foreground="{DynamicResource GreenBrush}" BorderThickness="0" AutomationProperties.Name="Caricamento in corso" />
                                 <DockPanel Margin="0,6,0,0">
                                     <Button DockPanel.Dock="Right" Content="Annulla" Click="CancelWikipedia_Click" Padding="12,4" Margin="8,0,0,0" VerticalAlignment="Top" />
                                     <TextBlock x:Name="LoadingStage" Foreground="{DynamicResource InkBrush}" FontSize="11" TextWrapping="Wrap" VerticalAlignment="Center" AutomationProperties.LiveSetting="Assertive" />
@@ -105,11 +107,19 @@
                     </Border>
                     <Border Style="{StaticResource Card}" Margin="0,0,0,4">
                         <StackPanel>
-                        <StackPanel x:Name="LanguagePanel" Orientation="Horizontal" Margin="0,0,0,14" Visibility="Collapsed">
-                            <Label Content="_Lingua visualizzata" Target="{Binding ElementName=LanguageSelector}" VerticalAlignment="Center" />
-                            <ComboBox x:Name="LanguageSelector" Width="240" Height="30" Margin="8,0,0,0" DisplayMemberPath="Etichetta" SelectionChanged="LanguageSelector_SelectionChanged" AutomationProperties.Name="Lingua visualizzata per nome, suffisso, soprannome e titolo principale" ToolTip="Mostra nome, suffisso, soprannome e titolo principale importati in un'altra lingua" />
-                            <TextBlock x:Name="LanguageNotice" Text="Valori importati, in sola lettura" VerticalAlignment="Center" Margin="10,0,0,0" FontSize="12" Foreground="{DynamicResource QuietBrush}" Visibility="Collapsed" />
-                        </StackPanel>
+                        <WrapPanel x:Name="LanguagePanel" Orientation="Horizontal" Margin="0,0,0,14">
+                            <StackPanel Orientation="Horizontal" Margin="0,0,16,6">
+                                <Label Content="_Lingua visualizzata" Target="{Binding ElementName=LanguageSelector}" VerticalAlignment="Center" />
+                                <ComboBox x:Name="LanguageSelector" MinWidth="250" Padding="10,5" Margin="8,0,0,0" DisplayMemberPath="Etichetta" SelectionChanged="LanguageSelector_SelectionChanged" AutomationProperties.Name="Lingua visualizzata per nome, suffisso, soprannome e titolo principale" ToolTip="Mostra e modifica nome, suffisso, soprannome e titolo principale in un'altra lingua" />
+                                <Button x:Name="RemoveLanguageButton" Content="Rimuovi lingua" Click="RemoveLanguage_Click" Padding="10,4" Margin="6,0,0,0" Visibility="Collapsed" AutomationProperties.Name="Rimuovi i valori della lingua visualizzata" />
+                            </StackPanel>
+                            <StackPanel x:Name="AddLanguagePanel" Orientation="Horizontal" Margin="0,0,0,6">
+                                <Label Content="Aggiungi li_ngua" Target="{Binding ElementName=AddLanguageSelector}" VerticalAlignment="Center" />
+                                <ComboBox x:Name="AddLanguageSelector" MinWidth="160" Padding="10,5" Margin="8,0,0,0" DisplayMemberPath="Etichetta" AutomationProperties.Name="Lingua da aggiungere" />
+                                <Button Content="Aggiungi" Click="AddLanguage_Click" Padding="10,4" Margin="6,0,0,0" AutomationProperties.Name="Aggiungi la lingua scelta" />
+                            </StackPanel>
+                        </WrapPanel>
+                        <TextBlock x:Name="LanguageNotice" Margin="0,-6,0,12" FontSize="12" Foreground="{DynamicResource SignalBrush}" TextWrapping="Wrap" Visibility="Collapsed" AutomationProperties.LiveSetting="Polite" />
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -125,6 +135,7 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
 
                             <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,0,14">
@@ -132,12 +143,8 @@
                                 <TextBox x:Name="NameInput" Height="34" AutomationProperties.Name="Nome" />
                             </StackPanel>
                             <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,0,14">
-                                <Label Content="Sesso" Target="{Binding ElementName=SexInput}" />
-                                <ComboBox x:Name="SexInput" Height="34" SelectedIndex="0" AutomationProperties.Name="Sesso">
-                                    <ComboBoxItem Content="Non indicato" Tag="" />
-                                    <ComboBoxItem Content="Maschio" Tag="M" />
-                                    <ComboBoxItem Content="Femmina" Tag="F" />
-                                </ComboBox>
+                                <Label Content="Cognome" Target="{Binding ElementName=SurnameInput}" />
+                                <TextBox x:Name="SurnameInput" Height="34" AutomationProperties.Name="Cognome" ToolTip="Per i personaggi moderni, ad esempio «Mussolini»; lascialo vuoto per i nomi dinastici" />
                             </StackPanel>
                             <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,0,14">
                                 <Label Content="Suffisso" Target="{Binding ElementName=SuffixInput}" />
@@ -152,26 +159,108 @@
                                 <TextBlock x:Name="DynastyPathText" FontSize="11" Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" Margin="2,4,0,0" />
                             </StackPanel>
                             <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,0,14">
+                                <Label Content="Sesso" Target="{Binding ElementName=SexInput}" />
+                                <ComboBox x:Name="SexInput" Height="34" SelectedIndex="0" AutomationProperties.Name="Sesso">
+                                    <ComboBoxItem Content="Non indicato" Tag="" />
+                                    <ComboBoxItem Content="Maschio" Tag="M" />
+                                    <ComboBoxItem Content="Femmina" Tag="F" />
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Grid.Row="2" Grid.Column="2" Margin="0,0,0,14">
                                 <Label Content="Soprannome" Target="{Binding ElementName=NicknameInput}" />
                                 <TextBox x:Name="NicknameInput" Height="34" AutomationProperties.Name="Soprannome" ToolTip="Ad esempio «il Bello»" />
                             </StackPanel>
-                            <StackPanel Grid.Row="2" Grid.Column="2" Margin="0,0,0,14">
+                            <StackPanel Grid.Row="3" Grid.ColumnSpan="3" Margin="0,0,0,14">
                                 <Label Content="Titolo principale" Target="{Binding ElementName=MainTitleInput}" />
                                 <TextBox x:Name="MainTitleInput" Height="34" AutomationProperties.Name="Titolo principale" ToolTip="Ad esempio «Imperatore del Sacro Romano Impero»" />
                             </StackPanel>
-                            <StackPanel Grid.Row="3" Grid.Column="0" Margin="0,0,0,14">
+                            <StackPanel Grid.Row="4" Grid.Column="0" Margin="0,0,0,14">
                                 <Label Content="Nascita" Target="{Binding ElementName=BirthInput}" />
-                                <TextBox x:Name="BirthInput" Height="34" AutomationProperties.Name="Nascita" />
+                                <TextBox x:Name="BirthInput" Height="34" AutomationProperties.Name="Nascita" TextChanged="DateCalendar_Changed" />
+                                <Grid Margin="0,6,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="8" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+                                    <Label Grid.Row="0" Grid.Column="0" Content="Calendario" Target="{Binding ElementName=BirthCalendarInput}" FontSize="11" Padding="0,0,0,2" />
+                                    <ComboBox Grid.Row="1" Grid.Column="0" x:Name="BirthCalendarInput" SelectionChanged="DateCalendar_Changed" AutomationProperties.Name="Calendario della data di nascita" ToolTip="Calendario in cui è scritta la data: giuliano o gregoriano" />
+                                    <Label Grid.Row="0" Grid.Column="2" Content="Stile dell’anno" Target="{Binding ElementName=BirthStyleInput}" FontSize="11" Padding="0,0,0,2" />
+                                    <ComboBox Grid.Row="1" Grid.Column="2" x:Name="BirthStyleInput" SelectionChanged="DateCalendar_Changed" AutomationProperties.Name="Stile di inizio dell’anno della data di nascita" />
+                                </Grid>
+                                <TextBlock x:Name="BirthCalendarNote" FontSize="11" Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" Margin="2,4,0,0" AutomationProperties.LiveSetting="Polite" />
                             </StackPanel>
-                            <StackPanel Grid.Row="3" Grid.Column="2" Margin="0,0,0,14">
+                            <StackPanel Grid.Row="4" Grid.Column="2" Margin="0,0,0,14">
                                 <Label Content="Morte" Target="{Binding ElementName=DeathInput}" />
-                                <TextBox x:Name="DeathInput" Height="34" AutomationProperties.Name="Morte" />
+                                <TextBox x:Name="DeathInput" Height="34" AutomationProperties.Name="Morte" TextChanged="DateCalendar_Changed" />
+                                <Grid Margin="0,6,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="8" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+                                    <Label Grid.Row="0" Grid.Column="0" Content="Calendario" Target="{Binding ElementName=DeathCalendarInput}" FontSize="11" Padding="0,0,0,2" />
+                                    <ComboBox Grid.Row="1" Grid.Column="0" x:Name="DeathCalendarInput" SelectionChanged="DateCalendar_Changed" AutomationProperties.Name="Calendario della data di morte" ToolTip="Calendario in cui è scritta la data: giuliano o gregoriano" />
+                                    <Label Grid.Row="0" Grid.Column="2" Content="Stile dell’anno" Target="{Binding ElementName=DeathStyleInput}" FontSize="11" Padding="0,0,0,2" />
+                                    <ComboBox Grid.Row="1" Grid.Column="2" x:Name="DeathStyleInput" SelectionChanged="DateCalendar_Changed" AutomationProperties.Name="Stile di inizio dell’anno della data di morte" />
+                                </Grid>
+                                <TextBlock x:Name="DeathCalendarNote" FontSize="11" Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" Margin="2,4,0,0" AutomationProperties.LiveSetting="Polite" />
                             </StackPanel>
-                            <StackPanel Grid.Row="4" Grid.ColumnSpan="3" Margin="0,0,0,14">
+                            <StackPanel Grid.Row="5" Grid.ColumnSpan="3" Margin="0,0,0,14">
                                 <DockPanel>
                                     <Button DockPanel.Dock="Right" Content="_Fonti…" Click="Sources_Click" Padding="12,5" Margin="8,0,0,0" VerticalAlignment="Center" ToolTip="Fonte delle informazioni e fonti delle date" AutomationProperties.Name="Fonti" />
-                                    <TextBlock x:Name="SourcesSummary" VerticalAlignment="Center" TextWrapping="Wrap" Foreground="{DynamicResource QuietBrush}" FontSize="12" />
+                                    <Button x:Name="RefreshWikipediaButton" DockPanel.Dock="Right" Content="_Aggiorna da Wikipedia" Click="RefreshWikipedia_Click" Padding="12,5" Margin="8,0,0,0" VerticalAlignment="Center" Visibility="Collapsed" ToolTip="Rilegge la pagina Wikipedia e i dati Wikidata della scheda: controlla i dati prima di salvare" AutomationProperties.Name="Aggiorna da Wikipedia" />
+                                    <Button x:Name="ConsensusLed" DockPanel.Dock="Left" Visibility="Collapsed" Click="ConsensusLed_Click" Cursor="Hand" Margin="0,0,10,0" VerticalAlignment="Center"
+                                            ToolTipService.ShowDuration="60000" ToolTipService.InitialShowDelay="200"
+                                            AutomationProperties.Name="Concordanza tra le edizioni di Wikipedia"
+                                            AutomationProperties.HelpText="Apre l'elenco delle edizioni di Wikipedia confrontate, con i collegamenti">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border x:Name="LedFrame" Background="Transparent" Padding="2" CornerRadius="9" BorderThickness="1" BorderBrush="Transparent">
+                                                    <ContentPresenter />
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsKeyboardFocused" Value="True">
+                                                        <Setter TargetName="LedFrame" Property="BorderBrush" Value="{DynamicResource InkBrush}" />
+                                                    </Trigger>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="LedFrame" Property="BorderBrush" Value="{DynamicResource QuietBrush}" />
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                        <Button.ToolTip>
+                                            <ToolTip MaxWidth="560">
+                                                <StackPanel>
+                                                    <TextBlock x:Name="ConsensusDetails" TextWrapping="Wrap" />
+                                                    <TextBlock Text="Fai clic per vedere le edizioni confrontate e aprire i collegamenti." Margin="0,6,0,0" FontStyle="Italic" TextWrapping="Wrap" />
+                                                </StackPanel>
+                                            </ToolTip>
+                                        </Button.ToolTip>
+                                        <Ellipse x:Name="ConsensusLight" Width="14" Height="14" Stroke="{DynamicResource AppBorder}" StrokeThickness="1" />
+                                    </Button>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock x:Name="SourcesSummary" TextWrapping="Wrap" Foreground="{DynamicResource QuietBrush}" FontSize="12" />
+                                        <Button x:Name="SourceLinkButton" Style="{StaticResource LinkButton}" FontSize="12" Click="SourceLink_Click" Visibility="Collapsed" AutomationProperties.Name="Apri la fonte nel browser" />
+                                        <Button x:Name="WikiTreeLinkButton" Style="{StaticResource LinkButton}" FontSize="12" Click="WikiTreeLink_Click" Visibility="Collapsed" AutomationProperties.Name="Apri il profilo WikiTree nel browser" />
+                                    </StackPanel>
                                 </DockPanel>
+                                <StackPanel x:Name="RefreshPanel" Visibility="Collapsed" Margin="0,8,0,0">
+                                    <ProgressBar x:Name="RefreshBar" IsIndeterminate="True" Minimum="0" Maximum="100" Height="4" Background="{DynamicResource AppBorder}" Foreground="{DynamicResource GreenBrush}" BorderThickness="0" AutomationProperties.Name="Aggiornamento in corso" />
+                                    <DockPanel Margin="0,6,0,0">
+                                        <Button DockPanel.Dock="Right" Content="Annulla" Click="CancelWikipedia_Click" Padding="12,4" Margin="8,0,0,0" VerticalAlignment="Top" AutomationProperties.Name="Annulla l'aggiornamento da Wikipedia" />
+                                        <TextBlock x:Name="RefreshStage" Foreground="{DynamicResource InkBrush}" FontSize="11" TextWrapping="Wrap" VerticalAlignment="Center" AutomationProperties.LiveSetting="Assertive" />
+                                    </DockPanel>
+                                </StackPanel>
+                                <TextBlock x:Name="RefreshStatus" FontSize="12" Margin="0,6,0,0" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
                                 <Border x:Name="DateNoticePanel" Visibility="Collapsed" Margin="0,12,0,0" Background="{DynamicResource AppSurfaceAlt}" BorderBrush="{DynamicResource SignalBrush}" BorderThickness="1" CornerRadius="8" Padding="12,10">
                                     <DockPanel>
                                         <Button DockPanel.Dock="Right" Content="Dettagli…" Click="DateDetails_Click" VerticalAlignment="Center" Padding="12,5" />
@@ -179,10 +268,21 @@
                                     </DockPanel>
                                 </Border>
                             </StackPanel>
-                            <local:PlaceFieldControl x:Name="BirthPlaceField" Grid.Row="5" Grid.ColumnSpan="3" Margin="0,2,0,16" Title="Luogo di nascita" />
-                            <local:PlaceFieldControl x:Name="DeathPlaceField" Grid.Row="6" Grid.ColumnSpan="3" Margin="0,0,0,16" Title="Luogo di morte" />
-                            <local:PlaceFieldControl x:Name="BurialPlaceField" Grid.Row="7" Grid.ColumnSpan="3" Title="Luogo di sepoltura" />
+                            <local:PlaceFieldControl x:Name="BirthPlaceField" Grid.Row="6" Grid.ColumnSpan="3" Margin="0,2,0,16" Title="Luogo di nascita" />
+                            <local:PlaceFieldControl x:Name="DeathPlaceField" Grid.Row="7" Grid.ColumnSpan="3" Margin="0,0,0,16" Title="Luogo di morte" />
+                            <local:PlaceFieldControl x:Name="BurialPlaceField" Grid.Row="8" Grid.ColumnSpan="3" Title="Luogo di sepoltura" />
                         </Grid>
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource Card}" Margin="0,12,0,0">
+                        <StackPanel>
+                            <Label Content="_Note" Target="{Binding ElementName=NoteEditor}" />
+                            <local:RichNoteEditor x:Name="NoteEditor" AccessibleName="Note sul personaggio" EditorHeight="150" />
+                            <DockPanel Margin="0,14,0,0">
+                                <Button x:Name="AttachmentsButton" DockPanel.Dock="Right" Content="A_llegati…" Click="Attachments_Click" Padding="12,5" Margin="8,0,0,0" IsEnabled="False"
+                                        ToolTip="Ritratti, immagini e documenti del personaggio" AutomationProperties.Name="Gestisci gli allegati del personaggio" />
+                                <TextBlock x:Name="AttachmentsSummary" VerticalAlignment="Center" TextWrapping="Wrap" Foreground="{DynamicResource QuietBrush}" FontSize="12" Text="Salva la scheda per aggiungere ritratti e documenti." />
+                            </DockPanel>
                         </StackPanel>
                     </Border>
                     </StackPanel>
@@ -201,13 +301,13 @@
                                 <DockPanel Margin="0,0,0,10">
                                     <Button DockPanel.Dock="Right" Content="Rimuovi" Click="RemoveFather_Click" Margin="6,0,0,0" AutomationProperties.Name="Rimuovi padre" />
                                     <Button DockPanel.Dock="Right" Content="Scegli…" Click="ChooseFather_Click" Margin="6,0,0,0" AutomationProperties.Name="Scegli padre" />
-                                    <TextBox x:Name="FatherText" IsReadOnly="True" AutomationProperties.Name="Padre" />
+                                    <Button x:Name="FatherText" Style="{StaticResource LinkButton}" Click="OpenRelative_Click" ToolTip="Apri la scheda del padre" AutomationProperties.Name="Padre" />
                                 </DockPanel>
                                 <Label Content="Madre" Target="{Binding ElementName=MotherText}" Padding="0,0,0,4" />
                                 <DockPanel>
                                     <Button DockPanel.Dock="Right" Content="Rimuovi" Click="RemoveMother_Click" Margin="6,0,0,0" AutomationProperties.Name="Rimuovi madre" />
                                     <Button DockPanel.Dock="Right" Content="Scegli…" Click="ChooseMother_Click" Margin="6,0,0,0" AutomationProperties.Name="Scegli madre" />
-                                    <TextBox x:Name="MotherText" IsReadOnly="True" AutomationProperties.Name="Madre" />
+                                    <Button x:Name="MotherText" Style="{StaticResource LinkButton}" Click="OpenRelative_Click" ToolTip="Apri la scheda della madre" AutomationProperties.Name="Madre" />
                                 </DockPanel>
 
                                 <TextBlock Text="CONIUGI E FIGLI" Style="{StaticResource SectionTitle}" />
@@ -217,7 +317,7 @@
                                         <DataTemplate>
                                             <Border BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" CornerRadius="10" Padding="12" Margin="0,0,0,8" Background="{DynamicResource AppControlBg}">
                                                 <StackPanel>
-                                                    <TextBlock Text="{Binding Intestazione}" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{DynamicResource InkBrush}" />
+                                                    <Button Content="{Binding Intestazione}" Style="{StaticResource LinkButton}" FontWeight="SemiBold" Click="OpenRelative_Click" Tag="{Binding Coniuge.Id}" IsEnabled="{Binding HasConiuge}" ToolTip="Apri la scheda del coniuge" AutomationProperties.Name="{Binding Intestazione, StringFormat=Apri la scheda del coniuge: {0}}" />
                                                     <ItemsControl ItemsSource="{Binding Figli}" ItemTemplate="{StaticResource ChildTemplate}" Margin="14,6,0,0" />
                                                     <WrapPanel Margin="0,10,0,0">
                                                         <Button Content="Aggiungi figlio…" Click="AddChildToUnion_Click" Margin="0,0,6,0" />
@@ -235,6 +335,24 @@
                                 <TextBlock Text="FIGLI CON ALTRO GENITORE NON INDICATO" Style="{StaticResource SectionTitle}" />
                                 <ItemsControl x:Name="OtherChildrenList" ItemTemplate="{StaticResource ChildTemplate}" AutomationProperties.Name="Figli con altro genitore non indicato" />
                                 <Button Content="Aggiungi figlio…" Click="AddChild_Click" HorizontalAlignment="Left" Margin="0,8,0,0" />
+
+                                <TextBlock Text="ALTRE RELAZIONI (ALLEANZE, RIVALITÀ, MECENATISMO, TUTELA, MAESTRI…)" Style="{StaticResource SectionTitle}" TextWrapping="Wrap" />
+                                <TextBlock x:Name="NoRelationsText" Text="Nessuna relazione registrata." Foreground="{DynamicResource QuietBrush}" />
+                                <ItemsControl x:Name="RelationsList" AutomationProperties.Name="Altre relazioni">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Margin="0,3">
+                                                <DockPanel>
+                                                    <Button DockPanel.Dock="Right" Content="Rimuovi" Click="RemoveRelation_Click" Padding="9,3" Margin="6,0,0,0" AutomationProperties.Name="{Binding Descrizione, StringFormat=Rimuovi la relazione: {0}}" />
+                                                    <Button DockPanel.Dock="Right" Content="Modifica…" Click="EditRelation_Click" Padding="9,3" Margin="6,0,0,0" AutomationProperties.Name="{Binding Descrizione, StringFormat=Modifica la relazione: {0}}" />
+                                                    <Button Content="{Binding Descrizione}" Style="{StaticResource LinkButton}" Click="OpenRelative_Click" Tag="{Binding Altro.Id}" ToolTip="Apri la scheda" AutomationProperties.Name="{Binding Descrizione, StringFormat=Apri la scheda: {0}}" AutomationProperties.HelpText="{Binding Note}" />
+                                                </DockPanel>
+                                                <TextBlock Text="{Binding Note}" Foreground="{DynamicResource QuietBrush}" FontSize="12" TextWrapping="Wrap" Margin="14,2,0,0" Visibility="{Binding HasNote, Converter={StaticResource BoolToVisibility}}" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <Button Content="Aggiungi relazione…" Click="AddRelation_Click" HorizontalAlignment="Left" Margin="0,8,0,0" ToolTip="Collega un personaggio con un legame non familiare: alleanza, rivalità, mecenatismo, tutela, maestro e allievo…" />
 
                                 <TextBlock x:Name="FamilyMessage" Foreground="{DynamicResource SignalBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,14,0,0" AutomationProperties.LiveSetting="Assertive" />
                             </StackPanel>
@@ -272,6 +390,27 @@
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
+                                <DataGridTextColumn Header="Predecessore" Binding="{Binding Predecessore, UpdateSourceTrigger=PropertyChanged}" Width="*" />
+                                <DataGridTextColumn Header="Successore" Binding="{Binding Successore, UpdateSourceTrigger=PropertyChanged}" Width="*" />
+                                <DataGridTemplateColumn Header="Fonti" Width="50" IsReadOnly="True">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Border Focusable="True" Background="Transparent" Padding="2" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                    Visibility="{Binding Converter={StaticResource TitleDateLed}, ConverterParameter=Visibility}"
+                                                    ToolTipService.ShowDuration="60000" ToolTipService.InitialShowDelay="200"
+                                                    AutomationProperties.Name="{Binding Converter={StaticResource TitleDateLed}, ConverterParameter=Name}"
+                                                    AutomationProperties.HelpText="{Binding Converter={StaticResource TitleDateLed}, ConverterParameter=Details}">
+                                                <Border.ToolTip>
+                                                    <ToolTip MaxWidth="560">
+                                                        <TextBlock Text="{Binding Converter={StaticResource TitleDateLed}, ConverterParameter=Details}" TextWrapping="Wrap" />
+                                                    </ToolTip>
+                                                </Border.ToolTip>
+                                                <Ellipse Width="14" Height="14" Stroke="{DynamicResource AppBorder}" StrokeThickness="1"
+                                                         Fill="{Binding Converter={StaticResource TitleDateLed}, ConverterParameter=Fill}" />
+                                            </Border>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
                             </DataGrid.Columns>
                         </DataGrid>
                     </DockPanel>
@@ -279,13 +418,21 @@
             </TabItem>
 
             <!-- TAB 4: altri eventi -->
-            <TabItem>
-                <Border Style="{StaticResource Card}" VerticalAlignment="Top">
-                    <StackPanel>
-                        <TextBlock Text="ALTRI EVENTI" Style="{StaticResource SectionTitle}" Margin="0,0,0,8" />
-                        <TextBlock Text="La gestione degli eventi (incarichi, battaglie, viaggi, opere…) arriverà in un prossimo aggiornamento."
-                                   Foreground="{DynamicResource InkSoftBrush}" FontSize="14" TextWrapping="Wrap" />
-                    </StackPanel>
+            <TabItem x:Name="EventsTab">
+                <Border Style="{StaticResource Card}">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" Text="ALTRI EVENTI" Style="{StaticResource SectionTitle}" Margin="0,0,0,8" />
+                        <TextBlock x:Name="EventsLockedText" DockPanel.Dock="Top" Text="Salva i dati principali per collegare il personaggio agli eventi." Foreground="{DynamicResource InkSoftBrush}" FontSize="14" TextWrapping="Wrap" Visibility="Collapsed" />
+                        <StackPanel x:Name="EventsCommands" DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,10">
+                            <Button Content="_Nuovo evento…" Click="NewPersonEvent_Click" Padding="12,5" ToolTip="Crea un evento (battaglia, trattato, incontro…) con questo personaggio tra i partecipanti" AutomationProperties.Name="Nuovo evento con questo personaggio" />
+                            <Button x:Name="OpenPersonEventButton" Content="_Apri evento…" Click="OpenPersonEvent_Click" Padding="12,5" Margin="8,0,0,0" IsEnabled="False" AutomationProperties.Name="Apri l'evento selezionato" />
+                            <Button Content="_Gestisci tutti gli eventi…" Click="ManageEvents_Click" Padding="12,5" Margin="8,0,0,0" ToolTip="Apre l'elenco di tutti gli eventi per collegare il personaggio a eventi esistenti" AutomationProperties.Name="Gestisci tutti gli eventi" />
+                            <Button Content="Opere d'a_rte…" Click="PersonArtworks_Click" Padding="12,5" Margin="8,0,0,0" ToolTip="Opere dipinte, scolpite o commissionate dal personaggio, o in cui è raffigurato" AutomationProperties.Name="Opere d'arte del personaggio" />
+                        </StackPanel>
+                        <TextBlock x:Name="EventsEmptyText" DockPanel.Dock="Top" Text="Nessun evento collegato. Usa «Nuovo evento…» o, per un evento già registrato, «Gestisci tutti gli eventi…» e aggiungi il personaggio tra i partecipanti." Foreground="{DynamicResource QuietBrush}" FontSize="13" TextWrapping="Wrap" Visibility="Collapsed" />
+                        <ListBox x:Name="PersonEventsList" MinHeight="120" SelectionChanged="PersonEventsList_SelectionChanged" MouseDoubleClick="PersonEventsList_MouseDoubleClick" KeyDown="PersonEventsList_KeyDown"
+                                 DisplayMemberPath="Etichetta" AutomationProperties.Name="Eventi del personaggio" />
+                    </DockPanel>
                 </Border>
             </TabItem>
         </TabControl>

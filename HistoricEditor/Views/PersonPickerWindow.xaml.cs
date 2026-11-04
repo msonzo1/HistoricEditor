@@ -10,6 +10,7 @@ public partial class PersonPickerWindow : Window
 {
     private readonly PeopleStore store;
     private readonly string newPersonSex;
+    private readonly int excludeId;
     private readonly IReadOnlyList<PersonSummary> all;
 
     public int? SelectedId { get; private set; }
@@ -19,6 +20,7 @@ public partial class PersonPickerWindow : Window
         InitializeComponent();
         this.store = store;
         this.newPersonSex = newPersonSex;
+        this.excludeId = excludeId;
         Title = title;
         all = [.. store.GetPersonSummaries().Where(p => p.Id != excludeId)];
         ApplyFilter();
@@ -60,6 +62,30 @@ public partial class PersonPickerWindow : Window
             PickerMessage.Text = "Scrivi il nome della nuova scheda.";
             NewNameBox.Focus();
             return;
+        }
+
+        var duplicates = store.FindPossibleDuplicates(new HistoricalPerson { Name = name }, excludeId);
+        if (duplicates.Count > 0)
+        {
+            var list = string.Join(Environment.NewLine, duplicates.Take(5).Select(d => $"• {d.Etichetta}"));
+            var answer = MessageBox.Show(
+                this,
+                $"In archivio c’è già una scheda con questo nome:{Environment.NewLine}{Environment.NewLine}{list}{Environment.NewLine}{Environment.NewLine}Sì: usa la scheda esistente ({duplicates[0].Etichetta}).{Environment.NewLine}No: crea comunque una nuova scheda.{Environment.NewLine}Annulla: torna alla scelta.",
+                "Scheda già presente",
+                MessageBoxButton.YesNoCancel,
+                MessageBoxImage.Warning,
+                MessageBoxResult.Yes);
+            if (answer == MessageBoxResult.Cancel)
+            {
+                return;
+            }
+
+            if (answer == MessageBoxResult.Yes)
+            {
+                SelectedId = duplicates[0].Id;
+                DialogResult = true;
+                return;
+            }
         }
 
         try

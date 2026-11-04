@@ -53,7 +53,7 @@
                     <ContentPresenter ContentSource="Header" RecognizesAccessKey="True" VerticalAlignment="Center" />
                     <Popup x:Name="PART_Popup" Placement="Bottom" IsOpen="{TemplateBinding IsSubmenuOpen}" AllowsTransparency="True" Focusable="False" PopupAnimation="Fade">
                         <Border Background="{DynamicResource AppSurface}" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" Padding="4" MinWidth="220" CornerRadius="8">
-                            <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle" />
+                            <StackPanel IsItemsHost="True" Grid.IsSharedSizeScope="True" KeyboardNavigation.DirectionalNavigation="Cycle" />
                         </Border>
                     </Popup>
                 </Grid>
@@ -110,42 +110,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
-		  <!-- Pulsanti piatti della barra comandi della scheda Persone. -->
-		  <Style x:Key="ToolButton" TargetType="ButtonBase">
-				<Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
-				<Setter Property="Background" Value="Transparent" />
-				<Setter Property="Padding" Value="10,6" />
-				<Setter Property="Margin" Value="0,0,2,0" />
-				<Setter Property="FontSize" Value="12" />
-				<Setter Property="Cursor" Value="Hand" />
-				<Setter Property="FocusVisualStyle" Value="{x:Null}" />
-				<Setter Property="Template">
-					 <Setter.Value>
-						  <ControlTemplate TargetType="ButtonBase">
-								<Border x:Name="Bd" Background="{TemplateBinding Background}" BorderBrush="Transparent" BorderThickness="1" CornerRadius="6" Padding="{TemplateBinding Padding}">
-									 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-								</Border>
-								<ControlTemplate.Triggers>
-									 <Trigger Property="IsMouseOver" Value="True">
-										  <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SelectionBrush}" />
-									 </Trigger>
-									 <Trigger Property="IsKeyboardFocused" Value="True">
-										  <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource SignalBrush}" />
-									 </Trigger>
-									 <Trigger Property="ToggleButton.IsChecked" Value="True">
-										  <Setter TargetName="Bd" Property="Background" Value="{DynamicResource SelectionBrush}" />
-										  <Setter Property="Foreground" Value="{DynamicResource SignalBrush}" />
-									 </Trigger>
-									 <Trigger Property="IsEnabled" Value="False">
-										  <Setter Property="Foreground" Value="{DynamicResource QuietBrush}" />
-										  <Setter Property="Opacity" Value="0.55" />
-									 </Trigger>
-								</ControlTemplate.Triggers>
-						  </ControlTemplate>
-					 </Setter.Value>
-				</Setter>
-		  </Style>
-		  <Style x:Key="ViewToggle" TargetType="RadioButton" BasedOn="{StaticResource ToolButton}" />
 
 		  <!-- Casella dell'albero genealogico: piena (persona) oppure trasparente con il + per aggiungere. -->
 		  <Style x:Key="PedigreeCard" TargetType="Button">
@@ -201,9 +165,8 @@
             <Image Grid.Column="0" Source="{StaticResource AppLogo}" Width="18" Height="18" Margin="12,0,6,0" VerticalAlignment="Center" AutomationProperties.Name="Logo Alberi Storici" />
             <Menu Grid.Column="1" Background="Transparent" VerticalAlignment="Center" WindowChrome.IsHitTestVisibleInChrome="True" AutomationProperties.Name="Barra dei menu">
                 <Menu.Resources>
-                    <Style TargetType="MenuItem">
+                    <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
                         <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
-                        <Setter Property="Padding" Value="6,4" />
                     </Style>
                 </Menu.Resources>
                 <MenuItem Header="_File" Style="{StaticResource TitleMenuItem}">
@@ -225,6 +188,15 @@
                 <MenuItem Header="_Visualizza" Style="{StaticResource TitleMenuItem}">
                     <MenuItem x:Name="ThemeLightMenuItem" Header="Tema _chiaro" Click="ThemeLight_Click" IsCheckable="True" />
                     <MenuItem x:Name="ThemeDarkMenuItem" Header="Tema _scuro" Click="ThemeDark_Click" IsCheckable="True" />
+                    <Separator />
+                    <MenuItem Header="_Mappa storica…" Click="OpenMap_Click" />
+                    <MenuItem Header="Ca_riche e successioni…" Click="OpenOffices_Click" />
+                    <MenuItem Header="_Linea del tempo…" Click="OpenTimeline_Click" />
+                    <MenuItem Header="Con_vertitore di date…" Click="OpenCalendarConverter_Click" />
+                    <MenuItem Header="_Opere d'arte…" Click="OpenArtworks_Click" />
+                    <Separator />
+                    <MenuItem x:Name="OpenViewMenuItem" Header="Doppio clic apre la scheda di l_ettura" Click="OpenModeView_Click" IsCheckable="True" InputGestureText="Ctrl+M" />
+                    <MenuItem x:Name="OpenEditMenuItem" Header="Doppio clic apre la scheda di mo_difica" Click="OpenModeEdit_Click" IsCheckable="True" InputGestureText="Ctrl+M" />
                 </MenuItem>
             </Menu>
             <TextBlock Grid.Column="2" Text="Alberi Storici" Foreground="{DynamicResource TitleTextBrush}" Opacity="0.75" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center" />
@@ -248,9 +220,12 @@
                 </Border>
                 <TextBlock DockPanel.Dock="Bottom" Text="ARCHIVIO STORICO" Foreground="{DynamicResource SidebarFaintBrush}" FontFamily="Consolas" FontSize="9" HorizontalAlignment="Center" />
                 <StackPanel Margin="0,28,0,0" AutomationProperties.Name="Sezioni dell'archivio">
-                    <RadioButton x:Name="PeopleTab" GroupName="Sections" Style="{StaticResource NavTab}" Tag="&#xE716;" Content="Persone" Checked="SectionTab_Checked" AutomationProperties.Name="Scheda Persone" />
-                    <RadioButton x:Name="PlacesTab" GroupName="Sections" Style="{StaticResource NavTab}" Tag="&#xE707;" Content="Luoghi" Checked="SectionTab_Checked" AutomationProperties.Name="Scheda Luoghi" />
-                    <RadioButton x:Name="EventsTab" GroupName="Sections" Style="{StaticResource NavTab}" Tag="&#xE787;" Content="Eventi" Checked="SectionTab_Checked" AutomationProperties.Name="Scheda Eventi" />
+                    <RadioButton x:Name="PeopleTab" GroupName="Sections" Style="{StaticResource NavTab}" Tag="&#xE716;" Content="Persone" Checked="SectionTab_Checked" ToolTip="Personaggi e famiglie (Ctrl+1)" AutomationProperties.Name="Sezione Persone" AutomationProperties.AcceleratorKey="Ctrl+1" />
+                    <RadioButton x:Name="DynastiesTab" GroupName="Sections" Style="{StaticResource NavTab}" Tag="&#xE8B7;" Content="Dinastie" Checked="SectionTab_Checked" ToolTip="Dinastie, rami e membri (Ctrl+2)" AutomationProperties.Name="Sezione Dinastie" AutomationProperties.AcceleratorKey="Ctrl+2" />
+                    <RadioButton x:Name="OfficesTab" GroupName="Sections" Style="{StaticResource NavTab}" Tag="&#xE728;" Content="Cariche" Checked="SectionTab_Checked" ToolTip="Cariche e titoli con i loro titolari (Ctrl+3)" AutomationProperties.Name="Sezione Cariche" AutomationProperties.AcceleratorKey="Ctrl+3" />
+                    <RadioButton x:Name="EventsTab" GroupName="Sections" Style="{StaticResource NavTab}" Tag="&#xE787;" Content="Eventi" Checked="SectionTab_Checked" ToolTip="Cronologia degli eventi (Ctrl+4)" AutomationProperties.Name="Sezione Eventi" AutomationProperties.AcceleratorKey="Ctrl+4" />
+                    <RadioButton x:Name="ArtworksTab" GroupName="Sections" Style="{StaticResource NavTab}" Tag="&#xE8B9;" Content="Opere" Checked="SectionTab_Checked" ToolTip="Galleria delle opere d'arte (Ctrl+5)" AutomationProperties.Name="Sezione Opere d'arte" AutomationProperties.AcceleratorKey="Ctrl+5" />
+                    <RadioButton x:Name="PlacesTab" GroupName="Sections" Style="{StaticResource NavTab}" Tag="&#xE707;" Content="Luoghi" Checked="SectionTab_Checked" ToolTip="Luoghi amministrativi e specifici (Ctrl+6)" AutomationProperties.Name="Sezione Luoghi" AutomationProperties.AcceleratorKey="Ctrl+6" />
                 </StackPanel>
             </DockPanel>
         </Border>
@@ -264,7 +239,16 @@
 
             <Border Grid.Row="0" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,0,0,1">
                 <DockPanel Margin="46,0">
-                    <TextBlock Text="ARCHIVIO LOCALE" DockPanel.Dock="Right" VerticalAlignment="Center" Foreground="{DynamicResource QuietBrush}" FontFamily="Consolas" FontSize="10" />
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" AutomationProperties.Name="Modalità di apertura con doppio clic e Invio">
+                        <TextBlock Text="APRI IN" Foreground="{DynamicResource QuietBrush}" FontFamily="Consolas" FontSize="10" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <RadioButton x:Name="OpenViewToggle" GroupName="OpenMode" Style="{StaticResource ViewToggle}" Checked="OpenMode_Checked" ToolTip="Modalità lettura: in ogni sezione doppio clic e Invio aprono la scheda di lettura (Ctrl+M per cambiare modalità)" AutomationProperties.Name="Modalità lettura" AutomationProperties.AcceleratorKey="Ctrl+M">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE736;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" VerticalAlignment="Center" /><TextBlock Text="Lettura" /></StackPanel>
+                        </RadioButton>
+                        <RadioButton x:Name="OpenEditToggle" GroupName="OpenMode" Style="{StaticResource ViewToggle}" Checked="OpenMode_Checked" ToolTip="Modalità modifica: in ogni sezione doppio clic e Invio aprono la scheda di modifica (Ctrl+M per cambiare modalità)" AutomationProperties.Name="Modalità modifica" AutomationProperties.AcceleratorKey="Ctrl+M">
+                            <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" VerticalAlignment="Center" /><TextBlock Text="Modifica" /></StackPanel>
+                        </RadioButton>
+                        <TextBlock Text="Ctrl+M" Foreground="{DynamicResource QuietBrush}" FontFamily="Consolas" FontSize="10" VerticalAlignment="Center" Margin="6,0,0,0" />
+                    </StackPanel>
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="COLLEZIONE" Foreground="{DynamicResource QuietBrush}" FontFamily="Consolas" FontSize="10" />
                         <TextBlock Text="   /   " Foreground="{DynamicResource QuietBrush}" FontFamily="Consolas" FontSize="10" />
@@ -285,6 +269,9 @@
 									 <Button x:Name="NewPersonButton" Style="{StaticResource ToolButton}" Click="NewPerson_Click" ToolTip="Nuovo personaggio" AutomationProperties.Name="Nuovo personaggio">
 										  <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" VerticalAlignment="Center" /><TextBlock Text="Nuovo" /></StackPanel>
 									 </Button>
+									 <Button x:Name="ViewPersonButton" Style="{StaticResource ToolButton}" Click="ViewPerson_Click" IsEnabled="False" ToolTip="Mostra tutte le informazioni del personaggio selezionato, senza modificarle" AutomationProperties.Name="Visualizza scheda">
+										  <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE890;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" VerticalAlignment="Center" /><TextBlock Text="Visualizza" /></StackPanel>
+									 </Button>
 									 <Button x:Name="EditPersonButton" Style="{StaticResource ToolButton}" Click="EditPerson_Click" IsEnabled="False" ToolTip="Apri la scheda del personaggio selezionato" AutomationProperties.Name="Apri scheda">
 										  <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" VerticalAlignment="Center" /><TextBlock Text="Apri scheda" /></StackPanel>
 									 </Button>
@@ -304,6 +291,21 @@
 									 <Rectangle Width="1" Margin="6,4" Fill="{DynamicResource AppBorder}" />
 									 <Button x:Name="DynastiesButton" Style="{StaticResource ToolButton}" Click="EditDynasties_Click" ToolTip="Dinastie e loro rami (es. Asburgo di Spagna sotto Asburgo)" AutomationProperties.Name="Gestisci dinastie">
 										  <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8B7;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" VerticalAlignment="Center" /><TextBlock Text="Dinastie…" /></StackPanel>
+									 </Button>
+									 <Button x:Name="EventsButton" Style="{StaticResource ToolButton}" Click="EditEvents_Click" ToolTip="Battaglie, trattati, incontri, scoperte e altri eventi con i loro partecipanti" AutomationProperties.Name="Gestisci eventi">
+										  <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE787;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" VerticalAlignment="Center" /><TextBlock Text="Eventi…" /></StackPanel>
+									 </Button>
+										  									 <Button x:Name="ArtworksButton" Style="{StaticResource ToolButton}" Click="EditArtworks_Click" ToolTip="Dipinti, sculture e altre opere con autori, committenti, soggetti e immagini" AutomationProperties.Name="Opere d'arte">
+										  										  <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8B9;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" VerticalAlignment="Center" /><TextBlock Text="Opere…" /></StackPanel>
+										  									 </Button>
+									 <Button x:Name="MapButton" Style="{StaticResource ToolButton}" Click="OpenMap_Click" ToolTip="Mappa di nascite, morti, sepolture, eventi e luoghi, con filtri per periodo, personaggio, dinastia e tipo di evento" AutomationProperties.Name="Mappa storica">
+										  <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE707;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" VerticalAlignment="Center" /><TextBlock Text="Mappa…" /></StackPanel>
+									 </Button>
+									 <Button x:Name="OfficesButton" Style="{StaticResource ToolButton}" Click="OpenOffices_Click" ToolTip="Cariche e titoli con la cronologia dei titolari, predecessori e successori" AutomationProperties.Name="Cariche e successioni">
+										  <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE728;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" VerticalAlignment="Center" /><TextBlock Text="Cariche…" /></StackPanel>
+									 </Button>
+									 <Button x:Name="TimelineButton" Style="{StaticResource ToolButton}" Click="OpenTimeline_Click" ToolTip="Linea del tempo del personaggio selezionato, dei suoi familiari o di una dinastia: nascite, morti, cariche, unioni ed eventi" AutomationProperties.Name="Linea del tempo">
+										  <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE81C;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" VerticalAlignment="Center" /><TextBlock Text="Linea del tempo…" /></StackPanel>
 									 </Button>
 									 <Rectangle Width="1" Margin="6,4" Fill="{DynamicResource AppBorder}" />
 									 <RadioButton x:Name="FamiliesViewToggle" GroupName="PeopleView" Style="{StaticResource ViewToggle}" Checked="PeopleView_Checked" ToolTip="Persone raggruppate per famiglia" AutomationProperties.Name="Vista famiglie">
@@ -338,7 +340,10 @@
 										 <TextBlock Grid.Column="5" Text="LUOGO DI MORTE" Foreground="{DynamicResource SignalBrush}" FontFamily="Consolas" FontSize="10" />
 										 <Border Grid.Column="6" Width="{x:Static SystemParameters.VerticalScrollBarWidth}" Margin="2,0,0,0" />
 									</Grid>
-									<TreeView x:Name="PeopleTree" ScrollViewer.VerticalScrollBarVisibility="Visible" SelectedItemChanged="PeopleTree_SelectedItemChanged" MouseDoubleClick="PeopleTree_MouseDoubleClick" KeyDown="PeopleTree_KeyDown" BorderThickness="0" Background="Transparent" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="Persone raggruppate per famiglia">
+									<TreeView x:Name="PeopleTree" ScrollViewer.VerticalScrollBarVisibility="Visible" SelectedItemChanged="PeopleTree_SelectedItemChanged" MouseDoubleClick="PeopleTree_MouseDoubleClick" KeyDown="PeopleTree_KeyDown" PreviewMouseRightButtonDown="PeopleTree_PreviewMouseRightButtonDown" ContextMenuOpening="PeopleTree_ContextMenuOpening" BorderThickness="0" Background="Transparent" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="Persone raggruppate per famiglia" AutomationProperties.HelpText="Clic destro o tasto Menu su un personaggio per le azioni: apri, famiglia, coniuge, figlio, eventi, elimina">
+									 <TreeView.ContextMenu>
+										  <ContextMenu />
+									 </TreeView.ContextMenu>
 									 <TreeView.ItemContainerStyle>
 										  <Style TargetType="TreeViewItem" BasedOn="{StaticResource {x:Type TreeViewItem}}">
 												<Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
@@ -388,11 +393,10 @@
 
             <local:PlacesView x:Name="PlacesPanel" Grid.Row="1" Margin="46,32,46,20" Visibility="Collapsed" />
 
-            <StackPanel x:Name="EventsPanel" Grid.Row="1" Margin="46,40,46,32" Visibility="Collapsed">
-                <TextBlock Text="CRONOLOGIA" Foreground="{DynamicResource SignalBrush}" FontFamily="Consolas" FontSize="10" />
-                <TextBlock Text="Gli eventi" Foreground="{DynamicResource InkBrush}" FontFamily="Georgia" FontSize="23" Margin="0,5,0,0" />
-                <TextBlock Text="La gestione degli eventi (collegati a persone, luoghi e fonti) arriverà in una prossima versione." Foreground="{DynamicResource QuietBrush}" FontSize="13" TextWrapping="Wrap" Margin="0,24,0,0" MaxWidth="420" HorizontalAlignment="Left" />
-            </StackPanel>
+            <local:DynastiesSection x:Name="DynastiesPanel" Grid.Row="1" Margin="46,18,46,12" Visibility="Collapsed" />
+            <local:OfficesSection x:Name="OfficesPanel" Grid.Row="1" Margin="46,18,46,12" Visibility="Collapsed" />
+            <local:EventsSection x:Name="EventsPanel" Grid.Row="1" Margin="46,18,46,12" Visibility="Collapsed" />
+            <local:ArtworksSection x:Name="ArtworksPanel" Grid.Row="1" Margin="46,18,46,12" Visibility="Collapsed" />
 
             <Border Grid.Row="2" Margin="46,0" BorderBrush="{DynamicResource LineBrush}" BorderThickness="0,1,0,0">
                 <DockPanel>

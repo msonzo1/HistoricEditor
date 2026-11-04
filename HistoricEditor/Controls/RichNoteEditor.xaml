@@ -1,0 +1,24 @@
+<UserControl x:Class="HistoricEditor.RichNoteEditor"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Focusable="True" IsTabStop="False">
+    <DockPanel>
+        <Border x:Name="Toolbar" DockPanel.Dock="Top" Style="{StaticResource ToolbarStrip}" Margin="0,0,0,4" Padding="3">
+            <WrapPanel>
+                <Button x:Name="BoldButton" Style="{StaticResource ToolButton}" Click="Bold_Click" Content="G" FontWeight="Bold" ToolTip="Grassetto (Ctrl+B)" AutomationProperties.Name="Grassetto" />
+                <Button x:Name="ItalicButton" Style="{StaticResource ToolButton}" Click="Italic_Click" Content="C" FontStyle="Italic" ToolTip="Corsivo (Ctrl+I)" AutomationProperties.Name="Corsivo" />
+                <Button x:Name="UnderlineButton" Style="{StaticResource ToolButton}" Click="Underline_Click" ToolTip="Sottolineato (Ctrl+U)" AutomationProperties.Name="Sottolineato">
+                    <TextBlock Text="S" TextDecorations="Underline" />
+                </Button>
+                <Rectangle Style="{StaticResource ToolSeparator}" />
+                <Button x:Name="HeadingButton" Style="{StaticResource ToolButton}" Click="Heading_Click" Content="Titolo" ToolTip="Trasforma i paragrafi selezionati in un titolo" AutomationProperties.Name="Titolo" />
+                <Button x:Name="NormalButton" Style="{StaticResource ToolButton}" Click="Normal_Click" Content="Testo" ToolTip="Riporta i paragrafi selezionati a testo normale" AutomationProperties.Name="Testo normale" />
+                <Rectangle Style="{StaticResource ToolSeparator}" />
+                <Button x:Name="BulletsButton" Style="{StaticResource ToolButton}" Click="Bullets_Click" Content="• Elenco" ToolTip="Elenco puntato (Ctrl+Maiusc+L)" AutomationProperties.Name="Elenco puntato" />
+                <Button x:Name="NumberingButton" Style="{StaticResource ToolButton}" Click="Numbering_Click" Content="1. Elenco" ToolTip="Elenco numerato (Ctrl+Maiusc+N)" AutomationProperties.Name="Elenco numerato" />
+            </WrapPanel>
+        </Border>
+        <RichTextBox x:Name="Box" Padding="6,4" AcceptsReturn="True" AcceptsTab="False" VerticalScrollBarVisibility="Auto"
+                     SpellCheck.IsEnabled="True" Language="it-IT" TextChanged="Box_TextChanged" />
+    </DockPanel>
+</UserControl>

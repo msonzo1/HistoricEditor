@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -26,6 +26,11 @@ public sealed class AppDbContext : DbContext
     public DbSet<LuogoSpecifico> LuoghiSpecifici => Set<LuogoSpecifico>();
     public DbSet<Unione> Unioni => Set<Unione>();
     public DbSet<Dinastia> Dinastie => Set<Dinastia>();
+    public DbSet<Evento> Eventi => Set<Evento>();
+    public DbSet<Relazione> Relazioni => Set<Relazione>();
+    public DbSet<PersonaDinastia> PersoneDinastie => Set<PersonaDinastia>();
+    public DbSet<Opera> Opere => Set<Opera>();
+    public DbSet<Allegato> Allegati => Set<Allegato>();
 
     public AppDbContext(string dbPath) => this.dbPath = dbPath;
 
@@ -57,8 +62,13 @@ public sealed class AppDbContext : DbContext
         person.OwnsMany(p => p.BirthPlaces, ConfigurePlaces);
         person.OwnsMany(p => p.DeathPlaces, ConfigurePlaces);
         person.OwnsMany(p => p.BurialPlaces, ConfigurePlaces);
-        person.OwnsMany(p => p.Titles, b => b.ToJson());
+        person.OwnsMany(p => p.Titles, b =>
+        {
+            b.ToJson();
+            b.OwnsMany(t => t.FontiDate);
+        });
         person.OwnsMany(p => p.LocalizedNames, b => b.ToJson());
+        person.OwnsMany(p => p.WikipediaLeads, b => b.ToJson());
 
         person.HasIndex(p => p.Name);
         person.HasIndex(p => p.Family);
@@ -112,6 +122,14 @@ public sealed class AppDbContext : DbContext
             u.HasOne(x => x.Persona2).WithMany().HasForeignKey(x => x.Persona2Id).OnDelete(DeleteBehavior.Cascade);
         });
 
+        modelBuilder.Entity<Relazione>(r =>
+        {
+            r.ToTable("Relazioni");
+            r.HasOne(x => x.Persona1).WithMany().HasForeignKey(x => x.Persona1Id).OnDelete(DeleteBehavior.Cascade);
+            r.HasOne(x => x.Persona2).WithMany().HasForeignKey(x => x.Persona2Id).OnDelete(DeleteBehavior.Cascade);
+            r.HasIndex(x => x.Tipo);
+        });
+
         modelBuilder.Entity<Dinastia>(d =>
         {
             d.ToTable("Dinastie");
@@ -121,7 +139,59 @@ public sealed class AppDbContext : DbContext
             d.HasIndex(x => x.Nome).IsUnique();
         });
 
+        modelBuilder.Entity<PersonaDinastia>(l =>
+        {
+            l.ToTable("PersoneDinastie");
+            l.HasKey(x => new { x.PersonaId, x.DinastiaId });
+            l.HasOne(x => x.Persona).WithMany().HasForeignKey(x => x.PersonaId).OnDelete(DeleteBehavior.Cascade);
+            l.HasOne(x => x.Dinastia).WithMany().HasForeignKey(x => x.DinastiaId).OnDelete(DeleteBehavior.Cascade);
+            l.HasIndex(x => x.DinastiaId);
+        });
+
+        modelBuilder.Entity<Evento>(e =>
+        {
+            e.ToTable("Eventi");
+            e.Ignore(x => x.DataTesto);
+            e.Ignore(x => x.Anno);
+            e.HasIndex(x => x.Tipo);
+            e.HasMany(x => x.Partecipanti).WithOne(x => x.Evento).HasForeignKey(x => x.EventoId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.Luogo).WithMany().HasForeignKey(x => x.LuogoId).OnDelete(DeleteBehavior.SetNull);
+            e.HasOne(x => x.LuogoSpecifico).WithMany().HasForeignKey(x => x.LuogoSpecificoId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<EventoPartecipante>(p =>
+        {
+            p.ToTable("EventiPartecipanti");
+            p.HasKey(x => new { x.EventoId, x.PersonaId });
+            p.HasOne(x => x.Persona).WithMany().HasForeignKey(x => x.PersonaId).OnDelete(DeleteBehavior.Cascade);
+            p.HasIndex(x => x.PersonaId);
+        });
+
+        modelBuilder.Entity<Opera>(o =>
+        {
+            o.ToTable("Opere");
+            o.HasIndex(x => x.Tipo);
+            o.HasIndex(x => x.WikidataId);
+            o.HasMany(x => x.Persone).WithOne(x => x.Opera).HasForeignKey(x => x.OperaId).OnDelete(DeleteBehavior.Cascade);
+            o.HasOne(x => x.Luogo).WithMany().HasForeignKey(x => x.LuogoId).OnDelete(DeleteBehavior.SetNull);
+            o.HasOne(x => x.LuogoSpecifico).WithMany().HasForeignKey(x => x.LuogoSpecificoId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<OperaPersona>(p =>
+        {
+            p.ToTable("OperePersone");
+            p.HasKey(x => new { x.OperaId, x.PersonaId, x.Ruolo });
+            p.HasOne(x => x.Persona).WithMany().HasForeignKey(x => x.PersonaId).OnDelete(DeleteBehavior.Cascade);
+            p.HasIndex(x => x.PersonaId);
+        });
+
         ConfigureGeography(modelBuilder);
+
+        modelBuilder.Entity<Allegato>(a =>
+        {
+            a.ToTable("Allegati");
+            a.HasIndex(x => new { x.Ambito, x.SchedaId });
+        });
     }
 
     private static void ConfigureGeography(ModelBuilder modelBuilder)
@@ -134,6 +204,8 @@ public sealed class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
             l.HasIndex(x => new { x.ParentId, x.Tipo, x.Nome }).IsUnique();
             l.OwnsMany(x => x.NomiAltreLingue, n => n.ToJson());
+            l.OwnsMany(x => x.NomiStorici, n => n.ToJson());
+            l.HasIndex(x => x.WikidataId);
         });
 
         modelBuilder.Entity<LuogoSpecifico>(s =>
@@ -155,6 +227,7 @@ public sealed class AppDbContext : DbContext
         places.OwnsMany(r => r.AdministrativeDivisions, d => d.OwnsMany(x => x.Names));
         places.OwnsMany(r => r.HistoricalContexts, c => c.OwnsMany(x => x.Sources));
         places.OwnsMany(r => r.Sources);
+        places.Ignore(r => r.HistoricalNames);
     }
 }
 

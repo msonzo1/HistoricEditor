@@ -1,0 +1,92 @@
+<UserControl x:Class="HistoricEditor.OfficesSection"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Foreground="{DynamicResource InkBrush}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="320" />
+            <ColumnDefinition Width="28" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <DockPanel Grid.Row="0" Grid.ColumnSpan="3" Margin="0,0,0,14">
+            <TextBlock x:Name="CountText" DockPanel.Dock="Right" VerticalAlignment="Bottom" Foreground="{DynamicResource QuietBrush}" FontSize="12" AutomationProperties.LiveSetting="Polite" />
+            <StackPanel>
+                <TextBlock Text="TITOLI E SUCCESSIONI" Style="{StaticResource SectionKicker}" />
+                <TextBlock Text="Le cariche" Style="{StaticResource SectionHeading}" AutomationProperties.HeadingLevel="Level1" />
+            </StackPanel>
+        </DockPanel>
+
+        <Border Grid.Row="1" Grid.ColumnSpan="3" Style="{StaticResource ToolbarStrip}">
+            <StackPanel Orientation="Horizontal" AutomationProperties.Name="Comandi cariche">
+                <Button x:Name="ViewButton" Style="{StaticResource ToolButton}" Click="View_Click" IsEnabled="False" ToolTip="Mostra la scheda del titolare selezionato senza modificarla" AutomationProperties.Name="Visualizza il titolare">
+                    <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE890;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" VerticalAlignment="Center" /><TextBlock Text="Visualizza titolare" /></StackPanel>
+                </Button>
+                <Button x:Name="EditButton" Style="{StaticResource ToolButton}" Click="Edit_Click" IsEnabled="False" ToolTip="Modifica la scheda del titolare selezionato (le cariche si cambiano nella scheda Titoli)" AutomationProperties.Name="Modifica il titolare">
+                    <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" VerticalAlignment="Center" /><TextBlock Text="Modifica titolare" /></StackPanel>
+                </Button>
+                <Rectangle Style="{StaticResource ToolSeparator}" />
+                <Button x:Name="ChronologyButton" Style="{StaticResource ToolButton}" Click="Chronology_Click" IsEnabled="False" ToolTip="Cronologia completa con predecessori, successori, vacanze e titolari mancanti" AutomationProperties.Name="Cronologia completa della carica">
+                    <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE81C;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" VerticalAlignment="Center" /><TextBlock Text="Cronologia completa…" /></StackPanel>
+                </Button>
+            </StackPanel>
+        </Border>
+
+        <DockPanel Grid.Row="2" Grid.Column="0">
+            <StackPanel DockPanel.Dock="Top">
+                <Label Content="_Cerca carica" Target="{Binding ElementName=SearchBox}" Padding="0,0,0,3" />
+                <TextBox x:Name="SearchBox" Padding="8,6" TextChanged="Filter_Changed" ToolTip="Parte del nome della carica (es. imperatore, re, duca, papa)" AutomationProperties.Name="Cerca carica o titolo" />
+                <CheckBox x:Name="OnlyMultipleCheck" Content="Solo cariche con _più titolari" Margin="0,8,0,8" Checked="Filter_Changed" Unchecked="Filter_Changed" />
+                <Label Content="Ca_riche" Target="{Binding ElementName=OfficeList}" Padding="0,0,0,3" />
+            </StackPanel>
+            <ListBox x:Name="OfficeList" HorizontalContentAlignment="Stretch" SelectionChanged="OfficeList_SelectionChanged" AutomationProperties.Name="Cariche e titoli dell'archivio">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                        <Setter Property="AutomationProperties.Name" Value="{Binding Etichetta}" />
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Margin="2,3">
+                            <TextBlock Text="{Binding Nome}" FontSize="13" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="{Binding Riepilogo}" Foreground="{DynamicResource QuietBrush}" FontSize="11" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </DockPanel>
+
+        <DockPanel Grid.Row="2" Grid.Column="2">
+            <StackPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                <TextBlock x:Name="OfficeTitle" FontFamily="Georgia" FontSize="19" TextWrapping="Wrap" AutomationProperties.HeadingLevel="Level2" />
+                <TextBlock x:Name="OfficeSummary" Foreground="{DynamicResource QuietBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,2,0,0" />
+                <Label Content="_Titolari" Target="{Binding ElementName=HoldersGrid}" Padding="0,8,0,3" />
+            </StackPanel>
+            <Grid>
+                <DataGrid x:Name="HoldersGrid" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" CanUserDeleteRows="False"
+                          HeadersVisibility="Column" SelectionMode="Single" SelectionUnit="FullRow"
+                          SelectionChanged="HoldersGrid_SelectionChanged" MouseDoubleClick="HoldersGrid_MouseDoubleClick" PreviewKeyDown="HoldersGrid_PreviewKeyDown"
+                          AutomationProperties.Name="Titolari della carica" AutomationProperties.HelpText="Invio o doppio clic apre la scheda del titolare in lettura o in modifica, secondo la modalità scelta (Ctrl+M)">
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow">
+                            <Setter Property="AutomationProperties.Name" Value="{Binding Etichetta}" />
+                        </Style>
+                    </DataGrid.RowStyle>
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="N." Binding="{Binding Posizione}" Width="40" />
+                        <DataGridTextColumn Header="Titolare" Binding="{Binding Titolare}" Width="2*" />
+                        <DataGridTextColumn Header="Inizio" Binding="{Binding Inizio}" Width="1.3*" />
+                        <DataGridTextColumn Header="Fine" Binding="{Binding Fine}" Width="1.3*" />
+                    </DataGrid.Columns>
+                </DataGrid>
+                <TextBlock x:Name="EmptyText" Visibility="Collapsed" Foreground="{DynamicResource QuietBrush}" FontSize="14" TextAlignment="Center" TextWrapping="Wrap" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="360"
+                           Text="Ancora nessuna carica.&#10;&#10;Le cariche nascono dai titoli delle schede dei personaggi (scheda Titoli, oppure importando da Wikipedia)." />
+            </Grid>
+        </DockPanel>
+    </Grid>
+</UserControl>
