@@ -21,6 +21,7 @@ public class WikipediaConsensusTests
     [InlineData("Firenze, Toscana", "firenze")]
     [InlineData("Vinci, Toscana", "Q1")]
     [InlineData("Firenze, vicino a Vinci", "firenze")]
+    [InlineData("Schloss Clos Lucé, Amboise, Frankreich", "Q2")]
     [InlineData("", "")]
     public void PlaceKey_RecognisesWikidataPlaceOrNormalisesText(string text, string expected)
     {
