@@ -111,7 +111,8 @@ public static class PeopleGrouping
 
     // Raggruppa per dinastia: le persone collegate (links) vanno sotto ciascuna delle loro dinastie,
     // quelle non collegate secondo i nomi scritti nel campo «Famiglia» (senza distinguere maiuscole).
-    // Le famiglie registrate come rami di una dinastia vengono annidate sotto di essa; le persone senza famiglia vanno in fondo.
+    // Le famiglie registrate come rami di una dinastia vengono annidate sotto di essa; chi è sia nella dinastia sia in un suo ramo
+    // compare solo nel ramo. Le persone senza famiglia vanno in fondo.
     public static List<PersonGroup> Build(IEnumerable<HistoricalPerson> people, IEnumerable<Dinastia>? dynasties = null, IEnumerable<PersonaDinastia>? links = null)
     {
         var dynastyList = (dynasties ?? []).Where(d => !string.IsNullOrWhiteSpace(d.Nome)).ToList();
@@ -178,6 +179,10 @@ public static class PeopleGrouping
             {
                 members.AddRange(named);
             }
+
+            // Chi appartiene anche a un ramo compare solo lì: altrimenti, aprendo la dinastia, sembrerebbe un doppione.
+            var inBranches = rami.SelectMany(r => r.SelfAndDescendants()).SelectMany(g => g.Persone).Select(p => p.Person.Id).ToHashSet();
+            members.RemoveAll(p => inBranches.Contains(p.Id));
 
             return members.Count == 0 && rami.Count == 0 ? null : new PersonGroup(name, Entries(members), rami);
         }

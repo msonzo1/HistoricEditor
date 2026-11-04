@@ -104,10 +104,27 @@ public class PeopleGroupingTests
 
         // Il collegamento per identificativo vale anche se il testo della scheda ha un altro nome.
         Assert.Equal(["Asburgo", "Lorena"], groups.Select(g => g.Famiglia));
-        Assert.Equal(["Maria Teresa"], groups[0].Persone.Select(p => p.Nome));
+        // Maria Teresa è sia negli Asburgo sia nel ramo Asburgo-Lorena: compare solo nel ramo, per non sembrare un doppione.
+        Assert.Empty(groups[0].Persone);
         Assert.Equal(["Carlo", "Maria Teresa"], groups[0].Rami.Single().Persone.Select(p => p.Nome));
         Assert.Equal("2 PERSONE", groups[0].Conteggio);
         Assert.Equal(["Francesco", "Maria Teresa"], groups[1].Persone.Select(p => p.Nome));
+    }
+
+    [Fact]
+    public void Build_ShowsPersonOnlyInBranchWhenFamilyListsDynastyAndBranch()
+    {
+        // Caso Carlo V: Wikidata indica sia «Asburgo di Spagna» sia «Casa d'Asburgo», che ne è la dinastia superiore.
+        var groups = PeopleGrouping.Build(
+            [Person(1, "Carlo V", "Asburgo di Spagna; Casa d'Asburgo"), Person(2, "Massimiliano I", "Casa d'Asburgo")],
+            [new Dinastia { Id = 1, Nome = "Casa d'Asburgo" }, new Dinastia { Id = 2, Nome = "Asburgo di Spagna", ParentId = 1 }],
+            [new PersonaDinastia { PersonaId = 1, DinastiaId = 1 }, new PersonaDinastia { PersonaId = 1, DinastiaId = 2 },
+             new PersonaDinastia { PersonaId = 2, DinastiaId = 1 }]);
+
+        var asburgo = Assert.Single(groups);
+        Assert.Equal(["Massimiliano I"], asburgo.Persone.Select(p => p.Nome));
+        Assert.Equal(["Carlo V"], asburgo.Rami.Single().Persone.Select(p => p.Nome));
+        Assert.Equal("2 PERSONE", asburgo.Conteggio);
     }
 
     [Fact]
