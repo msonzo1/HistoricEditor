@@ -37,4 +37,43 @@ public class DynastyStoreTests
             Directory.Delete(dir, recursive: true);
         }
     }
+
+    [Fact]
+    public void Dynasties_LinkPeopleByIdAndFollowRenames()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), $"historic-dyn-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(dir);
+        try
+        {
+            using var store = new PeopleStore(dir);
+            var asburgo = store.EnsureDynasty("Asburgo", "", null);
+            var maria = new HistoricalPerson { Name = "Maria Teresa", Family = "asburgo ; Lorena" };
+            store.Add(maria);
+            Assert.Equal([asburgo], store.GetPersonDynastyIds(maria.Id));
+
+            // La dinastia registrata dopo il salvataggio si collega alle schede che la indicano.
+            var lorena = store.EnsureDynasty("Lorena", "", null);
+            Assert.Equal([asburgo, lorena], store.GetPersonDynastyIds(maria.Id).Order());
+
+            // La rinomina segue il collegamento e lascia invariate le altre famiglie della scheda.
+            store.SaveDynasty(new Dinastia { Id = lorena, Nome = "Casa di Lorena" });
+            Assert.Equal("asburgo; Casa di Lorena", store.GetPerson(maria.Id)!.Family);
+            Assert.Equal([asburgo, lorena], store.GetPersonDynastyIds(maria.Id).Order());
+
+            // Togliendo una famiglia dalla scheda si toglie il collegamento.
+            var copy = store.GetPerson(maria.Id)!;
+            copy.Family = "Casa di Lorena";
+            store.Update(copy);
+            Assert.Equal([lorena], store.GetPersonDynastyIds(maria.Id));
+
+            store.DeleteDynasty(lorena);
+            Assert.Empty(store.GetDynastyLinks());
+            Assert.Equal("Casa di Lorena", store.GetPerson(maria.Id)!.Family);
+        }
+        finally
+        {
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+            Directory.Delete(dir, recursive: true);
+        }
+    }
 }

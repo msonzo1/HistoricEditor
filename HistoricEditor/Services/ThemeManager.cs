@@ -1,6 +1,4 @@
-using System.IO;
-using System.Text.Json;
-using System.Windows;
+﻿using System.Windows;
 
 namespace HistoricEditor;
 
@@ -13,18 +11,17 @@ public enum AppTheme
 // Gestisce il tema chiaro/scuro a runtime e lo conserva fra le sessioni.
 public static class ThemeManager
 {
-    private static readonly string SettingsPath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "AlberiStorici",
-        "settings.json");
-
     public static AppTheme Current { get; private set; } = AppTheme.Light;
 
-    public static void Initialize() => Apply(Load(), persist: false);
+    public static void Initialize()
+    {
+        TitleBarTheme.Register();
+        Apply(Load(), persist: false);
+    }
 
     public static void Apply(AppTheme theme, bool persist = true)
     {
-        var uri = new Uri(theme == AppTheme.Dark ? "Themes/Dark.xaml" : "Themes/Light.xaml", UriKind.Relative);
+        var uri = new Uri(theme == AppTheme.Dark ? "/HistoricEditor;component/Themes/Dark.xaml" : "/HistoricEditor;component/Themes/Light.xaml", UriKind.Relative);
         var dictionaries = Application.Current.Resources.MergedDictionaries;
 
         for (var i = dictionaries.Count - 1; i >= 0; i--)
@@ -38,6 +35,7 @@ public static class ThemeManager
 
         dictionaries.Add(new ResourceDictionary { Source = uri });
         Current = theme;
+        TitleBarTheme.ApplyToOpenWindows(theme == AppTheme.Dark);
 
         if (persist)
         {
@@ -46,42 +44,7 @@ public static class ThemeManager
     }
 
     private static AppTheme Load()
-    {
-        try
-        {
-            if (File.Exists(SettingsPath))
-            {
-                using var stream = File.OpenRead(SettingsPath);
-                var settings = JsonSerializer.Deserialize<AppSettings>(stream);
-                if (settings is not null && Enum.TryParse<AppTheme>(settings.Theme, ignoreCase: true, out var theme))
-                {
-                    return theme;
-                }
-            }
-        }
-        catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException)
-        {
-            // Preferenza non leggibile: si usa il tema chiaro.
-        }
+        => Enum.TryParse<AppTheme>(SettingsStore.Load().Theme, ignoreCase: true, out var theme) && Enum.IsDefined(theme) ? theme : AppTheme.Light;
 
-        return AppTheme.Light;
-    }
-
-    private static void Save(AppTheme theme)
-    {
-        try
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(SettingsPath)!);
-            File.WriteAllText(SettingsPath, JsonSerializer.Serialize(new AppSettings { Theme = theme.ToString() }));
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            // Preferenza non salvabile: si ignora.
-        }
-    }
-
-    private sealed class AppSettings
-    {
-        public string Theme { get; set; } = nameof(AppTheme.Light);
-    }
+    private static void Save(AppTheme theme) => SettingsStore.Update(s => s.Theme = theme.ToString());
 }

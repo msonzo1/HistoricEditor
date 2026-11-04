@@ -1,8 +1,33 @@
-bin
-obj
-.vs
-.user
 .github
-.vscode
-# Tracce vere per le prove: restano sul PC, non nel repository
-GpxEditor.Tests/TestFiles/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+# Build output
+bin/
+obj/
+
+# IDE files
+.vs/
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.suo
+*.user
+*.sln.docstates
+
+# OS files
+.DS_Store
+Thumbs.db

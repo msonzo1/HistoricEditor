@@ -205,12 +205,13 @@ public partial class MainWindow
         {
             card.SetResourceReference(BackgroundProperty, person.Sesso == Sessi.Maschio ? "MaleCardBrush" : "FemaleCardBrush");
         }
-        card.ToolTip = "Mostra il suo albero genealogico";
+        card.ToolTip = "Mostra il suo albero genealogico (clic destro per altre azioni)";
+        AttachPersonMenu(card, person.Id);
         card.Click += (_, _) =>
         {
             if (person.Id == pedigreeRootId)
             {
-                EditPerson_Click(card, new RoutedEventArgs());
+                OpenPerson(CurrentPerson);
                 return;
             }
 

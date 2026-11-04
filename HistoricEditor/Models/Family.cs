@@ -34,6 +34,12 @@ public sealed record PersonSummary(int Id, string Nome, string Anni, string Sess
     public string Etichetta => Anni.Length > 0 ? $"{Nome} ({Anni})" : Nome;
 }
 
+// Scheda esistente che potrebbe coincidere con quella in creazione; Certa se coincide l'identificativo Wikidata o la voce Wikipedia.
+public sealed record PersonDuplicate(int Id, string Etichetta, bool Certa, string Motivo)
+{
+    public string Descrizione => $"{Etichetta} — {Motivo}";
+}
+
 public sealed class UnionView
 {
     // Null quando i figli hanno un altro genitore comune ma l'unione non è stata registrata.
@@ -46,6 +52,7 @@ public sealed class UnionView
 
     public bool IsRegistered => UnionId is not null;
     public bool IsImplicit => UnionId is null;
+    public bool HasConiuge => Coniuge is not null;
 
     public string Intestazione
     {

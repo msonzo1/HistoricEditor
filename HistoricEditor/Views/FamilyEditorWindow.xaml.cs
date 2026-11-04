@@ -89,7 +89,8 @@ public partial class FamilyEditorWindow : Window
     private void AddSpouse_Click(object sender, RoutedEventArgs e)
     {
         var picker = new PersonPickerWindow(store, "Scegli il coniuge", personId, Sessi.Opposto(store.GetSex(personId))) { Owner = this };
-        if (picker.ShowDialog() == true && picker.SelectedId is int spouseId)
+        if (picker.ShowDialog() == true && picker.SelectedId is int spouseId
+            && FamilyActions.ConfirmNewUnion(this, store, personId, spouseId, store.GetPersonSummaries().FirstOrDefault(p => p.Id == spouseId)?.Nome ?? "il coniuge"))
         {
             EditUnion(new Unione { Persona1Id = personId, Persona2Id = spouseId });
         }
@@ -167,17 +168,7 @@ public partial class FamilyEditorWindow : Window
             return;
         }
 
-        // Avvisa prima di sostituire un genitore già registrato.
-        var (motherId, fatherId) = store.GetParents(childId);
-        var ownSlot = sesso == Sessi.Femmina ? motherId : fatherId;
-        var otherSlot = sesso == Sessi.Femmina ? fatherId : motherId;
-        var replaces = (ownSlot is int own && own != personId) || (otherParentId is int other && otherSlot is int existing && existing != other);
-        if (replaces && MessageBox.Show(
-                this,
-                "Questa persona ha già un altro genitore registrato. Sostituirlo?",
-                "Aggiungi figlio",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning) != MessageBoxResult.Yes)
+        if (!FamilyActions.ConfirmParentReplacement(this, store, personId, childId, otherParentId))
         {
             return;
         }

@@ -26,6 +26,20 @@ public class PeopleGroupingTests
     }
 
     [Fact]
+    public void Build_GroupsBySurnameWhenFamilyIsMissing()
+    {
+        var groups = PeopleGrouping.Build(
+        [
+            new HistoricalPerson { Id = 1, Name = "Benito", Surname = "Mussolini" },
+            new HistoricalPerson { Id = 2, Name = "Edda", Surname = "Mussolini" },
+            new HistoricalPerson { Id = 3, Name = "Lorenzo", Surname = "Rossi", Family = "Medici" },
+        ]);
+
+        Assert.Equal(["Medici", "Mussolini"], groups.Select(g => g.Famiglia));
+        Assert.Equal(["Benito Mussolini", "Edda Mussolini"], groups[1].Persone.Select(p => p.Nome));
+    }
+
+    [Fact]
     public void Build_SortsGroupsAndPeople_WithoutFamilyLast()
     {
         var groups = PeopleGrouping.Build(
@@ -76,6 +90,32 @@ public class PeopleGroupingTests
         var asburgo = Assert.Single(groups);
         Assert.Empty(asburgo.Persone);
         Assert.Equal("1 PERSONA", asburgo.Conteggio);
+    }
+
+    [Fact]
+    public void Build_ShowsPersonUnderEachLinkedDynasty()
+    {
+        var groups = PeopleGrouping.Build(
+            [Person(1, "Maria Teresa", "Asburgo; Lorena"), Person(2, "Francesco", "Lorena"), Person(3, "Carlo", "Asburgo-Lorena")],
+            [new Dinastia { Id = 1, Nome = "Asburgo" }, new Dinastia { Id = 2, Nome = "Lorena" }, new Dinastia { Id = 3, Nome = "Asburgo-Lorena", ParentId = 1 }],
+            [new PersonaDinastia { PersonaId = 1, DinastiaId = 1 }, new PersonaDinastia { PersonaId = 1, DinastiaId = 2 },
+             new PersonaDinastia { PersonaId = 2, DinastiaId = 2 }, new PersonaDinastia { PersonaId = 3, DinastiaId = 3 },
+             new PersonaDinastia { PersonaId = 1, DinastiaId = 3 }]);
+
+        // Il collegamento per identificativo vale anche se il testo della scheda ha un altro nome.
+        Assert.Equal(["Asburgo", "Lorena"], groups.Select(g => g.Famiglia));
+        Assert.Equal(["Maria Teresa"], groups[0].Persone.Select(p => p.Nome));
+        Assert.Equal(["Carlo", "Maria Teresa"], groups[0].Rami.Single().Persone.Select(p => p.Nome));
+        Assert.Equal("2 PERSONE", groups[0].Conteggio);
+        Assert.Equal(["Francesco", "Maria Teresa"], groups[1].Persone.Select(p => p.Nome));
+    }
+
+    [Fact]
+    public void Build_SplitsUnregisteredFamilies()
+    {
+        var groups = PeopleGrouping.Build([Person(1, "Anna", "Bianchi ; Rossi")]);
+
+        Assert.Equal(["Bianchi", "Rossi"], groups.Select(g => g.Famiglia));
     }
 
     [Fact]

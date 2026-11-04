@@ -10,6 +10,9 @@ public partial class PlacesView : UserControl
 {
     private PeopleStore? store;
 
+    // Segnala che i luoghi sono cambiati: le schede collegate mostrano testi nuovi e il backup va aggiornato.
+    public event EventHandler? PlacesChanged;
+
     public PlacesView()
     {
         InitializeComponent();
@@ -63,7 +66,13 @@ public partial class PlacesView : UserControl
         LonBox.Text = CoordinateText.Format(luogo.Longitudine);
         StoricoBox.IsChecked = luogo.Storico;
         PeriodoBox.Text = luogo.Periodo;
-        NoteBox.Text = luogo.Note;
+        var current = store?.GetPlace(luogo.Id) ?? luogo;
+        NoteEditor.Text = current.Note;
+        LoadHistoricNames(current.NomiStorici);
+        if (store is not null)
+        {
+            AttachmentsView.Load(store, AmbitiAllegato.Luogo, luogo.Id);
+        }
 
         // Il flag ha senso solo per luoghi attuali con un altro livello prima della foglia.
         var (schema, index) = SchemaPosition(selected);
@@ -111,9 +120,15 @@ public partial class PlacesView : UserControl
 
         var storico = StoricoBox.IsChecked == true;
         var senzaLivello = SenzaLivelloBox.Visibility == Visibility.Visible && SenzaLivelloBox.IsChecked == true;
+        if (ReadHistoricNames() is not { } names)
+        {
+            return;
+        }
+
         try
         {
-            store.UpdatePlace(selected.Id, nome, lat, lon, storico, storico ? PeriodoBox.Text : string.Empty, NoteBox.Text, senzaLivello);
+            store.UpdatePlace(selected.Id, nome, lat, lon, storico, storico ? PeriodoBox.Text : string.Empty, NoteEditor.Text, senzaLivello);
+            store.SetPlaceHistoricNames(selected.Id, names);
         }
         catch (DbUpdateException)
         {
@@ -122,6 +137,7 @@ public partial class PlacesView : UserControl
         }
 
         PlacesTree.Reload(selected.Id);
+        PlacesChanged?.Invoke(this, EventArgs.Empty);
         Feedback.Success(ManagerMessage, "Modifiche salvate.");
     }
 
@@ -150,6 +166,7 @@ public partial class PlacesView : UserControl
         if (editor.ShowDialog() == true)
         {
             PlacesTree.Reload(node.Id, selectSpecific: true);
+            PlacesChanged?.Invoke(this, EventArgs.Empty);
             Feedback.Success(ManagerMessage, "Luogo specifico aggiornato.");
         }
     }
@@ -187,6 +204,7 @@ public partial class PlacesView : UserControl
         }
 
         PlacesTree.Reload();
+        PlacesChanged?.Invoke(this, EventArgs.Empty);
         Feedback.Success(ManagerMessage, "Luogo eliminato.");
     }
 

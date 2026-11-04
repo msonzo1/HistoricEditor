@@ -1,4 +1,5 @@
 ﻿using System.Windows;
+using Microsoft.EntityFrameworkCore;
 
 namespace HistoricEditor;
 
@@ -38,7 +39,7 @@ public partial class PersonEditorWindow
     }
 
     private string TitlesSnapshot() => string.Join("\u001e", titles.Select(t =>
-        $"{t.Titolo}|{t.Numerazione}|{t.Inizio}|{t.CausaInizio}|{t.Fine}|{t.CausaFine}"));
+        $"{t.Titolo}|{t.Numerazione}|{t.Inizio}|{t.CausaInizio}|{t.Fine}|{t.CausaFine}|{t.Predecessore}|{t.Successore}"));
     private string SelectedSex => (SexInput.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Tag as string ?? string.Empty;
 
     private void SelectSex(string sesso)
@@ -52,6 +53,7 @@ public partial class PersonEditorWindow
     {
         ShowWorkingLanguage();
         person.Name = NameInput.Text.Trim();
+        person.Surname = SurnameInput.Text.Trim();
         person.Suffix = SuffixInput.Text.Trim();
         person.Family = FamilyInput.Text.Trim();
         person.Sesso = SelectedSex;
@@ -59,9 +61,10 @@ public partial class PersonEditorWindow
         person.MainTitle = MainTitleInput.Text.Trim();
         TitlesGrid.CommitEdit();
         person.Titles = titles.Where(t => !t.IsEmpty()).Select(t => t.Clone()).ToList();
-        person.LocalizedNames = localizedNames.Select(n => n.Clone()).ToList();
+        person.LocalizedNames = LocalizedPersonName.Normalize(localizedNames);
         person.Birth = BirthInput.Text.Trim();
         person.Death = DeathInput.Text.Trim();
+        FillDateCalendars(person);
         person.BirthPlace = BirthPlaceField.DisplayText;
         person.DeathPlace = DeathPlaceField.DisplayText;
         person.BurialPlace = BurialPlaceField.DisplayText;
@@ -69,22 +72,26 @@ public partial class PersonEditorWindow
         person.WikipediaUrl = pendingImport?.ArticleUrl ?? person.WikipediaUrl;
         person.WikipediaExtract = pendingImport?.Extract ?? person.WikipediaExtract;
         person.WikidataId = pendingImport?.WikidataId ?? person.WikidataId;
+        person.WikiTreeId = wikiTreeId;
         person.BirthDateEvidence = BuildDateEvidence(BirthInput.Text, birthSources, pendingImport?.BirthDates ?? editingPerson?.BirthDateEvidence);
         person.DeathDateEvidence = BuildDateEvidence(DeathInput.Text, deathSources, pendingImport?.DeathDates ?? editingPerson?.DeathDateEvidence);
         person.BirthPlaces = BuildPlaceRecords(BirthPlaceField.ImportedRecords, BirthPlaceField.GetHistoricalContext());
         person.DeathPlaces = BuildPlaceRecords(DeathPlaceField.ImportedRecords, DeathPlaceField.GetHistoricalContext());
         person.BurialPlaces = BuildPlaceRecords(BurialPlaceField.ImportedRecords, BurialPlaceField.GetHistoricalContext());
+        person.WikipediaLeads = (pendingImport?.WikipediaLeads ?? editingPerson?.WikipediaLeads ?? []).Select(l => l.Clone()).ToList();
         person.BirthLuogoId = BirthPlaceField.LuogoId;
         person.BirthLuogoSpecificoId = BirthPlaceField.LuogoSpecificoId;
         person.DeathLuogoId = DeathPlaceField.LuogoId;
         person.DeathLuogoSpecificoId = DeathPlaceField.LuogoSpecificoId;
         person.BurialLuogoId = BurialPlaceField.LuogoId;
         person.BurialLuogoSpecificoId = BurialPlaceField.LuogoSpecificoId;
+        person.Note = NoteEditor.Text;
     }
 
     private void LoadPersonIntoForm(HistoricalPerson person)
     {
         NameInput.Text = person.Name;
+        SurnameInput.Text = person.Surname;
         SuffixInput.Text = person.Suffix;
         FamilyInput.Text = person.Family;
         SelectSex(person.Sesso);
@@ -95,19 +102,23 @@ public partial class PersonEditorWindow
 
         BirthInput.Text = person.BirthDateEvidence.Count > 0 ? FormatDateInput(person.BirthDateEvidence) : person.Birth;
         DeathInput.Text = person.DeathDateEvidence.Count > 0 ? FormatDateInput(person.DeathDateEvidence) : person.Death;
+        SetDateCalendars(person.BirthCalendario, person.BirthStile, person.DeathCalendario, person.DeathStile);
         birthSources = JoinEvidenceSources(person.BirthDateEvidence);
         deathSources = JoinEvidenceSources(person.DeathDateEvidence);
         sourceUrl = person.WikipediaUrl;
+        wikiTreeId = person.WikiTreeId;
 
         LoadPlaceField(BirthPlaceField, person.BirthPlaces, person.BirthLuogoId, person.BirthLuogoSpecificoId);
         LoadPlaceField(DeathPlaceField, person.DeathPlaces, person.DeathLuogoId, person.DeathLuogoSpecificoId);
         LoadPlaceField(BurialPlaceField, person.BurialPlaces, person.BurialLuogoId, person.BurialLuogoSpecificoId);
+        NoteEditor.Text = person.Note;
     }
 
     private void PrefillFromImport(WikipediaImportResult import)
     {
         ShowWorkingLanguage();
         NameInput.Text = import.Name;
+        SurnameInput.Text = import.Surname;
         SuffixInput.Text = import.Suffix;
         NicknameInput.Text = import.Nickname;
         MainTitleInput.Text = import.MainTitle;
@@ -117,7 +128,10 @@ public partial class PersonEditorWindow
         SelectSex(import.Sesso);
         BirthInput.Text = FormatDateInput(import.BirthDates);
         DeathInput.Text = FormatDateInput(import.DeathDates);
+        SetDateCalendars(ImportedCalendar(import.BirthDates), HistoricalCalendar.StileComune, ImportedCalendar(import.DeathDates), HistoricalCalendar.StileComune);
         sourceUrl = import.ArticleUrl;
+        // Un profilo indicato a mano resta se Wikidata non ne indica uno (aggiornamento di una scheda esistente).
+        wikiTreeId = import.WikiTreeId.Length > 0 ? import.WikiTreeId : editingPerson?.WikiTreeId ?? string.Empty;
         UpdateSourcesSummary();
 
         ApplyImportedPlace(BirthPlaceField, import.BirthPlaces);
@@ -150,6 +164,7 @@ public partial class PersonEditorWindow
     }
 
     // Se la catena amministrativa importata è incompleta o incerta, apre l'editor dei luoghi e avvisa l'utente.
+    // Un errore di salvataggio lascia il campo vuoto senza interrompere il resto dell'import.
     private (int? LuogoId, int? SpecificoId) ResolveOrEditPlace(IReadOnlyList<HistoricalPlaceRecord> places, string role)
     {
         var place = places.FirstOrDefault(p => !string.IsNullOrWhiteSpace(p.CurrentName));
@@ -158,63 +173,22 @@ public partial class PersonEditorWindow
             return (null, null);
         }
 
-        var derived = store.DerivePlace(place);
-        int? classicId;
-        if (derived.Confident)
+        try
         {
-            classicId = store.EnsurePlace(derived.Levels, null, null);
+            return ResolveOrEditPlace(place, role);
         }
-        else
+        catch (Exception ex) when (ex is DbUpdateException or InvalidOperationException)
         {
-            var notice = derived.SpecificName is null
-                ? $"{role}: la gerarchia di «{place.CurrentName}» è incompleta o incerta. Verificala prima di salvare."
-                : $"{role}: «{place.CurrentName}» non è un’unità amministrativa e sarà salvato come luogo specifico. Verifica il luogo che lo contiene.";
-            var editor = new PlacesEditorWindow(derived.Levels, notice: notice, store: store) { Owner = this };
-            classicId = editor.ShowDialog() == true
-                ? store.EnsurePlace(editor.ResultLevels, editor.ResultLatitude, editor.ResultLongitude)
-                : null;
-        }
-
-        if (classicId is not int luogoId)
-        {
+            Feedback.Error(EditorMessage, $"{role}: impossibile salvare il luogo «{place.CurrentName}». Sceglilo manualmente.");
             return (null, null);
         }
-
-        return derived.SpecificName is { Length: > 0 } specificName
-            ? (null, store.EnsureSpecificPlace(specificName, luogoId, place.WikidataId, place.Latitudine, place.Longitudine))
-            : (luogoId, null);
     }
+
+    private (int? LuogoId, int? SpecificoId) ResolveOrEditPlace(HistoricalPlaceRecord place, string role)
+        => ImportedPlaceResolver.Resolve(store, place, role, this);
 
     private List<HistoricalDateEvidence> BuildDateEvidence(string dateText, string sourceText, IEnumerable<HistoricalDateEvidence>? importedEvidence)
-    {
-        var values = SplitUserValues(dateText);
-        var sources = SplitUserValues(sourceText);
-        var evidence = importedEvidence?
-            .Where(item => values.Contains(item.Value, StringComparer.OrdinalIgnoreCase))
-            .Select(CloneEvidence)
-            .ToList() ?? [];
-        for (var index = 0; index < values.Count; index++)
-        {
-            var value = values[index];
-            if (evidence.Any(item => string.Equals(item.Value, value, StringComparison.OrdinalIgnoreCase)))
-            {
-                continue;
-            }
-
-            var citation = index < sources.Count
-                ? new SourceCitation { Title = "Fonte della data", Url = sources[index] }
-                : CreateInputCitation();
-            evidence.Add(new HistoricalDateEvidence
-            {
-                Value = value,
-                RawValue = value,
-                Precision = "testo libero",
-                Sources = citation is null ? [] : [CloneCitation(citation)],
-            });
-        }
-
-        return evidence;
-    }
+        => DateEvidenceBuilder.Build(dateText, sourceText, importedEvidence, CreateInputCitation());
 
     private List<HistoricalPlaceRecord> BuildPlaceRecords(IEnumerable<HistoricalPlaceRecord> records, HistoricalPlaceContext? historicalContext)
     {
@@ -247,10 +221,7 @@ public partial class PersonEditorWindow
         return places;
     }
 
-    private static List<string> SplitUserValues(string value) =>
-        value.Split([';', '\r', '\n'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
+    private static List<string> SplitUserValues(string value) => DateEvidenceBuilder.SplitUserValues(value);
 
     private SourceCitation? CreateInputCitation()
     {
@@ -258,21 +229,13 @@ public partial class PersonEditorWindow
         return url.Length == 0 ? null : new SourceCitation { Title = "Fonte inserita", Url = url };
     }
 
-    private static HistoricalDateEvidence CloneEvidence(HistoricalDateEvidence source) => new()
-    {
-        Value = source.Value,
-        RawValue = source.RawValue,
-        Precision = source.Precision,
-        Rank = source.Rank,
-        Qualifiers = source.Qualifiers.ToDictionary(pair => pair.Key, pair => pair.Value.ToList(), StringComparer.Ordinal),
-        Sources = source.Sources.Select(CloneCitation).ToList(),
-    };
-
     private static HistoricalPlaceRecord ClonePlace(HistoricalPlaceRecord source) => new()
     {
         WikidataId = source.WikidataId,
         CurrentName = source.CurrentName,
         CurrentCountry = source.CurrentCountry,
+        TypeIds = [.. source.TypeIds],
+        TypeLabel = source.TypeLabel,
         Names = source.Names.Select(ClonePlaceName).ToList(),
         AdministrativeDivisions = source.AdministrativeDivisions.Select(item => new PlaceDivision
         {
@@ -305,8 +268,7 @@ public partial class PersonEditorWindow
         WikidataId = source.WikidataId,
     };
 
-    private static string FormatDateInput(IEnumerable<HistoricalDateEvidence> evidence) =>
-        string.Join("; ", evidence.Select(item => item.Value).Where(value => value.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase));
+    private static string FormatDateInput(IEnumerable<HistoricalDateEvidence> evidence) => ImportedPersonCreator.FormatDates(evidence);
 
     private static string JoinEvidenceSources(IEnumerable<HistoricalDateEvidence> evidence) =>
         string.Join("; ", evidence

@@ -1,0 +1,80 @@
+<Window x:Class="HistoricEditor.AttachmentsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Allegati"
+        Width="820" Height="540" MinWidth="640" MinHeight="420"
+        WindowStartupLocation="CenterOwner" AllowDrop="True" Drop="Window_Drop" DragOver="Window_DragOver"
+        Background="{DynamicResource AppBackground}" Foreground="{DynamicResource InkBrush}"
+        FontFamily="Segoe UI" FontSize="13">
+    <Grid Margin="18">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="320" />
+            <ColumnDefinition Width="18" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock x:Name="IntroText" Grid.Row="0" Grid.ColumnSpan="3" Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" Margin="0,0,0,12"
+                   Text="Ritratti, documenti e immagini vengono copiati nell’archivio: l’originale non viene modificato. Le immagini sono salvate compresse (JPEG, lato massimo 2000 pixel). Puoi anche trascinare i file sulla finestra." />
+
+        <DockPanel Grid.Row="1" Grid.Column="0">
+            <Label DockPanel.Dock="Top" Content="_File allegati" Target="{Binding ElementName=AttachmentList}" />
+            <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,8,0,0">
+                <Button Content="_Aggiungi file…" Click="Add_Click" Padding="14,7" Style="{StaticResource PrimaryButton}" AutomationProperties.Name="Aggiungi file allegati" />
+                <Button x:Name="UpButton" Content="Su" Click="Up_Click" Padding="10,7" Margin="8,0,0,0" IsEnabled="False" ToolTip="Sposta prima" AutomationProperties.Name="Sposta l’allegato prima" />
+                <Button x:Name="DownButton" Content="Giù" Click="Down_Click" Padding="10,7" Margin="6,0,0,0" IsEnabled="False" ToolTip="Sposta dopo" AutomationProperties.Name="Sposta l’allegato dopo" />
+            </StackPanel>
+            <ListBox x:Name="AttachmentList" SelectionChanged="AttachmentList_SelectionChanged" MouseDoubleClick="AttachmentList_MouseDoubleClick" AutomationProperties.Name="File allegati"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                        <Setter Property="AutomationProperties.Name" Value="{Binding Etichetta}" />
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <DockPanel Margin="2,4">
+                            <Border DockPanel.Dock="Left" Width="52" Height="52" Margin="0,0,10,0" CornerRadius="4" Background="{DynamicResource AppSurfaceAlt}">
+                                <Grid>
+                                    <Image Source="{Binding Miniatura}" Stretch="Uniform" />
+                                    <TextBlock Text="{Binding Estensione}" HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="Consolas" FontSize="11" Foreground="{DynamicResource QuietBrush}" />
+                                </Grid>
+                            </Border>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="{Binding Titolo}" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{Binding Dettaglio}" Foreground="{DynamicResource QuietBrush}" FontSize="11" TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </DockPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </DockPanel>
+
+        <StackPanel x:Name="DetailPanel" Grid.Row="1" Grid.Column="2" IsEnabled="False">
+            <Border Height="150" CornerRadius="6" Background="{DynamicResource AppSurfaceAlt}" Margin="0,0,0,10">
+                <Image x:Name="PreviewImage" Stretch="Uniform" Margin="4" AutomationProperties.Name="Anteprima dell’allegato" />
+            </Border>
+            <Label Content="_Titolo" Target="{Binding ElementName=TitleBox}" />
+            <TextBox x:Name="TitleBox" Padding="8,6" Margin="0,0,0,10" AutomationProperties.Name="Titolo dell’allegato" />
+            <Label Content="_Data (testo libero)" Target="{Binding ElementName=DateBox}" />
+            <TextBox x:Name="DateBox" Padding="8,6" Margin="0,0,0,10" AutomationProperties.Name="Data dell’allegato" />
+            <Label Content="_Descrizione" Target="{Binding ElementName=DescriptionBox}" />
+            <TextBox x:Name="DescriptionBox" Height="60" Padding="8,6" Margin="0,0,0,10" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top" AutomationProperties.Name="Descrizione dell’allegato" />
+            <WrapPanel>
+                <Button Content="Salva _dettagli" Click="SaveDetails_Click" Padding="12,6" Margin="0,0,8,6" AutomationProperties.Name="Salva i dettagli dell’allegato" />
+                <Button Content="A_pri" Click="Open_Click" Padding="12,6" Margin="0,0,8,6" AutomationProperties.Name="Apri l’allegato con il programma predefinito" />
+                <Button x:Name="PortraitButton" Content="Usa come _ritratto" Click="Portrait_Click" Padding="12,6" Margin="0,0,8,6" Visibility="Collapsed" />
+                <Button Content="_Elimina" Click="Delete_Click" Padding="12,6" Margin="0,0,8,6" Style="{StaticResource DangerButton}" AutomationProperties.Name="Elimina l’allegato" />
+            </WrapPanel>
+        </StackPanel>
+
+        <DockPanel Grid.Row="2" Grid.ColumnSpan="3" Margin="0,16,0,0">
+            <Button DockPanel.Dock="Right" Content="Chiudi" IsCancel="True" Padding="14,7" />
+            <TextBlock x:Name="Message" Foreground="{DynamicResource SignalBrush}" FontSize="11" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,12,0" AutomationProperties.LiveSetting="Polite" />
+        </DockPanel>
+    </Grid>
+</Window>

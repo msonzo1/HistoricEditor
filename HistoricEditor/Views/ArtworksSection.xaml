@@ -1,0 +1,91 @@
+<UserControl x:Class="HistoricEditor.ArtworksSection"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Foreground="{DynamicResource InkBrush}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <DockPanel Grid.Row="0" Margin="0,0,0,14">
+            <TextBlock x:Name="CountText" DockPanel.Dock="Right" VerticalAlignment="Bottom" Foreground="{DynamicResource QuietBrush}" FontSize="12" AutomationProperties.LiveSetting="Polite" />
+            <StackPanel>
+                <TextBlock Text="COLLEZIONE" Style="{StaticResource SectionKicker}" />
+                <TextBlock Text="Le opere d’arte" Style="{StaticResource SectionHeading}" AutomationProperties.HeadingLevel="Level1" />
+            </StackPanel>
+        </DockPanel>
+
+        <Border Grid.Row="1" Style="{StaticResource ToolbarStrip}">
+            <StackPanel Orientation="Horizontal" AutomationProperties.Name="Comandi opere d'arte">
+                <Button Style="{StaticResource ToolButton}" Click="New_Click" ToolTip="Aggiungi un'opera, anche importandola da Wikipedia o dai musei" AutomationProperties.Name="Nuova opera">
+                    <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE710;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" VerticalAlignment="Center" /><TextBlock Text="Nuova" /></StackPanel>
+                </Button>
+                <Button x:Name="ViewButton" Style="{StaticResource ToolButton}" Click="View_Click" IsEnabled="False" ToolTip="Mostra l'opera selezionata senza modificarla" AutomationProperties.Name="Visualizza opera">
+                    <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE890;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" VerticalAlignment="Center" /><TextBlock Text="Visualizza" /></StackPanel>
+                </Button>
+                <Button x:Name="EditButton" Style="{StaticResource ToolButton}" Click="Edit_Click" IsEnabled="False" ToolTip="Modifica l'opera selezionata nel gestore delle opere" AutomationProperties.Name="Modifica opera">
+                    <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" VerticalAlignment="Center" /><TextBlock Text="Modifica" /></StackPanel>
+                </Button>
+                <Rectangle Style="{StaticResource ToolSeparator}" />
+                <Button x:Name="ArtistButton" Style="{StaticResource ToolButton}" Click="OpenArtist_Click" IsEnabled="False" ToolTip="Apri la scheda del personaggio scelto nel filtro «Artista»" AutomationProperties.Name="Apri la scheda dell'artista">
+                    <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" VerticalAlignment="Center" /><TextBlock Text="Scheda dell'artista" /></StackPanel>
+                </Button>
+            </StackPanel>
+        </Border>
+
+        <WrapPanel Grid.Row="2" Margin="0,0,0,10" AutomationProperties.Name="Filtri delle opere">
+            <StackPanel Margin="0,0,14,6">
+                <Label Content="_Cerca" Target="{Binding ElementName=SearchBox}" Padding="0,0,0,3" />
+                <TextBox x:Name="SearchBox" Width="240" Padding="8,6" TextChanged="Filter_Changed" ToolTip="Titolo, artisti, data, tipo, tecnica, persone collegate o note" AutomationProperties.Name="Cerca nelle opere" />
+            </StackPanel>
+            <StackPanel Margin="0,0,14,6">
+                <Label Content="_Tipo" Target="{Binding ElementName=TypeCombo}" Padding="0,0,0,3" />
+                <ComboBox x:Name="TypeCombo" Width="170" SelectionChanged="Filter_Changed" AutomationProperties.Name="Filtra per tipo di opera" />
+            </StackPanel>
+            <StackPanel Margin="0,0,14,6">
+                <Label Content="A_rtista" Target="{Binding ElementName=ArtistCombo}" Padding="0,0,0,3" />
+                <ComboBox x:Name="ArtistCombo" Width="260" SelectionChanged="Filter_Changed" IsTextSearchEnabled="True" ToolTip="Opere di un pittore, scultore o architetto (autore, bottega o attribuzione)" AutomationProperties.Name="Filtra per artista" />
+            </StackPanel>
+            <Button Content="_Azzera filtri" Click="ClearFilters_Click" VerticalAlignment="Bottom" Padding="12,6" Margin="0,0,0,6" Style="{StaticResource GhostButton}" />
+        </WrapPanel>
+
+        <Grid Grid.Row="3">
+            <ListBox x:Name="Gallery" SelectionMode="Single" BorderThickness="0" Background="Transparent"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" VirtualizingPanel.IsVirtualizing="False"
+                     SelectionChanged="Gallery_SelectionChanged" MouseDoubleClick="Gallery_MouseDoubleClick" PreviewKeyDown="Gallery_PreviewKeyDown"
+                     AutomationProperties.Name="Galleria delle opere" AutomationProperties.HelpText="Invio o doppio clic apre l'opera in lettura o in modifica, secondo la modalità scelta (Ctrl+M)">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                        <Setter Property="AutomationProperties.Name" Value="{Binding Row.Etichetta}" />
+                        <Setter Property="Margin" Value="0,0,10,10" />
+                        <Setter Property="Padding" Value="8" />
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Width="176" ToolTip="{Binding Row.Etichetta}">
+                            <Border Height="132" Background="{DynamicResource AppSurfaceAlt}" CornerRadius="6">
+                                <Grid>
+                                    <TextBlock Text="&#xE8B9;" FontFamily="Segoe MDL2 Assets" FontSize="30" Foreground="{DynamicResource QuietBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    <Image Source="{Binding Miniatura}" Stretch="Uniform" Margin="4" />
+                                </Grid>
+                            </Border>
+                            <TextBlock Text="{Binding Row.Titolo}" FontFamily="Georgia" FontSize="14" Foreground="{DynamicResource InkBrush}" TextTrimming="CharacterEllipsis" Margin="0,8,0,0" />
+                            <TextBlock Text="{Binding Row.Artisti}" Foreground="{DynamicResource InkSoftBrush}" FontSize="12" TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
+                            <TextBlock Text="{Binding Row.Dettaglio}" Foreground="{DynamicResource QuietBrush}" FontSize="11" TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            <TextBlock x:Name="EmptyText" Visibility="Collapsed" Foreground="{DynamicResource QuietBrush}" FontSize="14" TextAlignment="Center" TextWrapping="Wrap" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="380" />
+        </Grid>
+    </Grid>
+</UserControl>

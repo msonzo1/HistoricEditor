@@ -1,4 +1,4 @@
-namespace HistoricEditor;
+﻿namespace HistoricEditor;
 
 // Compone, per ogni lingua d'importazione, nome/suffisso/soprannome/titolo principale a partire dai dati Wikidata.
 internal static class LocalizedNameBuilder
@@ -7,7 +7,8 @@ internal static class LocalizedNameBuilder
         IEnumerable<(string Code, string Name)> languages,
         IReadOnlyDictionary<string, string> labels,
         IReadOnlyList<(string Text, string Language)> nicknames,
-        IReadOnlyDictionary<string, string> mainTitleLabels)
+        IReadOnlyDictionary<string, string> mainTitleLabels,
+        IReadOnlyList<string>? surnames = null)
     {
         var result = new List<LocalizedPersonName>();
         foreach (var (code, name) in languages)
@@ -21,7 +22,8 @@ internal static class LocalizedNameBuilder
             {
                 Lingua = code,
                 LinguaNome = name,
-                Nome = parsed.Name,
+                // Il cognome non è localizzato: si toglie dal nome di ogni lingua.
+                Nome = PersonNameParser.SplitSurname(parsed.Name, surnames).Name,
                 Suffisso = parsed.Suffix,
                 Soprannome = parsed.Nickname.Length > 0 ? parsed.Nickname : languageNicknames.FirstOrDefault() ?? string.Empty,
                 TitoloPrincipale = mainTitleLabels.GetValueOrDefault(code, string.Empty),

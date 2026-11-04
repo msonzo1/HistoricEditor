@@ -1,0 +1,194 @@
+<Window x:Class="HistoricEditor.EventsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:HistoricEditor"
+        Title="Eventi"
+        Width="980" Height="740" MinWidth="780" MinHeight="560"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource AppBackground}" Foreground="{DynamicResource InkBrush}"
+        FontFamily="Segoe UI" FontSize="13">
+    <Grid Margin="18">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="320" />
+            <ColumnDefinition Width="18" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Grid.ColumnSpan="3" Text="Battaglie, trattati, paci, incontri, scoperte… Un evento può avere più partecipanti, ognuno con un ruolo facoltativo. Le date sono testo libero: scegli un qualificatore per le date incerte o gli intervalli." Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" Margin="0,0,0,12" />
+
+        <DockPanel Grid.Row="1" Grid.Column="0">
+            <Label DockPanel.Dock="Top" Content="_Cerca evento" Target="{Binding ElementName=SearchBox}" />
+            <TextBox DockPanel.Dock="Top" x:Name="SearchBox" Padding="8,6" Margin="0,0,0,6" TextChanged="Filter_Changed" AutomationProperties.Name="Cerca evento per titolo o tipo" />
+            <CheckBox DockPanel.Dock="Top" x:Name="PersonFilter" Visibility="Collapsed" Margin="0,0,0,6" Checked="Filter_Changed" Unchecked="Filter_Changed" />
+            <Button DockPanel.Dock="Bottom" Content="_Nuovo evento" Click="New_Click" Padding="14,7" Margin="0,8,0,0" HorizontalAlignment="Left" AutomationProperties.Name="Nuovo evento" />
+            <ListBox x:Name="EventList" SelectionChanged="EventList_SelectionChanged" AutomationProperties.Name="Eventi registrati" HorizontalContentAlignment="Stretch">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                        <Setter Property="AutomationProperties.Name" Value="{Binding Etichetta}" />
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Margin="2,3">
+                            <TextBlock Text="{Binding Evento.Titolo}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="{Binding Dettaglio}" Foreground="{DynamicResource QuietBrush}" FontSize="11" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </DockPanel>
+
+        <ScrollViewer Grid.Row="1" Grid.Column="2" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+            <Border BorderBrush="{DynamicResource QuietBrush}" BorderThickness="1" CornerRadius="4" Padding="10" Margin="0,0,0,12">
+                <StackPanel>
+                    <Label Content="Cerca su Wi_kipedia" Target="{Binding ElementName=WikiSearchBox}" Padding="0,0,0,4" />
+                    <DockPanel>
+                        <Button x:Name="WikiImportButton" DockPanel.Dock="Right" Content="Imp_orta" Click="WikiImport_Click" Padding="12,6" Margin="6,0,0,0" IsEnabled="False" AutomationProperties.Name="Importa l’evento scelto da Wikipedia" />
+                        <Button x:Name="WikiSearchButton" DockPanel.Dock="Right" Content="Cerca" Click="WikiSearch_Click" Padding="12,6" Margin="6,0,0,0" AutomationProperties.Name="Cerca l’evento su Wikipedia" />
+                        <TextBox x:Name="WikiSearchBox" Padding="8,6" KeyDown="WikiSearchBox_KeyDown" AutomationProperties.Name="Evento da cercare su Wikipedia" AutomationProperties.HelpText="Scrivi il nome dell’evento e premi Invio, poi scegli la voce e premi Importa" ToolTip="Es. Battaglia di Pavia, Pace di Lodi, Trattato di Tordesillas" />
+                    </DockPanel>
+                    <ListBox x:Name="WikiResults" MaxHeight="160" Margin="0,6,0,0" Visibility="Collapsed" SelectionChanged="WikiResults_SelectionChanged" MouseDoubleClick="WikiResults_MouseDoubleClick" KeyDown="WikiResults_KeyDown" AutomationProperties.Name="Voci trovate su Wikipedia" HorizontalContentAlignment="Stretch">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                                <Setter Property="AutomationProperties.Name" Value="{Binding Title}" />
+                                <Setter Property="AutomationProperties.HelpText" Value="{Binding Snippet}" />
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Margin="2,2">
+                                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Text="{Binding Snippet}" Foreground="{DynamicResource QuietBrush}" FontSize="11" TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <DockPanel x:Name="WikiBusyPanel" Margin="0,6,0,0" Visibility="Collapsed">
+                        <Button DockPanel.Dock="Right" Content="Annulla" Click="WikiCancel_Click" Padding="10,4" Margin="8,0,0,0" AutomationProperties.Name="Annulla la richiesta a Wikipedia" />
+                        <StackPanel>
+                            <ProgressBar x:Name="WikiProgress" Height="6" IsIndeterminate="True" Maximum="100" AutomationProperties.Name="Avanzamento dell’import" />
+                            <TextBlock x:Name="WikiStage" FontSize="11" Foreground="{DynamicResource QuietBrush}" Margin="0,3,0,0" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
+                        </StackPanel>
+                    </DockPanel>
+                    <TextBlock x:Name="WikiStatus" FontSize="11" Margin="0,6,0,0" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
+                </StackPanel>
+            </Border>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="14" />
+                    <ColumnDefinition Width="220" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Grid.Column="0">
+                    <Label Content="_Titolo" Target="{Binding ElementName=TitleBox}" />
+                    <TextBox x:Name="TitleBox" Padding="8,6" Margin="0,0,0,10" TextChanged="Field_Changed" AutomationProperties.Name="Titolo dell’evento" ToolTip="Es. Battaglia di Pavia, Pace di Cateau-Cambrésis" />
+                </StackPanel>
+                <StackPanel Grid.Row="0" Grid.Column="2">
+                    <Label Content="Ti_po" Target="{Binding ElementName=TypeBox}" />
+                    <ComboBox x:Name="TypeBox" IsEditable="True" Margin="0,0,0,10" AutomationProperties.Name="Tipo di evento" ToolTip="Scegli un tipo o scrivine uno nuovo" />
+                </StackPanel>
+
+                <Grid Grid.Row="1" Grid.ColumnSpan="3" Margin="0,0,0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="200" />
+                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <Label Grid.Row="0" Grid.Column="0" Content="_Quando" Target="{Binding ElementName=QualifierBox}" />
+                    <ComboBox Grid.Row="1" Grid.Column="0" x:Name="QualifierBox" DisplayMemberPath="Etichetta" SelectionChanged="Field_Changed" AutomationProperties.Name="Tipo di data" />
+                    <Label Grid.Row="0" Grid.Column="2" x:Name="Date1Label" Content="_Data" Target="{Binding ElementName=Date1Box}" />
+                    <TextBox Grid.Row="1" Grid.Column="2" x:Name="Date1Box" Padding="8,6" TextChanged="Field_Changed" AutomationProperties.Name="Data dell’evento" ToolTip="Testo libero: es. 24 febbraio 1525, 1525, XV secolo, 44 a.C." />
+                    <Label Grid.Row="1" Grid.Column="3" x:Name="Date2Label" Content="a" Target="{Binding ElementName=Date2Box}" VerticalAlignment="Center" Margin="6,0" />
+                    <TextBox Grid.Row="1" Grid.Column="4" x:Name="Date2Box" Padding="8,6" TextChanged="Field_Changed" AutomationProperties.Name="Seconda data" />
+                    <Label Grid.Row="2" Grid.Column="0" Content="Calendario" Target="{Binding ElementName=CalendarBox}" Margin="0,6,0,0" />
+                    <ComboBox Grid.Row="3" Grid.Column="0" x:Name="CalendarBox" SelectionChanged="Field_Changed" AutomationProperties.Name="Calendario delle date" ToolTip="Calendario in cui sono scritte le date: giuliano (prima della riforma del 1582, e dopo in molti paesi) o gregoriano" />
+                    <Label Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="3" Content="Stile dell’anno" Target="{Binding ElementName=StyleBox}" Margin="0,6,0,0" />
+                    <DockPanel Grid.Row="3" Grid.Column="2" Grid.ColumnSpan="3">
+                        <Button DockPanel.Dock="Right" Content="Convertitore…" Click="OpenConverter_Click" Padding="12,6" Margin="6,0,0,0" ToolTip="Apre il convertitore con la data dell’evento" AutomationProperties.Name="Apri il convertitore di date con la data dell’evento" />
+                        <ComboBox x:Name="StyleBox" SelectionChanged="Field_Changed" AutomationProperties.Name="Stile di inizio dell’anno" />
+                    </DockPanel>
+                </Grid>
+                <TextBlock Grid.Row="2" Grid.ColumnSpan="3" x:Name="DatePreview" Foreground="{DynamicResource QuietBrush}" FontSize="11" Margin="0,0,0,10" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
+
+                <StackPanel Grid.Row="3" Grid.ColumnSpan="3" Margin="0,0,0,10">
+                    <Label Content="L_uogo" Target="{Binding ElementName=PlaceBox}" />
+                    <DockPanel>
+                        <Button x:Name="ClearPlaceButton" DockPanel.Dock="Right" Content="Rimuo_vi luogo" Click="ClearPlace_Click" Padding="12,6" Margin="6,0,0,0" IsEnabled="False" AutomationProperties.Name="Rimuovi il luogo dell’evento" />
+                        <Button DockPanel.Dock="Right" Content="Scegli luo_go…" Click="ChoosePlace_Click" Padding="12,6" Margin="6,0,0,0" AutomationProperties.Name="Scegli il luogo dell’evento" />
+                        <TextBox x:Name="PlaceBox" IsReadOnly="True" Padding="8,6" AutomationProperties.Name="Luogo dell’evento" ToolTip="Il luogo compare sulla mappa storica" />
+                    </DockPanel>
+                </StackPanel>
+
+                <StackPanel Grid.Row="4" Grid.ColumnSpan="3">
+                    <Label Content="Pa_rtecipanti" Target="{Binding ElementName=ParticipantList}" />
+                    <ListBox x:Name="ParticipantList" Height="170" HorizontalContentAlignment="Stretch" SelectionChanged="ParticipantList_SelectionChanged" AutomationProperties.Name="Partecipanti all’evento" KeyboardNavigation.TabNavigation="Continue">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                                <Setter Property="AutomationProperties.Name" Value="{Binding Nome}" />
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="2,2">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="200" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{Binding Nome}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                    <TextBlock Grid.Column="1" Text="Ruolo" Foreground="{DynamicResource QuietBrush}" FontSize="11" VerticalAlignment="Center" Margin="8,0,6,0" />
+                                    <TextBox Grid.Column="2" Text="{Binding Ruolo, UpdateSourceTrigger=PropertyChanged}" Padding="6,3" AutomationProperties.Name="{Binding Nome, StringFormat=Ruolo di {0}}" ToolTip="Facoltativo: es. comandante, firmatario, vincitore" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <StackPanel Orientation="Horizontal" Margin="0,6,0,10">
+                        <Button Content="_Aggiungi partecipante…" Click="AddParticipant_Click" Padding="12,6" Margin="0,0,8,0" AutomationProperties.Name="Aggiungi partecipante" />
+                        <Button x:Name="RemoveParticipantButton" Content="R_imuovi" Click="RemoveParticipant_Click" Padding="12,6" IsEnabled="False" AutomationProperties.Name="Rimuovi partecipante selezionato" />
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel Grid.Row="5" Grid.ColumnSpan="3">
+                    <Label Content="D_escrizione" Target="{Binding ElementName=DescriptionBox}" />
+                    <local:RichNoteEditor x:Name="DescriptionBox" EditorHeight="120" Margin="0,0,0,10" AccessibleName="Descrizione dell’evento" />
+                    <Label Content="_Wikidata" Target="{Binding ElementName=WikidataBox}" />
+                    <TextBox x:Name="WikidataBox" Padding="8,6" Width="220" HorizontalAlignment="Left" AutomationProperties.Name="Identificativo Wikidata dell’evento" ToolTip="Es. Q193630" />
+                </StackPanel>
+            </Grid>
+            </StackPanel>
+        </ScrollViewer>
+
+        <DockPanel Grid.Row="2" Grid.ColumnSpan="3" Margin="0,16,0,0">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <Button x:Name="AttachmentsButton" Content="Allega_ti…" Click="Attachments_Click" Padding="14,7" Margin="0,0,8,0" IsEnabled="False" ToolTip="Immagini e documenti dell’evento" AutomationProperties.Name="Gestisci gli allegati dell’evento" />
+                <Button x:Name="DeleteButton" Content="E_limina" Click="Delete_Click" Padding="14,7" Margin="0,0,8,0" IsEnabled="False" AutomationProperties.Name="Elimina evento" />
+                <Button Content="_Salva" IsDefault="True" Click="Save_Click" Padding="14,7" Margin="0,0,8,0" Style="{StaticResource PrimaryButton}" AutomationProperties.Name="Salva evento" />
+                <Button Content="Chiudi" IsCancel="True" Padding="14,7" />
+            </StackPanel>
+            <TextBlock x:Name="EditorMessage" Foreground="{DynamicResource SignalBrush}" FontSize="11" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,12,0" AutomationProperties.LiveSetting="Polite" />
+        </DockPanel>
+    </Grid>
+</Window>

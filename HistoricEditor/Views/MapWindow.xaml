@@ -1,0 +1,120 @@
+<Window x:Class="HistoricEditor.MapWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mapsui="clr-namespace:Mapsui.UI.Wpf;assembly=Mapsui.UI.Wpf"
+        Title="Mappa storica"
+        Width="1180" Height="800" MinWidth="860" MinHeight="560"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource AppBackground}" Foreground="{DynamicResource InkBrush}"
+        FontFamily="Segoe UI" FontSize="13">
+    <Grid Margin="14">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="340" />
+            <ColumnDefinition Width="14" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <DockPanel Grid.Column="0">
+            <StackPanel DockPanel.Dock="Top">
+                <TextBlock Text="Mostra" FontWeight="SemiBold" Margin="0,0,0,4" />
+                <WrapPanel Margin="0,0,0,8">
+                    <CheckBox x:Name="BirthsCheck" Content="_Nascite" IsChecked="True" Margin="0,0,12,4" Checked="Filter_Changed" Unchecked="Filter_Changed" />
+                    <CheckBox x:Name="DeathsCheck" Content="_Morti" IsChecked="True" Margin="0,0,12,4" Checked="Filter_Changed" Unchecked="Filter_Changed" />
+                    <CheckBox x:Name="BurialsCheck" Content="_Sepolture" IsChecked="True" Margin="0,0,12,4" Checked="Filter_Changed" Unchecked="Filter_Changed" />
+                    <CheckBox x:Name="EventsCheck" Content="_Eventi" IsChecked="True" Margin="0,0,12,4" Checked="Filter_Changed" Unchecked="Filter_Changed" />
+                    <CheckBox x:Name="PlacesCheck" Content="_Tutti i luoghi" IsChecked="True" Margin="0,0,12,4" Checked="Filter_Changed" Unchecked="Filter_Changed" ToolTip="Tutti i luoghi dell’archivio con coordinate (non legati a persone o periodi)" />
+                </WrapPanel>
+
+                <Grid Margin="0,0,0,6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <Label Content="_Dall’anno" Target="{Binding ElementName=FromYearBox}" Padding="0,0,0,3" />
+                        <TextBox x:Name="FromYearBox" Padding="8,6" TextChanged="Filter_Changed" AutomationProperties.Name="Dall’anno" ToolTip="Es. 1450, 44 a.C., XV secolo" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <Label Content="_All’anno" Target="{Binding ElementName=ToYearBox}" Padding="0,0,0,3" />
+                        <TextBox x:Name="ToYearBox" Padding="8,6" TextChanged="Filter_Changed" AutomationProperties.Name="All’anno" ToolTip="Es. 1550" />
+                    </StackPanel>
+                </Grid>
+
+                <Label Content="_Personaggio" Target="{Binding ElementName=PersonBox}" Padding="0,4,0,3" />
+                <ComboBox x:Name="PersonBox" IsEditable="True" IsTextSearchEnabled="True" TextSearch.TextPath="Etichetta" DisplayMemberPath="Etichetta" SelectionChanged="Filter_Changed" Margin="0,0,0,6" AutomationProperties.Name="Filtra per personaggio" AutomationProperties.HelpText="Scrivi l’inizio del nome per cercarlo" />
+
+                <Label Content="D_inastia" Target="{Binding ElementName=DynastyBox}" Padding="0,4,0,3" />
+                <ComboBox x:Name="DynastyBox" DisplayMemberPath="Etichetta" SelectionChanged="Filter_Changed" Margin="0,0,0,6" AutomationProperties.Name="Filtra per dinastia, rami compresi" />
+
+                <Label Content="Tipo di e_vento" Target="{Binding ElementName=EventTypeBox}" Padding="0,4,0,3" />
+                <ComboBox x:Name="EventTypeBox" SelectionChanged="Filter_Changed" Margin="0,0,0,6" AutomationProperties.Name="Filtra per tipo di evento" />
+
+                <DockPanel Margin="0,6,0,6">
+                    <Button DockPanel.Dock="Right" Content="A_zzera filtri" Click="ResetFilters_Click" Padding="12,6" AutomationProperties.Name="Azzera filtri" />
+                    <TextBlock x:Name="SummaryText" VerticalAlignment="Center" TextWrapping="Wrap" Foreground="{DynamicResource QuietBrush}" FontSize="12" AutomationProperties.LiveSetting="Polite" />
+                </DockPanel>
+
+                <Label Content="P_osizioni" Target="{Binding ElementName=LocationList}" Padding="0,4,0,3" />
+            </StackPanel>
+
+            <StackPanel DockPanel.Dock="Bottom">
+                <Label Content="Elementi della posizio_ne" Target="{Binding ElementName=PointList}" Padding="0,8,0,3" />
+                <ListBox x:Name="PointList" Height="150" HorizontalContentAlignment="Stretch" MouseDoubleClick="PointList_MouseDoubleClick" KeyDown="PointList_KeyDown" SelectionChanged="PointList_SelectionChanged" AutomationProperties.Name="Elementi nella posizione scelta" AutomationProperties.HelpText="Invio o doppio clic per aprire la scheda o l’evento">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                            <Setter Property="AutomationProperties.Name" Value="{Binding Etichetta}" />
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Margin="2,2">
+                                <TextBlock Text="{Binding Titolo}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{Binding Dettaglio}" Foreground="{DynamicResource QuietBrush}" FontSize="11" TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+                <Button x:Name="OpenButton" Content="_Apri" Click="Open_Click" IsEnabled="False" Padding="12,6" Margin="0,6,0,0" HorizontalAlignment="Left" AutomationProperties.Name="Apri la scheda o l’evento selezionato" />
+            </StackPanel>
+
+            <ListBox x:Name="LocationList" HorizontalContentAlignment="Stretch" SelectionChanged="LocationList_SelectionChanged" AutomationProperties.Name="Posizioni sulla mappa" AutomationProperties.HelpText="Scegli una posizione per centrarla sulla mappa">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                        <Setter Property="AutomationProperties.Name" Value="{Binding Etichetta}" />
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Etichetta}" TextTrimming="CharacterEllipsis" Margin="2,2" />
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </DockPanel>
+
+        <Grid Grid.Column="2">
+            <Border BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" CornerRadius="4" ClipToBounds="True">
+                <mapsui:MapControl x:Name="MapView" AutomationProperties.Name="Mappa" AutomationProperties.HelpText="Usa l’elenco Posizioni per spostarti sulla mappa con la tastiera" />
+            </Border>
+            <Border HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10" Padding="10,6" CornerRadius="4" Background="{DynamicResource AppSurface}" Opacity="0.92">
+                <StackPanel x:Name="Legend" AutomationProperties.Name="Legenda" />
+            </Border>
+            <TextBlock HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,6,4" Padding="4,1" Background="#CCFFFFFF" Foreground="#333333" FontSize="10">
+                © <Hyperlink NavigateUri="https://www.openstreetmap.org/copyright" RequestNavigate="Attribution_RequestNavigate">OpenStreetMap</Hyperlink> contributors
+            </TextBlock>
+        </Grid>
+
+        <DockPanel Grid.Row="1" Grid.ColumnSpan="3" Margin="0,12,0,0">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <Button Content="Adatta _vista" Click="FitAll_Click" Padding="14,7" Margin="0,0,8,0" AutomationProperties.Name="Adatta la mappa a tutte le posizioni" />
+                <Button Content="Chiudi" IsCancel="True" Padding="14,7" />
+            </StackPanel>
+            <TextBlock x:Name="StatusText" VerticalAlignment="Center" TextWrapping="Wrap" Foreground="{DynamicResource QuietBrush}" FontSize="11" AutomationProperties.LiveSetting="Polite"
+                       Text="Le posizioni approssimate usano le coordinate del luogo contenitore (es. la provincia). La mappa di sfondo è moderna." />
+        </DockPanel>
+    </Grid>
+</Window>

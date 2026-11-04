@@ -34,4 +34,43 @@ internal static partial class PersonNameParser
 
         return (text, string.Empty, nickname);
     }
+
+    private static readonly HashSet<string> SurnameParticles = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "da", "de", "de'", "dei", "degli", "del", "della", "dello", "dalla", "di", "d'",
+        "van", "von", "der", "den", "ten", "ter", "du", "des", "le", "la", "dos", "das", "y",
+    };
+
+    // Separa il cognome (P734) in coda al nome, es. "Benito Mussolini" → ("Benito", "Mussolini");
+    // i cognomi composti e le particelle ("Ludwig van Beethoven") restano nel cognome.
+    public static (string Name, string Surname) SplitSurname(string name, IEnumerable<string>? surnames)
+    {
+        var text = (name ?? string.Empty).Trim();
+        var surnameTokens = new HashSet<string>(
+            (surnames ?? []).SelectMany(s => (s ?? string.Empty).Split(' ', StringSplitOptions.RemoveEmptyEntries)),
+            StringComparer.CurrentCultureIgnoreCase);
+        var tokens = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (surnameTokens.Count == 0 || tokens.Length < 2)
+        {
+            return (text, string.Empty);
+        }
+
+        var start = tokens.Length;
+        while (start > 1 && surnameTokens.Contains(tokens[start - 1]))
+        {
+            start--;
+        }
+
+        if (start == tokens.Length || tokens[start..].All(SurnameParticles.Contains))
+        {
+            return (text, string.Empty);
+        }
+
+        while (start > 1 && SurnameParticles.Contains(tokens[start - 1]))
+        {
+            start--;
+        }
+
+        return (string.Join(' ', tokens[..start]), string.Join(' ', tokens[start..]));
+    }
 }

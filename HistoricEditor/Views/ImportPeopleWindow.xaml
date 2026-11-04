@@ -1,0 +1,76 @@
+<Window x:Class="HistoricEditor.ImportPeopleWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Schede mancanti"
+        Height="560" Width="620"
+        MinHeight="360" MinWidth="460"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResizeWithGrip"
+        Background="{DynamicResource AppBackground}" Foreground="{DynamicResource InkBrush}"
+        FontFamily="Segoe UI" FontSize="13">
+    <Grid Margin="20,18,20,18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock x:Name="IntroText" Grid.Row="0" TextWrapping="Wrap" FontWeight="SemiBold" />
+
+        <DockPanel Grid.Row="1" Margin="0,12,0,4">
+            <Button x:Name="SelectAllButton" DockPanel.Dock="Right" Content="Seleziona _tutti" Click="SelectAll_Click" Padding="10,4"
+                    AutomationProperties.Name="Seleziona tutti" />
+            <Label x:Name="CandidatesLabel" Content="_Personaggi da importare" Target="{Binding ElementName=CandidatesList}" Padding="0" VerticalAlignment="Center" />
+        </DockPanel>
+
+        <ListBox x:Name="CandidatesList" Grid.Row="2" HorizontalContentAlignment="Stretch"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                 KeyboardNavigation.TabNavigation="Continue"
+                 AutomationProperties.Name="Personaggi da importare">
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                    <Setter Property="Focusable" Value="False" />
+                    <Setter Property="Padding" Value="6,4" />
+                </Style>
+            </ListBox.ItemContainerStyle>
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <CheckBox IsChecked="{Binding Selected}" IsEnabled="{Binding CanImport}"
+                              AutomationProperties.Name="{Binding AccessibleName}">
+                        <StackPanel>
+                            <TextBlock TextWrapping="Wrap">
+                                <Run Text="{Binding Nome, Mode=OneWay}" FontWeight="SemiBold" />
+                                <Run Text="{Binding Ruolo, Mode=OneWay}" Foreground="{DynamicResource QuietBrush}" />
+                            </TextBlock>
+                            <TextBlock Text="{Binding Dettaglio}" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource QuietBrush}" />
+                        </StackPanel>
+                    </CheckBox>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <StackPanel x:Name="ProgressPanel" Grid.Row="3" Margin="0,12,0,0" Visibility="Collapsed">
+            <DockPanel>
+                <Button x:Name="CancelWorkButton" DockPanel.Dock="Right" Content="_Annulla" Click="CancelWork_Click" Padding="12,4" Margin="8,0,0,0"
+                        AutomationProperties.Name="Annulla l’importazione" />
+                <ProgressBar x:Name="WorkProgress" Height="8" IsIndeterminate="True" VerticalAlignment="Center"
+                             AutomationProperties.Name="Avanzamento dell’importazione" />
+            </DockPanel>
+            <TextBlock x:Name="StageText" Margin="0,6,0,0" TextWrapping="Wrap" FontSize="12" AutomationProperties.LiveSetting="Polite" />
+        </StackPanel>
+
+        <DockPanel Grid.Row="4" Margin="0,14,0,0">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <Button x:Name="SkipButton" Content="_Salta" Click="Skip_Click" Padding="14,7" Margin="0,0,8,0"
+                        ToolTip="Non creare altre schede" />
+                <Button x:Name="ImportButton" Content="_Importa selezionati" IsDefault="True" Click="Import_Click" Padding="14,7"
+                        Style="{StaticResource PrimaryButton}" AutomationProperties.Name="Importa i personaggi selezionati" />
+                <Button x:Name="CloseButton" Content="_Chiudi" Click="Close_Click" Padding="22,7" Visibility="Collapsed" />
+            </StackPanel>
+            <TextBlock x:Name="StatusText" VerticalAlignment="Center" TextWrapping="Wrap" FontSize="12" Margin="0,0,12,0"
+                       AutomationProperties.LiveSetting="Polite" />
+        </DockPanel>
+    </Grid>
+</Window>

@@ -2,8 +2,8 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Fonti dei dati"
-        Height="380" Width="560"
-        MinHeight="340" MinWidth="440"
+        Height="470" Width="560"
+        MinHeight="430" MinWidth="440"
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResizeWithGrip"
         FontFamily="Segoe UI" FontSize="13">
@@ -20,6 +20,9 @@
                 <TextBox x:Name="BirthSourcesInput" Height="34" AutomationProperties.Name="Fonti delle ipotesi di nascita" />
                 <Label Content="Fonti della _morte (URL separati da ;)" Target="{Binding ElementName=DeathSourcesInput}" Margin="0,12,0,0" />
                 <TextBox x:Name="DeathSourcesInput" Height="34" AutomationProperties.Name="Fonti delle ipotesi di morte" />
+                <Label Content="Profilo _WikiTree (es. Habsburg-105 o indirizzo del profilo)" Target="{Binding ElementName=WikiTreeInput}" Margin="0,12,0,0" />
+                <TextBox x:Name="WikiTreeInput" Height="34" AutomationProperties.Name="Profilo WikiTree" />
+                <TextBlock x:Name="WikiTreeError" Foreground="{DynamicResource DangerBrush}" TextWrapping="Wrap" Margin="0,4,0,0" Visibility="Collapsed" />
             </StackPanel>
         </Border>
         <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="20,14,20,18">
