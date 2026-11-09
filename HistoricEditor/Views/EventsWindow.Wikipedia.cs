@@ -132,6 +132,7 @@ public partial class EventsWindow
         Feedback.Info(WikiStatus, $"{operation} in corso su Wikipedia…");
         using var cancellation = new CancellationTokenSource();
         wikiCancellation = cancellation;
+        using var activity = ImportActivityLine.Start(WikiActivity);
         try
         {
             await action(cancellation.Token);

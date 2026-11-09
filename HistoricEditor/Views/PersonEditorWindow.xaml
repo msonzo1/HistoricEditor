@@ -99,7 +99,10 @@
                                 <ProgressBar x:Name="LoadingBar" IsIndeterminate="True" Minimum="0" Maximum="100" Height="4" Background="{DynamicResource AppBorder}" Foreground="{DynamicResource GreenBrush}" BorderThickness="0" AutomationProperties.Name="Caricamento in corso" />
                                 <DockPanel Margin="0,6,0,0">
                                     <Button DockPanel.Dock="Right" Content="Annulla" Click="CancelWikipedia_Click" Padding="12,4" Margin="8,0,0,0" VerticalAlignment="Top" />
-                                    <TextBlock x:Name="LoadingStage" Foreground="{DynamicResource InkBrush}" FontSize="11" TextWrapping="Wrap" VerticalAlignment="Center" AutomationProperties.LiveSetting="Assertive" />
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock x:Name="LoadingStage" Foreground="{DynamicResource InkBrush}" FontSize="11" TextWrapping="Wrap" AutomationProperties.LiveSetting="Assertive" />
+                                        <TextBlock x:Name="LoadingActivity" Visibility="Collapsed" Foreground="{DynamicResource QuietBrush}" FontSize="11" Margin="0,2,0,0" TextWrapping="Wrap" />
+                                    </StackPanel>
                                 </DockPanel>
                             </StackPanel>
                             <TextBlock x:Name="WikipediaStatus" FontSize="12" Margin="0,6,0,0" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
@@ -257,7 +260,10 @@
                                     <ProgressBar x:Name="RefreshBar" IsIndeterminate="True" Minimum="0" Maximum="100" Height="4" Background="{DynamicResource AppBorder}" Foreground="{DynamicResource GreenBrush}" BorderThickness="0" AutomationProperties.Name="Aggiornamento in corso" />
                                     <DockPanel Margin="0,6,0,0">
                                         <Button DockPanel.Dock="Right" Content="Annulla" Click="CancelWikipedia_Click" Padding="12,4" Margin="8,0,0,0" VerticalAlignment="Top" AutomationProperties.Name="Annulla l'aggiornamento da Wikipedia" />
-                                        <TextBlock x:Name="RefreshStage" Foreground="{DynamicResource InkBrush}" FontSize="11" TextWrapping="Wrap" VerticalAlignment="Center" AutomationProperties.LiveSetting="Assertive" />
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock x:Name="RefreshStage" Foreground="{DynamicResource InkBrush}" FontSize="11" TextWrapping="Wrap" AutomationProperties.LiveSetting="Assertive" />
+                                            <TextBlock x:Name="RefreshActivity" Visibility="Collapsed" Foreground="{DynamicResource QuietBrush}" FontSize="11" Margin="0,2,0,0" TextWrapping="Wrap" />
+                                        </StackPanel>
                                     </DockPanel>
                                 </StackPanel>
                                 <TextBlock x:Name="RefreshStatus" FontSize="12" Margin="0,6,0,0" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />

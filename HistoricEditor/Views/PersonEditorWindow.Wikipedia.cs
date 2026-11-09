@@ -89,6 +89,7 @@ public partial class PersonEditorWindow
         Feedback.Info(WikipediaStatus, "Ricerca in corso su Wikipedia in italiano…");
         using var cancellation = new CancellationTokenSource();
         wikipediaCancellation = cancellation;
+        var activity = ImportActivityLine.Start(LoadingActivity);
         try
         {
             var results = await wikipediaService.SearchAsync(query, CreateProgress(), cancellation.Token);
@@ -117,6 +118,7 @@ public partial class PersonEditorWindow
         }
         finally
         {
+            activity.Dispose();
             wikipediaCancellation = null;
             SetBusy(false);
         }
@@ -139,6 +141,7 @@ public partial class PersonEditorWindow
         Feedback.Info(WikipediaStatus, "Lettura della pagina e delle affermazioni Wikidata…");
         using var cancellation = new CancellationTokenSource();
         wikipediaCancellation = cancellation;
+        var activity = ImportActivityLine.Start(LoadingActivity);
         WikipediaImportResult result;
         try
         {
@@ -168,6 +171,7 @@ public partial class PersonEditorWindow
         }
         finally
         {
+            activity.Dispose();
             wikipediaCancellation = null;
             SetBusy(false);
         }
@@ -242,6 +246,7 @@ public partial class PersonEditorWindow
         Feedback.Info(RefreshStatus, "Lettura della pagina e delle affermazioni Wikidata…");
         using var cancellation = new CancellationTokenSource();
         wikipediaCancellation = cancellation;
+        var activity = ImportActivityLine.Start(RefreshActivity);
         WikipediaImportResult? result;
         try
         {
@@ -275,6 +280,7 @@ public partial class PersonEditorWindow
         }
         finally
         {
+            activity.Dispose();
             wikipediaCancellation = null;
             RefreshPanel.Visibility = Visibility.Collapsed;
             RefreshStage.Text = string.Empty;

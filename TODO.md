@@ -36,6 +36,8 @@
 - [x] Rendere cliccabile l'URL della fonte Wikipedia (oggi è solo testo).
 - [x] Avanzamento a passi (con percentuale) durante l'import da Wikipedia.
 - [x] LED di concordanza cliccabile: elenco delle edizioni confrontate con i collegamenti alle pagine.
+- [x] Migliorare la barra di avanzamento dell'import: riga sotto la barra con richiesta in corso (e da quanto si attende), coda di Wikidata, attesa per 429/503 con conto alla rovescia e numero del tentativo, tempo trascorso. Attiva nell'editor dei personaggi (import e «Aggiorna da Wikipedia»), negli eventi, nelle opere e nella finestra dei parenti mancanti.
+- [x] Musei (Met, AIC, Cleveland, Europeana) e scaricamento delle immagini: stesso stato delle richieste e stessi nuovi tentativi su 429/503 di Wikipedia (`HttpRetry` condiviso).
 
 ## Luoghi
 - [ ] Cambiare il luogo contenitore di un luogo storico dopo la creazione.
@@ -170,3 +172,4 @@
 - [x] Schede di sola lettura per opere d'arte ed eventi; dal pittore si passa alle sue opere (scheda di lettura, galleria filtrata per artista, pulsante «Opere d'arte…» nell'editor).
 - [x] Eventi filtrabili per tipo, dinastia e persona; dalla dinastia si aprono i suoi eventi e la linea del tempo.
 - [x] Import Wikidata: scartate le «famiglie» che sono Stati o periodi storici; chi non ha famiglia eredita quella del padre (es. figli naturali di Carlo V).
+- [ ] Chiarire a cosa serve il campo «Stile dell'anno» (editor degli eventi, convertitore di calendario). Ipotesi: è un'impostazione dell'app e non va nel modulo. Se invece deve restare per ogni data, spostarlo in una sezione separata più piccola, aperta da un pulsante.

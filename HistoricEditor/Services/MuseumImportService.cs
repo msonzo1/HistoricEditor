@@ -191,18 +191,23 @@ public sealed partial class MuseumImportService(WikipediaImportService wikipedia
         var temp = Path.Combine(Path.GetTempPath(), $"AlberiStorici-{Guid.NewGuid():N}.img");
         try
         {
-            using (var response = await Client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken))
-            {
-                response.EnsureSuccessStatusCode();
-                if (response.Content.Headers.ContentLength > MaximumImageBytes)
+            await HttpRetry.GetAsync(
+                Client,
+                url,
+                async (response, token) =>
                 {
-                    throw new InvalidOperationException("L’immagine online è troppo grande per essere scaricata.");
-                }
+                    if (response.Content.Headers.ContentLength > MaximumImageBytes)
+                    {
+                        throw new InvalidOperationException("L’immagine online è troppo grande per essere scaricata.");
+                    }
 
-                await using var input = await response.Content.ReadAsStreamAsync(cancellationToken);
-                await using var output = File.Create(temp);
-                await input.CopyToAsync(output, cancellationToken);
-            }
+                    await using var input = await response.Content.ReadAsStreamAsync(token);
+                    await using var output = File.Create(temp);
+                    await input.CopyToAsync(output, token);
+                    return true;
+                },
+                cancellationToken,
+                HttpCompletionOption.ResponseHeadersRead);
 
             return await Task.Run(() => ArtworkImages.Import(temp, directory), cancellationToken);
         }
@@ -446,12 +451,13 @@ public sealed partial class MuseumImportService(WikipediaImportService wikipedia
     private static string Join(string first, string second, string separator = " · ")
         => first.Length > 0 && second.Length > 0 ? $"{first}{separator}{second}" : first + second;
 
-    private static async Task<JsonDocument> GetJsonAsync(string url, CancellationToken cancellationToken)
-    {
-        using var response = await Client.GetAsync(url, cancellationToken);
-        response.EnsureSuccessStatusCode();
-        return JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
-    }
+    // Nuovi tentativi su 429/503 e segnalazione delle fasi per l'indicatore di avanzamento, come per Wikipedia.
+    private static Task<JsonDocument> GetJsonAsync(string url, CancellationToken cancellationToken)
+        => HttpRetry.GetAsync(
+            Client,
+            url,
+            async (response, token) => JsonDocument.Parse(await response.Content.ReadAsStringAsync(token)),
+            cancellationToken);
 
     private static HttpClient CreateClient()
     {

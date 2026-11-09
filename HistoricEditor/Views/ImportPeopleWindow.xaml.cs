@@ -138,6 +138,7 @@ public partial class ImportPeopleWindow : Window
         StageText.Text = "Lettura dei nomi da Wikidata…";
         using var cts = new CancellationTokenSource();
         cancellation = cts;
+        var activity = ImportActivityLine.Start(ActivityText);
         var loaded = false;
         try
         {
@@ -193,6 +194,7 @@ public partial class ImportPeopleWindow : Window
         }
         finally
         {
+            activity.Dispose();
             cancellation = null;
             SetWorking(false);
         }
@@ -353,6 +355,7 @@ public partial class ImportPeopleWindow : Window
         int fromWikiTree = 0, wikiTreeLinks = 0, skipped = 0, unresolvedPlaces = 0;
         var events = new EventImportSummary(0, 0, 0);
         var error = string.Empty;
+        var activity = ImportActivityLine.Start(ActivityText);
         try
         {
             for (var i = 0; i < selected.Count; i++)
@@ -455,6 +458,7 @@ public partial class ImportPeopleWindow : Window
         }
         finally
         {
+            activity.Dispose();
             cancellation = null;
             SetWorking(false);
         }

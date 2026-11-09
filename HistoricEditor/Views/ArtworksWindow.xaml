@@ -114,6 +114,7 @@
                                 <StackPanel>
                                     <ProgressBar x:Name="ImportProgressBar" Height="8" IsIndeterminate="True" AutomationProperties.Name="Avanzamento dell’importazione" />
                                     <TextBlock x:Name="ImportStage" FontSize="11" Foreground="{DynamicResource QuietBrush}" Margin="0,4,0,0" AutomationProperties.LiveSetting="Polite" />
+                                    <TextBlock x:Name="ImportActivity" Visibility="Collapsed" FontSize="11" Foreground="{DynamicResource QuietBrush}" Margin="0,2,0,0" TextWrapping="Wrap" />
                                 </StackPanel>
                             </DockPanel>
                             <TextBlock x:Name="ImportStatus" TextWrapping="Wrap" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite" />

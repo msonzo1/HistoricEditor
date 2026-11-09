@@ -199,6 +199,7 @@ public partial class ArtworksWindow
         Feedback.Info(ImportStatus, $"{operation} in corso su {source.Nome}…");
         using var cancellation = new CancellationTokenSource();
         importCancellation = cancellation;
+        using var activity = ImportActivityLine.Start(ImportActivity);
         try
         {
             await action(cancellation.Token);

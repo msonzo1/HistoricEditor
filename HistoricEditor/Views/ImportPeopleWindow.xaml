@@ -65,6 +65,7 @@
                              AutomationProperties.Name="Avanzamento dell’importazione" />
             </DockPanel>
             <TextBlock x:Name="StageText" Margin="0,6,0,0" TextWrapping="Wrap" FontSize="12" AutomationProperties.LiveSetting="Polite" />
+            <TextBlock x:Name="ActivityText" Visibility="Collapsed" Margin="0,2,0,0" TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource QuietBrush}" />
         </StackPanel>
 
         <DockPanel Grid.Row="5" Margin="0,14,0,0">

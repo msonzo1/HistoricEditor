@@ -11,7 +11,6 @@ public sealed partial class WikipediaImportService
     private const string WikipediaApi = "https://it.wikipedia.org/w/api.php";
     private const string WikidataApi = "https://www.wikidata.org/w/api.php";
     private const int MaximumPlaceHierarchyDepth = 6;
-    private const int MaximumRateLimitRetries = 3;
     private static readonly HttpClient Client = CreateClient();
 
     // Edizioni linguistiche lette oltre a quella italiana (codice, nome, Q-id del progetto, chiave sitelink).
@@ -1665,49 +1664,38 @@ public sealed partial class WikipediaImportService
      private static DateTime lastWikidataRequest = DateTime.MinValue;
      private static readonly TimeSpan WikidataInterval = TimeSpan.FromMilliseconds(250);
 
-     private static async Task<JsonDocument> GetJsonAsync(string url, CancellationToken cancellationToken)
+     // Nuovi tentativi e segnalazione delle fasi (coda, richiesta, attesa) in HttpRetry.
+     private static Task<JsonDocument> GetJsonAsync(string url, CancellationToken cancellationToken)
      {
-          var isWikidata = url.StartsWith(WikidataApi, StringComparison.Ordinal);
-          for (var attempt = 0; ; attempt++)
+          static async Task<JsonDocument> Read(HttpResponseMessage response, CancellationToken token)
+                => JsonDocument.Parse(await response.Content.ReadAsStringAsync(token));
+
+          return url.StartsWith(WikidataApi, StringComparison.Ordinal)
+                ? HttpRetry.GetAsync(url, (report, token) => SendToWikidataAsync(url, report, token), Read, cancellationToken)
+                : HttpRetry.GetAsync(Client, url, Read, cancellationToken);
+     }
+
+     // Richieste a Wikidata una alla volta, distanziate di un breve intervallo.
+     private static async Task<HttpResponseMessage> SendToWikidataAsync(string url, Action<NetworkPhase> report, CancellationToken cancellationToken)
+     {
+          report(NetworkPhase.Queued);
+          await WikidataGate.WaitAsync(cancellationToken);
+          try
           {
-                HttpResponseMessage response;
-                if (isWikidata)
+                var elapsed = DateTime.UtcNow - lastWikidataRequest;
+                if (elapsed < WikidataInterval)
                 {
-                     // Richieste a Wikidata una alla volta, distanziate di un breve intervallo.
-                     await WikidataGate.WaitAsync(cancellationToken);
-                     try
-                     {
-                          var elapsed = DateTime.UtcNow - lastWikidataRequest;
-                          if (elapsed < WikidataInterval)
-                          {
-                                await Task.Delay(WikidataInterval - elapsed, cancellationToken);
-                          }
-
-                          response = await Client.GetAsync(url, cancellationToken);
-                          lastWikidataRequest = DateTime.UtcNow;
-                     }
-                     finally
-                     {
-                          WikidataGate.Release();
-                     }
-                }
-                else
-                {
-                     response = await Client.GetAsync(url, cancellationToken);
+                     await Task.Delay(WikidataInterval - elapsed, cancellationToken);
                 }
 
-                using (response)
-                {
-                     if ((response.StatusCode == HttpStatusCode.TooManyRequests || response.StatusCode == HttpStatusCode.ServiceUnavailable)
-                          && attempt < MaximumRateLimitRetries)
-                     {
-                          await Task.Delay(RetryDelay(response.Headers.RetryAfter, attempt), cancellationToken);
-                          continue;
-                     }
-
-                     response.EnsureSuccessStatusCode();
-                     return JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
-                }
+                report(NetworkPhase.Requesting);
+                var response = await Client.GetAsync(url, cancellationToken);
+                lastWikidataRequest = DateTime.UtcNow;
+                return response;
+          }
+          finally
+          {
+                WikidataGate.Release();
           }
      }
 
@@ -1726,19 +1714,6 @@ public sealed partial class WikipediaImportService
             ? $"Wikipedia ha restituito un errore: {info}"
             : "Risposta di Wikipedia non valida o incompleta.");
     }
-
-    // Attesa indicata dal server (secondi o data), altrimenti crescente a ogni tentativo; massimo 30 secondi.
-     internal static TimeSpan RetryDelay(System.Net.Http.Headers.RetryConditionHeaderValue? retryAfter, int attempt)
-     {
-          var wait = retryAfter?.Delta
-                ?? (retryAfter?.Date is { } date ? date - DateTimeOffset.UtcNow : TimeSpan.FromSeconds(2 << attempt));
-          if (wait < TimeSpan.FromSeconds(1))
-          {
-                wait = TimeSpan.FromSeconds(1);
-          }
-
-          return wait > TimeSpan.FromSeconds(30) ? TimeSpan.FromSeconds(30) : wait;
-     }
 
     private static HttpClient CreateClient()
     {

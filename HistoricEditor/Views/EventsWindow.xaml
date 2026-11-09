@@ -74,6 +74,7 @@
                         <StackPanel>
                             <ProgressBar x:Name="WikiProgress" Height="6" IsIndeterminate="True" Maximum="100" AutomationProperties.Name="Avanzamento dell’import" />
                             <TextBlock x:Name="WikiStage" FontSize="11" Foreground="{DynamicResource QuietBrush}" Margin="0,3,0,0" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
+                            <TextBlock x:Name="WikiActivity" Visibility="Collapsed" FontSize="11" Foreground="{DynamicResource QuietBrush}" Margin="0,2,0,0" TextWrapping="Wrap" />
                         </StackPanel>
                     </DockPanel>
                     <TextBlock x:Name="WikiStatus" FontSize="11" Margin="0,6,0,0" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
