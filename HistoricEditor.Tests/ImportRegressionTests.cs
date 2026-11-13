@@ -245,6 +245,30 @@ public class ImportRegressionTests
         ImportFixtures.AssertMatchesSnapshot(page, r);
     }
 
+    [Fact]
+    public async Task MarcoAurelio()
+    {
+        const string page = "Marco Aurelio";
+        var r = await ImportFixtures.ImportAsync(page);
+        var person = ImportedPersonCreator.BuildPerson(r);
+
+        Assert.Equal("Q1430", r.WikidataId);
+        Assert.Equal("Marco Aurelio", person.DisplayName);
+
+        // Wikidata elenca i nomi di tutta la vita: Catilius e Annius, Severus e Verus sono abbandonati («causa della fine»
+        // = cambio di nome per adozione). Il nome è quello attuale, Marcus Aelius Aurelius Antoninus; il nome italiano
+        // completo non è scritto da nessuna parte, quindi le parti si adattano con le regole dell'italiano (2026-11-13).
+        Assert.Equal(("Marcus", "Aelius Aurelius", "Antoninus"), (r.Praenomen, r.Nomen, r.Cognomen));
+        Assert.Equal(("Marco", "Elio Aurelio", "Antonino"), (r.Prenome, r.Gentilizio, r.CognomeRomano));
+
+        // Nato nella gens Annia (gens di nascita «sconosciuta» su Wikidata, ricavata dal nomen Annius), adottato nella gens
+        // Aurelia: conta la gens di nascita.
+        Assert.Equal("gens Annia", r.Gens);
+        Assert.DoesNotContain(r.Dynasties, d => d.WikidataId == "Q906810");
+
+        ImportFixtures.AssertMatchesSnapshot(page, r);
+    }
+
     private static (string, string, string) RomanParts(WikipediaImportResult r, string language)
         => r.LocalizedNames.Single(n => n.Lingua == language) is var n ? (n.Prenome, n.Gentilizio, n.CognomeRomano) : default;
 

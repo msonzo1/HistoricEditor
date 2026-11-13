@@ -264,16 +264,32 @@ public sealed partial class WikipediaImportService
 
         // Onomastica romana: praenomen, nomen gentilicium, cognomina, agnomina e gens.
         var romanPartIds = ReadRomanNameParts(claims);
-        var gensIds = ReadEntityIds(claims, "P5025").ToArray();
+        var (gensIds, adoptiveGensIds) = ReadGensIds(claims);
+        var endedNomenIds = ReadEndedRomanPartIds(claims, "P2359");
         progress.Step(7, "Lettura di famiglie e titoli…");
         var rawTitles = ReadTitleStatements(claims, "P39").Concat(ReadTitleStatements(claims, "P97")).ToList();
         var sexId = ReadEntityIds(claims, "P21").FirstOrDefault();
 
         // Prima richiesta: famiglie, nomi romani, titoli e cause di fine con etichette e affermazioni insieme.
         var related = await ReadEntitiesAsync(
-            familyIds.Concat(surnameIds).Concat(gensIds).Concat(romanPartIds.Values.SelectMany(ids => ids))
+            familyIds.Concat(surnameIds).Concat(gensIds).Concat(romanPartIds.Values.SelectMany(ids => ids)).Concat(endedNomenIds)
                 .Concat(rawTitles.SelectMany(t => new[] { t.EntityId, t.EndCauseId })),
             cancellationToken);
+        // Senza gens di nascita su Wikidata (Marco Aurelio ha «valore sconosciuto») la si ricava dal nomen portato alla
+        // nascita, cioè quello abbandonato se c'è; la gens adottiva vale solo se non si trova altro.
+        if (gensIds.Length == 0)
+        {
+            gensIds = GensOfNomina(endedNomenIds.Length > 0 ? endedNomenIds : romanPartIds["P2359"], related);
+            if (gensIds.Length == 0)
+            {
+                gensIds = adoptiveGensIds;
+            }
+
+            foreach (var (id, gens) in await ReadEntitiesAsync(gensIds.Where(id => !related.ContainsKey(id)), cancellationToken))
+            {
+                related[id] = gens;
+            }
+        }
         familyIds = [.. familyIds.Where(id => !related.TryGetValue(id, out var family)
             || family.GetPropertyOrDefault("claims") is var familyClaims
             && !IsNotAFamily(ReadEntityIds(familyClaims, "P31"), ReadEntityIds(familyClaims, "P36").Any()))];
@@ -443,7 +459,7 @@ public sealed partial class WikipediaImportService
                 leadDates.GetValueOrDefault(language)?.Extract);
             return femaleSex ? parts with { Gentilizio = RomanNaming.FeminineNomen(parts.Gentilizio) } : parts;
         }
-        var italianParts = LocalParts("it");
+        var italianParts = ItalianRomanParts(LocalParts("it"), new RomanParts(praenomen, nomen, cognomen, agnomen));
         localizedNames = AddRomanParts(localizedNames, Languages.Where(l => l.Code != "it").Select(l => (l.Code, l.Name, LocalParts(l.Code))));
         // La gens e i suoi rami nel campo Gens, le dinastie nel campo Famiglia (vedi MarkGensLine).
         var gensLine = dynasties.Where(d => d.Gens).Select(d => d.WikidataId).ToHashSet(StringComparer.Ordinal);
@@ -1188,7 +1204,21 @@ public sealed partial class WikipediaImportService
 
     // Elementi di una parte del nome romano, senza quelli deprecati o contestati (P5102 «natura dell'affermazione»
     // = Q18912752 «contestato»): Vespasiano ha il cognomen «Sabinus» contestato, che non fa parte del suo nome.
+    // Le parti abbandonate (con «causa della fine» P1534 o data di fine P582) appartengono a un nome precedente e non
+    // entrano nel nome: Marco Aurelio, nato Marcus Annius Catilius Severus, ha come nomen attuali Aelius e Aurelius.
+    // Se tutte le parti sono abbandonate si tengono tutte. L'ordine è quello del qualificatore «numero nella serie» (P1545).
     internal static string[] ReadRomanPartIds(JsonElement claims, string propertyId)
+    {
+        var parts = ReadRomanPartStatements(claims, propertyId);
+        var current = parts.Where(p => !p.Ended).ToList();
+        return [.. (current.Count > 0 ? current : parts).Select(p => p.Id).Distinct(StringComparer.Ordinal)];
+    }
+
+    // Parti abbandonate di una parte del nome romano (vedi ReadRomanPartIds).
+    internal static string[] ReadEndedRomanPartIds(JsonElement claims, string propertyId)
+        => [.. ReadRomanPartStatements(claims, propertyId).Where(p => p.Ended).Select(p => p.Id).Distinct(StringComparer.Ordinal)];
+
+    private static List<(string Id, bool Ended)> ReadRomanPartStatements(JsonElement claims, string propertyId)
     {
         if (claims.ValueKind != JsonValueKind.Object || !claims.TryGetProperty(propertyId, out var statements) || statements.ValueKind != JsonValueKind.Array)
         {
@@ -1198,13 +1228,58 @@ public sealed partial class WikipediaImportService
         static bool Disputed(JsonElement statement)
             => statement.GetPropertyOrDefault("qualifiers").GetPropertyOrDefault("P5102") is { ValueKind: JsonValueKind.Array } natures
                 && natures.EnumerateArray().Any(n => GetString(n.GetPropertyOrDefault("datavalue").GetPropertyOrDefault("value"), "id") == "Q18912752");
+        static bool Ended(JsonElement statement)
+            => statement.GetPropertyOrDefault("qualifiers") is { ValueKind: JsonValueKind.Object } qualifiers
+                && (qualifiers.TryGetProperty("P1534", out _) || qualifiers.TryGetProperty("P582", out _));
+        static int Ordinal(JsonElement statement)
+            => statement.GetPropertyOrDefault("qualifiers").GetPropertyOrDefault("P1545") is { ValueKind: JsonValueKind.Array } ordinals
+                && ordinals.GetArrayLength() > 0
+                && int.TryParse(GetString(ordinals[0].GetPropertyOrDefault("datavalue"), "value"), out var n)
+                ? n
+                : int.MaxValue;
 
         return [.. statements.EnumerateArray()
             .Where(s => GetString(s, "rank") != "deprecated" && !Disputed(s))
-            .Select(s => GetString(s.GetPropertyOrDefault("mainsnak").GetPropertyOrDefault("datavalue").GetPropertyOrDefault("value"), "id"))
-            .Where(IsEntityId)
-            .Distinct(StringComparer.Ordinal)];
+            .Select((s, index) => (Id: GetString(s.GetPropertyOrDefault("mainsnak").GetPropertyOrDefault("datavalue").GetPropertyOrDefault("value"), "id"), Ended: Ended(s), Order: Ordinal(s), Index: index))
+            .Where(p => IsEntityId(p.Id))
+            .OrderBy(p => p.Order).ThenBy(p => p.Index)
+            .Select(p => (p.Id, p.Ended))];
     }
+
+    // Gens (P5025): quella di nascita e quella acquisita con l'adozione (qualificatore «causa» P828 = adozione).
+    // Marco Aurelio è nato nella gens Annia ed è entrato per adozione nella gens Aurelia: conta la gens di nascita.
+    private static readonly HashSet<string> AdoptionCauses = new(StringComparer.Ordinal) { "Q5658243", "Q180472", "Q121334179" };
+
+    internal static (string[] Birth, string[] Adoptive) ReadGensIds(JsonElement claims)
+    {
+        if (claims.ValueKind != JsonValueKind.Object || !claims.TryGetProperty("P5025", out var statements) || statements.ValueKind != JsonValueKind.Array)
+        {
+            return ([], []);
+        }
+
+        var birth = new List<string>();
+        var adoptive = new List<string>();
+        foreach (var statement in statements.EnumerateArray().Where(s => GetString(s, "rank") != "deprecated"))
+        {
+            var id = GetString(statement.GetPropertyOrDefault("mainsnak").GetPropertyOrDefault("datavalue").GetPropertyOrDefault("value"), "id");
+            if (!IsEntityId(id))
+            {
+                continue;
+            }
+
+            var adopted = statement.GetPropertyOrDefault("qualifiers").GetPropertyOrDefault("P828") is { ValueKind: JsonValueKind.Array } causes
+                && causes.EnumerateArray().Any(c => AdoptionCauses.Contains(GetString(c.GetPropertyOrDefault("datavalue").GetPropertyOrDefault("value"), "id")));
+            (adopted ? adoptive : birth).Add(id);
+        }
+
+        return ([.. birth.Distinct(StringComparer.Ordinal)], [.. adoptive.Distinct(StringComparer.Ordinal)]);
+    }
+
+    // Gens indicate dagli elementi del nomen (P1535 «usato da»): «Annius» → gens Annia.
+    internal static string[] GensOfNomina(IEnumerable<string> nomenIds, IReadOnlyDictionary<string, JsonElement> related)
+        => [.. nomenIds
+            .SelectMany(id => related.TryGetValue(id, out var nomen) ? ReadEntityIds(nomen.GetPropertyOrDefault("claims"), "P1535") : [])
+            .Distinct(StringComparer.Ordinal)];
 
     // Forma latina del nome di un elemento (praenomen, nomen…): latino, poi etichetta multilingue, inglese, italiano.
     private static string LatinLabel(JsonElement entity)
@@ -1213,6 +1288,20 @@ public sealed partial class WikipediaImportService
         return new[] { "la", "mul", "en", "it" }
             .Select(language => GetString(values.GetPropertyOrDefault(language), "value"))
             .FirstOrDefault(label => label.Length > 0) ?? string.Empty;
+    }
+
+    // Parti italiane rimaste in latino perché il nome italiano non si trova scritto (né nel nome, né negli alias, né
+    // nell'introduzione) o vuote: si adattano con le regole dell'italiano (Marcus Aelius → Marco Elio, vedi RomanNaming.ItalianForm).
+    internal static RomanParts ItalianRomanParts(RomanParts found, RomanParts latin)
+    {
+        // Una parte vuota (elemento senza etichetta italiana) si ricava dal latino.
+        static string Adapt(string part, string latinPart)
+            => part.Trim().Length == 0 || string.Equals(part.Trim(), latinPart.Trim(), StringComparison.OrdinalIgnoreCase) ? RomanNaming.ItalianForm(latinPart) : part;
+        return new RomanParts(
+            Adapt(found.Prenome, latin.Prenome),
+            Adapt(found.Gentilizio, latin.Gentilizio),
+            Adapt(found.Cognome, latin.Cognome),
+            Adapt(found.Agnome, latin.Agnome));
     }
 
     // Parti del nome romano in una lingua: prenome, nome gentilizio, cognome, agnome.

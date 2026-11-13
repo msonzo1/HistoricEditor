@@ -66,6 +66,39 @@ public class RomanNamingTests
     public void FeminineNomen_ChangesEnding(string nomen, string expected)
         => Assert.Equal(expected, RomanNaming.FeminineNomen(nomen));
 
+    // Forma italiana dei nomi latini, per le parti di cui non si trova scritto il nome italiano (2026-11-13, da Marco Aurelio).
+    [Theory]
+    [InlineData("Marcus Aelius Aurelius Antoninus", "Marco Elio Aurelio Antonino")]
+    [InlineData("Marcus Annius Catilius Severus", "Marco Annio Catilio Severo")]
+    [InlineData("Gaius Iulius Caesar", "Gaio Giulio Cesare")]
+    [InlineData("Julius", "Giulio")]
+    [InlineData("Iulia", "Giulia")]
+    [InlineData("Publius Aelius Hadrianus", "Publio Elio Adriano")]
+    [InlineData("Lucius Septimius Severus", "Lucio Settimio Severo")]
+    [InlineData("Gaius Octavius", "Gaio Ottavio")]
+    [InlineData("Titus Flavius Domitianus", "Tito Flavio Domiziano")]
+    [InlineData("Quintus Horatius Flaccus", "Quinto Orazio Flacco")]
+    [InlineData("Marcus Tullius Cicero", "Marco Tullio Cicerone")]
+    [InlineData("Publius Cornelius Scipio Africanus", "Publio Cornelio Scipione Africano")]
+    [InlineData("Sextus Pompeius", "Sesto Pompeo")]
+    [InlineData("Gnaeus Domitius", "Gneo Domizio")]
+    [InlineData("Marcus Cocceius Nerva", "Marco Cocceio Nerva")]
+    [InlineData("Lucius Annaeus Seneca", "Lucio Anneo Seneca")]
+    [InlineData("Gaius Sallustius Crispus", "Gaio Sallustio Crispo")]
+    [InlineData("Maximus", "Massimo")]
+    [InlineData("Felix", "Felice")]
+    [InlineData("Philippus", "Filippo")]
+    [InlineData("Otho", "Otone")]
+    [InlineData("Clemens", "Clemente")]
+    [InlineData("Martialis", "Marziale")]
+    [InlineData("Flavius Valerius Constantinus", "Flavio Valerio Costantino")]
+    [InlineData("Constantius", "Costanzo")]
+    [InlineData("Lucius Cornelius Sulla", "Lucio Cornelio Silla")]
+    [InlineData("Pius", "Pio")]
+    [InlineData("", "")]
+    public void ItalianForm_AdaptsLatinNames(string latin, string expected)
+        => Assert.Equal(expected, RomanNaming.ItalianForm(latin));
+
     [Theory]
     [InlineData("", "100 a.C.", "", false, true)]
     [InlineData("", "", "476", false, true)]

@@ -54,6 +54,8 @@
 - [x] Luogo storico con icona e corsivo nei campi dei luoghi della scheda.
 - [x] Gens e dinastia in campi separati (migrazione `PersonGens`); nell'elenco la persona compare solo sotto la dinastia.
 - [x] Nell'elenco la persona compare sotto la gens; sotto la dinastia solo se non ha una gens (2026-11-13).
+- [x] Marco Aurelio: nome romano attuale (scartate le parti con causa della fine), parti italiane adattate con le regole dell'italiano (Marco Elio Aurelio Antonino), gens di nascita ricavata dal nomen (gens Annia, non la gens Aurelia adottiva); test di non regressione (2026-11-13).
+- [ ] Provare l'app: «Aggiorna da Wikipedia» su Marco Aurelio (nome italiano, campo Gens con gens Annia); la gens Aurelia già registrata resta in archivio e va tolta a mano se non serve.
 - [x] Barra del titolo scura ridisegnata subito all'apertura della scheda.
 - [x] Test di non regressione di Traiano; test su introduzioni, date scartate, luogo storico sotto la regione, raggruppamento gens/dinastia.
 - [ ] Provare l'app con il tema scuro: barra del titolo della scheda personaggio appena aperta (la correzione non è stata vista a schermo).

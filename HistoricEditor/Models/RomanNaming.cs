@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace HistoricEditor;
 
@@ -171,6 +172,67 @@ public static class RomanNaming
         return text.EndsWith("us", StringComparison.OrdinalIgnoreCase) ? text[..^2] + "a"
             : text.EndsWith('o') ? text[..^1] + "a"
             : text;
+    }
+
+    // Forma italiana di un nome latino («Marcus Aelius Aurelius Antoninus» → «Marco Elio Aurelio Antonino»), per le parti
+    // del nome romano di cui non si trova la forma italiana scritta da nessuna parte. Regole degli adattamenti italiani:
+    // finali -ius → -io, -us → -o, -ar → -are, -o → -one, -is → -e, -ns → -nte, -ex → -ice, -x → -ce; I- davanti a vocale
+    // → Gi-, H- iniziale tolta, ae/oe → e, ph → f, th → t, ct/pt → tt, xt → st, x → ss, nst → st, ti + vocale → zi.
+    // I nomi che non seguono le regole sono nell'elenco delle eccezioni.
+    public static string ItalianForm(string? latin)
+        => string.Join(' ', (latin ?? string.Empty).Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(ItalianWord));
+
+    private static readonly Dictionary<string, string> ItalianExceptions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Gnaeus"] = "Gneo",
+        ["Sulla"] = "Silla",
+        ["Pompeius"] = "Pompeo",
+        ["Pompeia"] = "Pompea",
+        ["Constantius"] = "Costanzo",
+        ["Iuvenalis"] = "Giovenale",
+        ["Vergilius"] = "Virgilio",
+        ["Alexander"] = "Alessandro",
+        ["Paulus"] = "Paolo",
+        ["Paullus"] = "Paolo",
+        ["Romulus"] = "Romolo",
+        ["Tertius"] = "Terzo",
+    };
+
+    private static string ItalianWord(string word)
+    {
+        if (ItalianExceptions.TryGetValue(word, out var known))
+        {
+            return known;
+        }
+
+        // Solo parole latine scritte con lettere semplici; il resto (numeri, «f.», nomi già italiani con accenti) resta com'è.
+        if (word.Length < 2 || !word.All(c => c is >= 'a' and <= 'z' or >= 'A' and <= 'Z'))
+        {
+            return word;
+        }
+
+        var w = word.ToLowerInvariant().Replace('j', 'i').Replace('k', 'c').Replace('y', 'i');
+        w = Regex.Replace(w, "^h", string.Empty);
+        w = Regex.Replace(w, "^i(?=[aeiou])", "gi");
+        w = w.Replace("ae", "e").Replace("oe", "e").Replace("ph", "f").Replace("th", "t").Replace("rh", "r");
+
+        // Finali, prima dei gruppi di consonanti (la x finale di «Felix» non diventa «ss»).
+        w = w switch
+        {
+            _ when w.EndsWith("ius") => w[..^3] + "io",
+            _ when w.EndsWith("us") || w.EndsWith("um") => w[..^2] + "o",
+            _ when w.EndsWith("ar") => w + "e",
+            _ when w.EndsWith("o") && w.Length > 2 => w + "ne",
+            _ when w.EndsWith("is") => w[..^2] + "e",
+            _ when w.EndsWith("ns") => w[..^1] + "te",
+            _ when w.EndsWith("ex") => w[..^2] + "ice",
+            _ when w.EndsWith("x") => w[..^1] + "ce",
+            _ => w,
+        };
+
+        w = w.Replace("ct", "tt").Replace("pt", "tt").Replace("xt", "st").Replace("x", "ss").Replace("nst", "st");
+        w = Regex.Replace(w, "(?<=[^s])ti(?=[aeiou])", "zi");
+        return char.ToUpperInvariant(w[0]) + w[1..];
     }
 
     // Valori ripuliti per il salvataggio: spazi tolti e righe vuote scartate.
