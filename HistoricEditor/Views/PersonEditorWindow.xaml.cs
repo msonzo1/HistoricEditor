@@ -80,9 +80,9 @@ public partial class PersonEditorWindow : Window
         }
 
         // Se è mostrata un'altra lingua, il confronto usa i valori modificabili della scheda.
-        var (name, suffix, nickname, mainTitle, _, _, _, _) = ItalianNames();
+        var (name, suffix, nickname, mainTitle) = ItalianNames();
         return string.Join("\u001f",
-            name.Trim(), SurnameInput.Text.Trim(), suffix.Trim(), FamilyInput.Text.Trim(), GensInput.Text.Trim(), SelectedSex,
+            name.Trim(), SurnameInput.Text.Trim(), suffix.Trim(), FamilyInput.Text.Trim(), SelectedSex,
             nickname.Trim(), mainTitle.Trim(), TitlesSnapshot(), LocalizedNamesSnapshot(), RomanSnapshot(),
             BirthInput.Text.Trim(), DeathInput.Text.Trim(), DateCalendarsSnapshot(), birthSources, deathSources, sourceUrl, wikiTreeId,
             Place(BirthPlaceField), Place(DeathPlaceField), Place(BurialPlaceField), NoteEditor.Text);
@@ -375,85 +375,44 @@ public partial class PersonEditorWindow : Window
         try
         {
             var text = FamilyInput.Text;
-            var gensText = GensInput.Text;
             dynasties = store.GetDynasties();
-            // Nel campo Famiglia/Dinastia le dinastie, nel campo Gens le gens (e i loro rami).
+            // Nel campo Famiglia le dinastie; le gens si scelgono nel modulo «Dinastia e gens».
             FamilyInput.ItemsSource = dynasties.Where(d => !d.IsGens).Select(d => d.Nome).ToList();
-            GensInput.ItemsSource = dynasties.Where(d => d.IsGens).Select(d => d.Nome).ToList();
             FamilyInput.Text = text;
-            GensInput.Text = gensText;
         }
         catch (Exception ex) when (ex is DbUpdateException or InvalidOperationException)
         {
             dynasties = [];
             FamilyInput.ItemsSource = null;
-            GensInput.ItemsSource = null;
         }
 
         UpdateDynastyPath();
-        UpdateGensPath();
     }
 
     private IReadOnlyList<Dinastia> dynasties = [];
 
     // Mostra sotto il campo la posizione di ciascuna famiglia nella gerarchia, es. «Ramo di: Asburgo».
-    private void UpdateDynastyPath() => DynastyPathText.Text = DescribeDynasties(FamilyInput.Text, gens: false);
-
-    private void UpdateGensPath() => GensPathText.Text = DescribeDynasties(GensInput.Text, gens: true);
-
-    private string DescribeDynasties(string text, bool gens)
+    private void UpdateDynastyPath()
     {
-        var names = PeopleGrouping.FamilyNames(text);
-        return names.Count switch
-        {
-            0 => string.Empty,
-            1 => DescribeDynasty(names[0], gens),
-            _ => string.Join(" · ", names.Select(n => $"{n} – {DescribeDynasty(n, gens)}")),
-        };
-    }
-
-    private string DescribeDynasty(string name, bool gens)
-    {
-        var dynasty = dynasties.FirstOrDefault(d => PeopleGrouping.FamilyComparer.Equals(d.Nome.Trim(), name));
-        if (dynasty is null)
-        {
-            return gens ? "Nuova gens: verrà registrata al salvataggio" : "Nuova dinastia: verrà registrata al salvataggio";
-        }
-
-        var isGens = dynasty.IsGens;
-        var parents = new List<string>();
-        var visited = new HashSet<int>();
-        while (dynasty?.ParentId is int p && visited.Add(p) && dynasties.FirstOrDefault(d => d.Id == p) is { } parent)
-        {
-            parents.Insert(0, parent.Nome);
-            dynasty = parent;
-        }
-
-        return parents.Count > 0 ? $"Ramo di: {string.Join(" › ", parents)}" : isGens ? "Gens romana" : "Dinastia principale";
+        DynastyPathText.Text = DynastyDescriptions.Hint(dynasties, FamilyInput.Text, gens: false);
+        UpdateRomanFamily();
     }
 
     private void FamilyInput_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e) => UpdateDynastyPath();
 
-    private void GensInput_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e) => UpdateGensPath();
-
-    private void EditDynasty_Click(object sender, RoutedEventArgs e) => EditDynasties(FamilyInput);
-
-    private void EditGens_Click(object sender, RoutedEventArgs e) => EditDynasties(GensInput);
-
-    private void EditDynasties(System.Windows.Controls.ComboBox input)
+    private void EditDynasty_Click(object sender, RoutedEventArgs e)
     {
-        var names = PeopleGrouping.FamilyNames(input.Text);
+        var names = PeopleGrouping.FamilyNames(FamilyInput.Text);
         var window = new DynastiesWindow(store, names.FirstOrDefault()) { Owner = this };
         window.ShowDialog();
         LoadDynastyChoices();
         // Se una dinastia è stata rinominata nella finestra, la scheda segue il nuovo nome.
         if (names.Count > 0)
         {
-            input.Text = PeopleGrouping.JoinFamilyNames(names.Select(window.ResolveRename).Distinct(PeopleGrouping.FamilyComparer));
+            FamilyInput.Text = PeopleGrouping.JoinFamilyNames(names.Select(window.ResolveRename).Distinct(PeopleGrouping.FamilyComparer));
         }
 
         UpdateDynastyPath();
-        UpdateGensPath();
     }
 
     // Una famiglia (o una gens, dal campo Gens) scritta a mano viene registrata senza ramo superiore, se non esiste già.
@@ -513,9 +472,9 @@ public partial class PersonEditorWindow : Window
             changed = true;
         }
 
-        if (GensInput.Text.Trim().Length == 0 && saved.Gens.Length > 0)
+        if (gensText.Trim().Length == 0 && saved.Gens.Length > 0)
         {
-            GensInput.Text = saved.Gens;
+            SetGens(saved.Gens);
             person.Gens = saved.Gens;
             changed = true;
         }

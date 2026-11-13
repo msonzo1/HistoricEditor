@@ -78,28 +78,25 @@ public static class PersonSheet
         return string.Equals(latin, person.DisplayName.Trim(), StringComparison.OrdinalIgnoreCase) ? string.Empty : latin;
     }
 
-    // Nomi portati nel tempo: «Adozione» → «Gaius Iulius Caesar Octavianus (dal 44 a.C. al 27 a.C.)».
-    public static IReadOnlyList<SheetField> NamesOverTime(IEnumerable<RomanNameRecord>? names) =>
-    [
-        .. (names ?? [])
-            .Where(n => !n.IsEmpty())
-            .Select(n =>
-            {
-                var from = n.Dal.Trim();
-                var to = n.Al.Trim();
-                var period = (from.Length > 0, to.Length > 0) switch
-                {
-                    (true, true) => $"dal {from} al {to}",
-                    (true, false) => $"dal {from}",
-                    (false, true) => $"fino al {to}",
-                    _ => string.Empty,
-                };
-                var name = n.Nome.Trim().Length > 0 ? n.Nome.Trim() : "(nome non indicato)";
-                return new SheetField(
-                    n.Motivo.Trim().Length > 0 ? n.Motivo.Trim() : "Nome",
-                    period.Length > 0 ? $"{name} ({period})" : name);
-            }),
-    ];
+    // Nomi portati nel tempo: «Adozione» → «Marco Elio Aurelio Vero – Marcus Aelius Aurelius Verus (dal 138 al 161)»;
+    // il nome principale è segnato con ★. Un solo nome senza periodo né motivo non si elenca (è già nei campi del nome).
+    public static IReadOnlyList<SheetField> NamesOverTime(IEnumerable<RomanNameRecord>? names)
+    {
+        var list = (names ?? []).Where(n => !n.IsEmpty()).ToList();
+        if (list.Count == 1 && list[0].Period.Length == 0 && list[0].Motivo.Trim().Length == 0)
+        {
+            return [];
+        }
+
+        return [.. list.Select(n =>
+        {
+            var name = n.LatinSubtitle.Length > 0 ? $"{n.DisplayName} – {n.LatinSubtitle}" : n.DisplayName;
+            var label = n.Motivo.Trim().Length > 0 ? n.Motivo.Trim() : "Nome";
+            return new SheetField(
+                n.Principale ? $"★ {label} (nome principale)" : label,
+                n.Period.Length > 0 ? $"{name} ({n.Period})" : name);
+        })];
+    }
 
     // Data con il calendario e lo stile dell'anno, se indicati: «10 febbraio 1525 (calendario giuliano, stile fiorentino)».
     public static string DescribeDate(string? date, string? calendario, string? stile)

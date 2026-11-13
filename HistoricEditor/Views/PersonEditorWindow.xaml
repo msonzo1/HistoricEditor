@@ -177,122 +177,58 @@
                             <Border x:Name="RomanPanel" Grid.Row="2" Grid.ColumnSpan="3" Visibility="Collapsed" Margin="0,0,0,14" Background="{DynamicResource AppSurfaceAlt}" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" CornerRadius="10" Padding="14,4,14,14">
                                 <StackPanel>
                                     <TextBlock Text="NOME ROMANO" Style="{StaticResource SectionTitle}" Margin="0,10,0,6" />
-                                    <!-- Gens separata dalla dinastia (campo «Dinastia» sopra): Traiano è della gens Ulpia e della dinastia Nerva-Antonina. -->
-                                    <StackPanel x:Name="GensPanel" Margin="0,0,0,10">
-                                        <Label Content="_Gens" Target="{Binding ElementName=GensInput}" />
-                                        <DockPanel>
-                                            <Button DockPanel.Dock="Right" Content="Gens…" Click="EditGens_Click" Height="34" Padding="10,0" Margin="6,0,0,0" ToolTip="Modifica la gens: ramo di, Wikidata, note" AutomationProperties.Name="Modifica la gens" />
-                                            <ComboBox x:Name="GensInput" Height="34" IsEditable="True" IsTextSearchEnabled="True" VerticalContentAlignment="Center" TextBoxBase.TextChanged="GensInput_TextChanged" AutomationProperties.Name="Gens" AutomationProperties.HelpText="{Binding Text, ElementName=GensPathText}"
-                                                      ToolTip="La gens e i suoi rami, separati da «;» (es. «gens Ulpia; Ulpii Traiani»): un nome nuovo verrà registrato come gens al salvataggio. La dinastia va nel campo «Dinastia»" />
-                                        </DockPanel>
-                                        <TextBlock x:Name="GensPathText" FontSize="11" Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" Margin="2,4,0,0" />
-                                    </StackPanel>
-                                    <!-- Parti del nome nella lingua visualizzata (italiano o un'altra lingua scelta in alto). -->
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="14" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="Auto" />
-                                        </Grid.RowDefinitions>
-                                        <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,0,10">
-                                            <Label Content="Pr_enome" Target="{Binding ElementName=PrenomeInput}" />
-                                            <TextBox x:Name="PrenomeInput" Height="34" TextChanged="RomanPart_Changed" AutomationProperties.Name="Prenome" ToolTip="Nome personale (praenomen), ad esempio «Gaio»" />
-                                        </StackPanel>
-                                        <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,0,10">
-                                            <Label Content="Nome gent_ilizio" Target="{Binding ElementName=GentilizioInput}" />
-                                            <TextBox x:Name="GentilizioInput" Height="34" TextChanged="RomanPart_Changed" AutomationProperties.Name="Nome gentilizio" ToolTip="Nome della gens (nomen), ad esempio «Giulio»; per le donne al femminile, «Giulia»" />
-                                        </StackPanel>
-                                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,0,10">
-                                            <Label Content="Cogn_ome" Target="{Binding ElementName=CognomeRomanoInput}" />
-                                            <TextBox x:Name="CognomeRomanoInput" Height="34" TextChanged="RomanPart_Changed" AutomationProperties.Name="Cognome romano" ToolTip="Ramo della gens o soprannome ereditario (cognomen), ad esempio «Cesare»" />
-                                        </StackPanel>
-                                        <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,0,0,10">
-                                            <Label Content="Ag_nome" Target="{Binding ElementName=AgnomeInput}" />
-                                            <TextBox x:Name="AgnomeInput" Height="34" TextChanged="RomanPart_Changed" AutomationProperties.Name="Agnome" ToolTip="Soprannome personale o onorifico (agnomen), ad esempio «Africano»" />
-                                        </StackPanel>
-                                    </Grid>
+                                    <!-- Dinastia e gens si modificano solo nel modulo dedicato. -->
+                                    <DockPanel Margin="0,0,0,4">
+                                        <Button DockPanel.Dock="Right" Content="Dinastia e gens…" Click="EditDynastyGens_Click" VerticalAlignment="Top" Padding="12,5" Margin="12,0,0,0"
+                                                ToolTip="Modifica la dinastia e la gens del personaggio" AutomationProperties.Name="Modifica dinastia e gens" />
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="Auto" />
+                                            </Grid.RowDefinitions>
+                                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Dinastia" Foreground="{DynamicResource QuietBrush}" Margin="0,0,14,6" />
+                                            <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,6">
+                                                <TextBlock x:Name="RomanDynastyText" FontWeight="SemiBold" Foreground="{DynamicResource InkBrush}" TextWrapping="Wrap" AutomationProperties.Name="Dinastia" />
+                                                <TextBlock x:Name="RomanDynastyPath" FontSize="11" Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" />
+                                            </StackPanel>
+                                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Gens" Foreground="{DynamicResource QuietBrush}" Margin="0,0,14,0" />
+                                            <StackPanel Grid.Row="1" Grid.Column="1">
+                                                <TextBlock x:Name="RomanGensText" FontWeight="SemiBold" Foreground="{DynamicResource InkBrush}" TextWrapping="Wrap" AutomationProperties.Name="Gens" />
+                                                <TextBlock x:Name="RomanGensPath" FontSize="11" Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </DockPanel>
 
-                                    <!-- Forme latine: uguali per tutte le lingue, in una tendina chiusa. -->
-                                    <Expander x:Name="LatinExpander" IsExpanded="False" Margin="0,4,0,0" Foreground="{DynamicResource InkBrush}" AutomationProperties.Name="Nome in latino">
-                                        <Expander.Header>
-                                            <TextBlock x:Name="LatinExpanderHeader" Text="Nome in latino" FontWeight="SemiBold" Foreground="{DynamicResource InkBrush}" TextWrapping="Wrap" />
-                                        </Expander.Header>
-                                        <StackPanel Margin="0,8,0,0">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="14" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="Auto" />
-                                        </Grid.RowDefinitions>
-                                        <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,0,10">
-                                            <Label Content="_Praenomen" Target="{Binding ElementName=PraenomenInput}" />
-                                            <ComboBox x:Name="PraenomenInput" Height="34" IsEditable="True" VerticalContentAlignment="Center" TextBoxBase.TextChanged="RomanPart_Changed"
-                                                      AutomationProperties.Name="Praenomen" ToolTip="Nome personale, ad esempio «Gaius» (abbreviato «C.»)" />
-                                        </StackPanel>
-                                        <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,0,10">
-                                            <Label Content="No_men" Target="{Binding ElementName=NomenInput}" />
-                                            <TextBox x:Name="NomenInput" Height="34" TextChanged="RomanPart_Changed" AutomationProperties.Name="Nomen" ToolTip="Nome della gens, ad esempio «Iulius»; per le donne al femminile, «Iulia»" />
-                                        </StackPanel>
-                                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,0,10">
-                                            <Label Content="Co_gnomen" Target="{Binding ElementName=CognomenInput}" />
-                                            <TextBox x:Name="CognomenInput" Height="34" TextChanged="RomanPart_Changed" AutomationProperties.Name="Cognomen" ToolTip="Ramo della gens o soprannome ereditario, ad esempio «Caesar»; più cognomina separati da spazio" />
-                                        </StackPanel>
-                                        <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,0,0,10">
-                                            <Label Content="Agnomen" Target="{Binding ElementName=AgnomenInput}" />
-                                            <TextBox x:Name="AgnomenInput" Height="34" TextChanged="RomanPart_Changed" AutomationProperties.Name="Agnomen" ToolTip="Soprannome personale o onorifico, ad esempio «Africanus»" />
-                                        </StackPanel>
-                                        <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,0,10">
-                                            <Label Content="Filia_zione" Target="{Binding ElementName=FiliationInput}" />
-                                            <DockPanel>
-                                                <Button DockPanel.Dock="Right" Content="Dal padre" Click="FiliationFromFather_Click" Height="34" Padding="10,0" Margin="6,0,0,0"
-                                                        ToolTip="Compone la filiazione dal praenomen del padre indicato nella tab «Parentele»" AutomationProperties.Name="Filiazione dal praenomen del padre" />
-                                                <TextBox x:Name="FiliationInput" Height="34" TextChanged="RomanPart_Changed" AutomationProperties.Name="Filiazione" ToolTip="Praenomen del padre abbreviato, ad esempio «C. f.» (Gai filius)" />
-                                            </DockPanel>
-                                        </StackPanel>
-                                        <StackPanel Grid.Row="2" Grid.Column="2" Margin="0,0,0,10">
-                                            <Label Content="_Tribù" Target="{Binding ElementName=TribeInput}" />
-                                            <ComboBox x:Name="TribeInput" Height="34" IsEditable="True" VerticalContentAlignment="Center" TextBoxBase.TextChanged="RomanPart_Changed"
-                                                      AutomationProperties.Name="Tribù" ToolTip="Tribù di voto, ad esempio «Fabia» (abbreviata «Fab.» nelle epigrafi)" />
-                                        </StackPanel>
-                                        <StackPanel Grid.Row="3" Grid.ColumnSpan="3" Margin="0,0,0,6">
-                                            <Label Content="Nome latino li_bero" Target="{Binding ElementName=LatinNameInput}" />
-                                            <TextBox x:Name="LatinNameInput" Height="34" TextChanged="RomanPart_Changed" AutomationProperties.Name="Nome latino libero"
-                                                     ToolTip="Facoltativo: scrivi qui la forma latina quando non si compone bene dalle parti (donne, liberti, nomi grecanici). Se indicato, è il nome latino mostrato" />
-                                        </StackPanel>
-                                    </Grid>
-                                    <TextBlock x:Name="LatinPreview" FontSize="12" Foreground="{DynamicResource InkBrush}" TextWrapping="Wrap" Margin="2,2,0,0" AutomationProperties.LiveSetting="Polite" />
-                                        </StackPanel>
-                                    </Expander>
-
-                                    <TextBlock Text="NOMI NEL TEMPO" Style="{StaticResource SectionTitle}" Margin="0,16,0,6" />
-                                    <TextBlock Text="Nomi portati in periodi diversi: adozione, assunzione del potere, titoli onorifici. Ad esempio Gaius Octavius → Gaius Iulius Caesar Octavianus → Imperator Caesar Divi filius Augustus." FontSize="11" Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" Margin="0,0,0,6" />
-                                    <DataGrid x:Name="RomanNamesGrid" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="True" HeadersVisibility="Column" SelectionMode="Single" MinHeight="70" MaxHeight="200" AutomationProperties.Name="Nomi nel tempo">
+                                    <TextBlock Text="NOMI NEL TEMPO" Style="{StaticResource SectionTitle}" Margin="0,14,0,6" />
+                                    <TextBlock Text="Nomi portati nella vita: alla nascita, dopo un'adozione, all'assunzione del potere. Il nome principale (★) è quello usato nel nome latino e nella forma epigrafica. Ogni nome si modifica nel suo modulo (doppio clic o «Modifica…»)." FontSize="11" Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" Margin="0,0,0,6" />
+                                    <DataGrid x:Name="RomanNamesGrid" RowHeight="44" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" CanUserDeleteRows="False" HeadersVisibility="Column" SelectionMode="Single" MinHeight="60" MaxHeight="220"
+                                              MouseDoubleClick="RomanNamesGrid_MouseDoubleClick" SelectionChanged="RomanNamesGrid_SelectionChanged" AutomationProperties.Name="Nomi nel tempo">
                                         <DataGrid.Columns>
-                                            <DataGridTextColumn Header="Nome latino" Binding="{Binding Nome, UpdateSourceTrigger=PropertyChanged}" Width="2*" />
-                                            <DataGridTextColumn Header="Dal" Binding="{Binding Dal, UpdateSourceTrigger=PropertyChanged}" Width="*" />
-                                            <DataGridTextColumn Header="Al" Binding="{Binding Al, UpdateSourceTrigger=PropertyChanged}" Width="*" />
-                                            <DataGridTemplateColumn Header="Motivo" Width="1.3*">
+                                            <DataGridTextColumn Header="" Binding="{Binding Marker}" Width="28" />
+                                            <DataGridTemplateColumn Header="Nome" Width="2.4*">
                                                 <DataGridTemplateColumn.CellTemplate>
                                                     <DataTemplate>
-                                                        <ComboBox IsEditable="True" Text="{Binding Motivo, UpdateSourceTrigger=PropertyChanged}" ItemsSource="{x:Static local:RomanNameRecord.Reasons}" AutomationProperties.Name="Motivo del nome" />
+                                                        <StackPanel Margin="2,3">
+                                                            <TextBlock Text="{Binding DisplayName}" TextWrapping="Wrap" />
+                                                            <TextBlock Text="{Binding LatinSubtitle}" FontStyle="Italic" FontSize="11" Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" />
+                                                        </StackPanel>
                                                     </DataTemplate>
                                                 </DataGridTemplateColumn.CellTemplate>
                                             </DataGridTemplateColumn>
+                                            <DataGridTextColumn Header="Dal" Binding="{Binding Dal}" Width="*" />
+                                            <DataGridTextColumn Header="Al" Binding="{Binding Al}" Width="*" />
+                                            <DataGridTextColumn Header="Motivo" Binding="{Binding Motivo}" Width="1.3*" />
                                         </DataGrid.Columns>
                                     </DataGrid>
                                     <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                                        <Button Content="Aggiungi nome" Click="AddRomanName_Click" Padding="12,5" AutomationProperties.Name="Aggiungi un nome nel tempo" />
-                                        <Button Content="Rimuovi nome" Click="RemoveRomanName_Click" Padding="12,5" Margin="8,0,0,0" AutomationProperties.Name="Rimuovi il nome nel tempo selezionato" />
+                                        <Button Content="Nuovo nome…" Click="AddRomanName_Click" Padding="12,5" AutomationProperties.Name="Aggiungi un nome nel tempo" />
+                                        <Button x:Name="EditRomanNameButton" Content="Modifica…" Click="EditRomanName_Click" Padding="12,5" Margin="8,0,0,0" AutomationProperties.Name="Modifica il nome selezionato" />
+                                        <Button x:Name="RemoveRomanNameButton" Content="Elimina" Click="RemoveRomanName_Click" Padding="12,5" Margin="8,0,0,0" AutomationProperties.Name="Elimina il nome selezionato" />
+                                        <Button x:Name="PrincipalRomanNameButton" Content="Imposta come principale" Click="SetPrincipalRomanName_Click" Padding="12,5" Margin="8,0,0,0" AutomationProperties.Name="Imposta il nome selezionato come principale" />
                                     </StackPanel>
                                 </StackPanel>
                             </Border>

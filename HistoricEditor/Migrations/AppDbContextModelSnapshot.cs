@@ -1716,16 +1716,51 @@ namespace HistoricEditor.Migrations
                             b1.Property<int>("__synthesizedOrdinal")
                                 .ValueGeneratedOnAddOrUpdate();
 
+                            b1.Property<string>("Agnome")
+                                .IsRequired();
+
+                            b1.Property<string>("Agnomen")
+                                .IsRequired();
+
                             b1.Property<string>("Al")
                                 .IsRequired();
 
+                            b1.Property<string>("CognomeRomano")
+                                .IsRequired();
+
+                            b1.Property<string>("Cognomen")
+                                .IsRequired();
+
                             b1.Property<string>("Dal")
+                                .IsRequired();
+
+                            b1.Property<string>("Filiazione")
+                                .IsRequired();
+
+                            b1.Property<string>("Gentilizio")
                                 .IsRequired();
 
                             b1.Property<string>("Motivo")
                                 .IsRequired();
 
                             b1.Property<string>("Nome")
+                                .IsRequired();
+
+                            b1.Property<string>("NomeLatino")
+                                .IsRequired();
+
+                            b1.Property<string>("Nomen")
+                                .IsRequired();
+
+                            b1.Property<string>("Praenomen")
+                                .IsRequired();
+
+                            b1.Property<string>("Prenome")
+                                .IsRequired();
+
+                            b1.Property<bool>("Principale");
+
+                            b1.Property<string>("Tribu")
                                 .IsRequired();
 
                             b1.HasKey("HistoricalPersonId", "__synthesizedOrdinal");

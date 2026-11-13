@@ -1,20 +1,23 @@
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace HistoricEditor;
 
-// Onomastica romana nella scheda: praenomen, nomen, cognomen, agnomen, filiazione, tribù, nome latino e nomi nel tempo.
+// Onomastica romana nella scheda: dinastia e gens (modulo «Dinastia e gens») e nomi nel tempo, ciascuno con il suo modulo
+// (parti in italiano e in latino, filiazione, tribù, periodo, motivo). Il nome principale dà le parti della persona.
 public partial class PersonEditorWindow
 {
     private readonly ObservableCollection<RomanNameRecord> romanNames = [];
+
+    // Gens della persona: si modifica solo nel modulo «Dinastia e gens».
+    private string gensText = string.Empty;
 
     private bool romanForm;
 
     private void InitializeRomanInputs()
     {
-        PraenomenInput.ItemsSource = RomanNaming.Praenomina;
-        TribeInput.ItemsSource = RomanNaming.Tribes;
         RomanNamesGrid.ItemsSource = romanNames;
         NamingInput.Items.Add(new ComboBoxItem { Tag = Onomastiche.Automatica });
         NamingInput.Items.Add(new ComboBoxItem { Tag = Onomastiche.Romana, Content = "Romana: praenomen, nomen, cognomen e gens" });
@@ -27,6 +30,7 @@ public partial class PersonEditorWindow
         SurnameInput.TextChanged += (_, _) => UpdateNamingMode();
         SuffixInput.TextChanged += (_, _) => UpdateNamingMode();
         UpdateNamingMode();
+        UpdateRomanNameButtons();
     }
 
     private string SelectedNaming => (NamingInput.SelectedItem as ComboBoxItem)?.Tag as string ?? Onomastiche.Automatica;
@@ -35,17 +39,15 @@ public partial class PersonEditorWindow
         => NamingInput.SelectedItem = NamingInput.Items.OfType<ComboBoxItem>().FirstOrDefault(i => (i.Tag as string) == (onomastica ?? string.Empty))
             ?? NamingInput.Items[0];
 
-    private bool FormHasRomanParts => RomanNaming.HasRomanParts(
-        PraenomenInput.Text, NomenInput.Text, CognomenInput.Text, AgnomenInput.Text, LatinNameInput.Text,
-        PrenomeInput.Text, GentilizioInput.Text, CognomeRomanoInput.Text, AgnomeInput.Text);
+    private RomanNameRecord? PrincipalName => romanNames.FirstOrDefault(n => n.Principale);
+
+    private bool FormHasRomanParts => romanNames.Any(n => n.HasParts);
 
     private bool IsRomanForm => RomanNaming.IsRoman(SelectedNaming, BirthInput.Text, DeathInput.Text, FormHasRomanParts);
 
     private void NamingInput_SelectionChanged(object sender, SelectionChangedEventArgs e) => UpdateNamingMode();
 
-    private void RomanPart_Changed(object sender, TextChangedEventArgs e) => UpdateNamingMode();
-
-    // Mostra i campi del nome romano o quelli standard e aggiorna l'anteprima del nome latino.
+    // Mostra il riquadro del nome romano o i campi standard e aggiorna il nome latino nell'intestazione.
     private void UpdateNamingMode()
     {
         if (NamingInput.Items.Count == 0)
@@ -67,26 +69,14 @@ public partial class PersonEditorWindow
         // Cognome e suffisso restano visibili anche nella scheda romana se contengono già un valore, per non nasconderlo.
         SurnamePanel.Visibility = !roman || SurnameInput.Text.Trim().Length > 0 ? Visibility.Visible : Visibility.Collapsed;
         SuffixPanel.Visibility = !roman || SuffixInput.Text.Trim().Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+        // Nella scheda romana la dinastia si vede (e si modifica con il suo modulo) nel riquadro del nome romano.
+        FamilyPanel.Visibility = roman ? Visibility.Collapsed : Visibility.Visible;
         Grid.SetRow(FamilyPanel, SurnamePanel.Visibility == Visibility.Visible ? 1 : 0);
         SurnameLabel.Content = roman ? "Cognome (scheda standard)" : "Cognome";
         NameLabel.Content = roman ? "Nome italiano *" : "Nome *";
         NameInput.ToolTip = roman ? "Come compare in italiano, ad esempio «Gaio Giulio Cesare»: è il nome mostrato negli elenchi" : null;
-        // La gens ha un campo proprio nel riquadro del nome romano; qui resta la dinastia (es. «Dinastia flavia»).
-        FamilyLabel.Content = roman ? "Dinastia" : "Famiglia";
-        System.Windows.Automation.AutomationProperties.SetName(FamilyInput, roman ? "Dinastia" : "Famiglia");
-        FamilyInput.ToolTip = roman
-            ? "La dinastia (es. «Dinastia flavia»), non la gens, che ha un campo proprio nel riquadro del nome romano. Un nome nuovo verrà aggiunto alle dinastie al salvataggio"
-            : "Scegli una dinastia registrata o scrivi un nome nuovo: verrà aggiunto alle dinastie al salvataggio";
 
-        var latin = RomanNaming.LatinName(PraenomenInput.Text, NomenInput.Text, CognomenInput.Text, AgnomenInput.Text, LatinNameInput.Text);
-        var epigraphic = RomanNaming.Epigraphic(PraenomenInput.Text, NomenInput.Text, FiliationInput.Text, TribeInput.Text, CognomenInput.Text, AgnomenInput.Text);
-        LatinPreview.Text = latin.Length == 0
-            ? "Compila le parti del nome: il nome latino si compone da solo."
-            : epigraphic.Length > 0 && !string.Equals(epigraphic, latin, StringComparison.Ordinal)
-                ? $"Nome latino: {latin}  ·  Forma epigrafica: {epigraphic}"
-                : $"Nome latino: {latin}";
-        // A tendina chiusa il nome latino resta leggibile nell'intestazione.
-        LatinExpanderHeader.Text = latin.Length > 0 ? $"Nome in latino: {latin}" : "Nome in latino";
+        var latin = PrincipalName?.LatinName ?? string.Empty;
         HeaderLatin.Text = roman ? latin : string.Empty;
         HeaderLatin.Visibility = HeaderLatin.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
 
@@ -96,70 +86,85 @@ public partial class PersonEditorWindow
         }
     }
 
+    // Dinastia e gens mostrate nel riquadro del nome romano come percorso («gens Flavia › Flavii Sabini»);
+    // sotto, solo se servono, le famiglie non ancora registrate.
+    private void UpdateRomanFamily()
+    {
+        static void Show(TextBlock value, TextBlock note, (string Path, string Note) summary)
+        {
+            value.Text = summary.Path.Length > 0 ? summary.Path : "Non indicata";
+            value.Opacity = summary.Path.Length > 0 ? 1 : 0.6;
+            note.Text = summary.Note;
+            note.Visibility = summary.Note.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        Show(RomanDynastyText, RomanDynastyPath, DynastyDescriptions.Summarize(dynasties, FamilyInput.Text, gens: false));
+        Show(RomanGensText, RomanGensPath, DynastyDescriptions.Summarize(dynasties, gensText, gens: true));
+    }
+
+    private void SetGens(string gens)
+    {
+        gensText = gens.Trim();
+        UpdateRomanFamily();
+    }
+
+    private void EditDynastyGens_Click(object sender, RoutedEventArgs e)
+    {
+        var window = new DynastyGensWindow(store, FamilyInput.Text, gensText) { Owner = this };
+        if (window.ShowDialog() == true)
+        {
+            FamilyInput.Text = window.ResultFamily;
+            SetGens(window.ResultGens);
+        }
+
+        // Nel modulo si possono anche modificare o rinominare le dinastie registrate.
+        LoadDynastyChoices();
+    }
+
     private void FillRomanName(HistoricalPerson person)
     {
-        RomanNamesGrid.CommitEdit();
         person.Onomastica = SelectedNaming;
-        person.Praenomen = PraenomenInput.Text.Trim();
-        person.Nomen = NomenInput.Text.Trim();
-        person.Cognomen = CognomenInput.Text.Trim();
-        person.Agnomen = AgnomenInput.Text.Trim();
-        person.Filiazione = FiliationInput.Text.Trim();
-        person.Tribu = TribeInput.Text.Trim();
-        person.NomeLatino = LatinNameInput.Text.Trim();
-        person.NomiNelTempo = RomanNaming.Normalize(romanNames);
-
-        // Le parti in italiano (la scheda è già tornata all'italiano prima del salvataggio).
-        var italian = ItalianNames();
-        person.Prenome = italian.Prenome.Trim();
-        person.Gentilizio = italian.Gentilizio.Trim();
-        person.CognomeRomano = italian.CognomeRomano.Trim();
-        person.Agnome = italian.Agnome.Trim();
+        RomanNaming.SetNames(person, romanNames);
     }
 
     private void LoadRomanName(HistoricalPerson person)
     {
         SelectNaming(person.Onomastica);
-        PraenomenInput.Text = person.Praenomen;
-        NomenInput.Text = person.Nomen;
-        CognomenInput.Text = person.Cognomen;
-        AgnomenInput.Text = person.Agnomen;
-        FiliationInput.Text = person.Filiazione;
-        TribeInput.Text = person.Tribu;
-        LatinNameInput.Text = person.NomeLatino;
-        PrenomeInput.Text = person.Prenome;
-        GentilizioInput.Text = person.Gentilizio;
-        CognomeRomanoInput.Text = person.CognomeRomano;
-        AgnomeInput.Text = person.Agnome;
-        SetRomanNames(person.NomiNelTempo ?? []);
+        SetRomanNames(RomanNaming.NamesOf(person));
         UpdateNamingMode();
     }
 
-    // Dall'import arrivano le parti del nome; filiazione, tribù e nomi nel tempo non sono su Wikidata e restano quelli della scheda.
-    // Una parte che Wikidata non indica non cancella quella scritta a mano (aggiornamento di una scheda esistente).
+    // Dall'import arrivano le parti del nome principale; filiazione, tribù e gli altri nomi non sono su Wikidata e restano
+    // quelli della scheda. Una parte che Wikidata non indica non cancella quella scritta a mano (aggiornamento di una scheda).
     private void PrefillRomanName(WikipediaImportResult import)
     {
-        static void Apply(TextBox input, string value)
+        var principal = PrincipalName;
+        var created = principal is null;
+        principal = principal?.Clone() ?? new RomanNameRecord { Principale = true };
+
+        static string Pick(string imported, string current) => imported.Trim().Length > 0 ? imported.Trim() : current;
+        principal.Praenomen = Pick(import.Praenomen, principal.Praenomen);
+        principal.Nomen = Pick(import.Nomen, principal.Nomen);
+        principal.Cognomen = Pick(import.Cognomen, principal.Cognomen);
+        principal.Agnomen = Pick(import.Agnomen, principal.Agnomen);
+        principal.NomeLatino = Pick(import.NomeLatino, principal.NomeLatino);
+        principal.Prenome = Pick(import.Prenome, principal.Prenome);
+        principal.Gentilizio = Pick(import.Gentilizio, principal.Gentilizio);
+        principal.CognomeRomano = Pick(import.CognomeRomano, principal.CognomeRomano);
+        principal.Agnome = Pick(import.Agnome, principal.Agnome);
+
+        if (created)
         {
-            if (value.Trim().Length > 0)
+            if (principal.HasParts)
             {
-                input.Text = value.Trim();
+                romanNames.Add(principal);
             }
         }
-
-        if (import.Praenomen.Trim().Length > 0)
+        else
         {
-            PraenomenInput.Text = import.Praenomen.Trim();
+            ReplaceRomanName(PrincipalName!, principal);
         }
 
-        Apply(NomenInput, import.Nomen);
-        Apply(CognomenInput, import.Cognomen);
-        Apply(AgnomenInput, import.Agnomen);
-        Apply(LatinNameInput, import.NomeLatino);
-        Apply(PrenomeInput, import.Prenome);
-        Apply(GentilizioInput, import.Gentilizio);
-        Apply(CognomeRomanoInput, import.CognomeRomano);
-        Apply(AgnomeInput, import.Agnome);
         UpdateNamingMode();
     }
 
@@ -170,57 +175,140 @@ public partial class PersonEditorWindow
         {
             romanNames.Add(name.Clone());
         }
+
+        UpdateRomanNameButtons();
+    }
+
+    private void ReplaceRomanName(RomanNameRecord old, RomanNameRecord updated)
+    {
+        var index = romanNames.IndexOf(old);
+        if (index >= 0)
+        {
+            romanNames[index] = updated;
+            RomanNamesGrid.SelectedItem = updated;
+        }
     }
 
     private string RomanSnapshot()
+        => string.Join("\u001e", romanNames.Select(n => string.Join("|",
+            n.Principale, n.Prenome, n.Gentilizio, n.CognomeRomano, n.Agnome, n.Praenomen, n.Nomen, n.Cognomen, n.Agnomen,
+            n.Filiazione, n.Tribu, n.NomeLatino, n.Dal, n.Al, n.Motivo)))
+            + "\u001d" + SelectedNaming + "\u001d" + gensText.Trim();
+
+    private RomanNameRecord? SelectedRomanName => RomanNamesGrid.SelectedItem as RomanNameRecord;
+
+    private void RomanNamesGrid_SelectionChanged(object sender, SelectionChangedEventArgs e) => UpdateRomanNameButtons();
+
+    private void UpdateRomanNameButtons()
     {
-        RomanNamesGrid.CommitEdit();
-        var italian = ItalianNames();
-        return string.Join("|",
-            italian.Prenome.Trim(), italian.Gentilizio.Trim(), italian.CognomeRomano.Trim(), italian.Agnome.Trim(),
-            SelectedNaming, PraenomenInput.Text.Trim(), NomenInput.Text.Trim(), CognomenInput.Text.Trim(), AgnomenInput.Text.Trim(),
-            FiliationInput.Text.Trim(), TribeInput.Text.Trim(), LatinNameInput.Text.Trim(),
-            string.Join("\u001e", romanNames.Select(n => $"{n.Nome.Trim()}|{n.Dal.Trim()}|{n.Al.Trim()}|{n.Motivo.Trim()}")));
+        var selected = SelectedRomanName;
+        EditRomanNameButton.IsEnabled = selected is not null;
+        RemoveRomanNameButton.IsEnabled = selected is not null;
+        PrincipalRomanNameButton.IsEnabled = selected is { Principale: false };
+    }
+
+    private void RomanNamesGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        if (SelectedRomanName is { } name && e.OriginalSource is DependencyObject source && ItemsControl.ContainerFromElement(RomanNamesGrid, source) is DataGridRow)
+        {
+            EditRomanName(name);
+        }
+    }
+
+    private void EditRomanName_Click(object sender, RoutedEventArgs e)
+    {
+        if (SelectedRomanName is { } name)
+        {
+            EditRomanName(name);
+        }
     }
 
     private void AddRomanName_Click(object sender, RoutedEventArgs e)
     {
-        RomanNamesGrid.CommitEdit();
-        // Il primo nome proposto è quello attuale, da completare con il periodo.
-        var current = RomanNaming.LatinName(PraenomenInput.Text, NomenInput.Text, CognomenInput.Text, AgnomenInput.Text, LatinNameInput.Text);
-        var name = new RomanNameRecord { Nome = romanNames.Count == 0 ? current : string.Empty };
-        romanNames.Add(name);
-        RomanNamesGrid.SelectedItem = name;
-        RomanNamesGrid.ScrollIntoView(name);
-        RomanNamesGrid.Focus();
+        // Il primo nome è il principale.
+        var name = new RomanNameRecord { Principale = romanNames.Count == 0 };
+        if (ShowRomanNameEditor(name) is { } result)
+        {
+            romanNames.Add(result);
+            RomanNamesGrid.SelectedItem = result;
+            RomanNamesGrid.ScrollIntoView(result);
+            UpdateNamingMode();
+        }
+    }
+
+    private void EditRomanName(RomanNameRecord name)
+    {
+        if (ShowRomanNameEditor(name) is { } result)
+        {
+            ReplaceRomanName(name, result);
+            UpdateNamingMode();
+        }
+    }
+
+    // Apre il modulo del nome; per il nome principale anche le parti nelle altre lingue della scheda.
+    private RomanNameRecord? ShowRomanNameEditor(RomanNameRecord name)
+    {
+        CommitShownLanguage();
+        var father = editingPerson?.FatherId is int fatherId ? store.GetPerson(fatherId) : null;
+        var window = new RomanNameEditorWindow(name, father, name.Principale ? localizedNames : null) { Owner = this };
+        if (window.ShowDialog() != true)
+        {
+            return null;
+        }
+
+        foreach (var edited in window.ResultLanguages ?? [])
+        {
+            if (localizedNames.FirstOrDefault(l => l.Lingua == edited.Lingua) is { } target)
+            {
+                target.Prenome = edited.Prenome.Trim();
+                target.Gentilizio = edited.Gentilizio.Trim();
+                target.CognomeRomano = edited.CognomeRomano.Trim();
+                target.Agnome = edited.Agnome.Trim();
+            }
+        }
+
+        return window.Result;
     }
 
     private void RemoveRomanName_Click(object sender, RoutedEventArgs e)
     {
-        RomanNamesGrid.CommitEdit();
-        if (RomanNamesGrid.SelectedItem is RomanNameRecord name)
+        if (SelectedRomanName is not { } name)
         {
-            romanNames.Remove(name);
+            return;
+        }
+
+        romanNames.Remove(name);
+        // Senza il principale diventa principale l'ultimo nome rimasto.
+        if (name.Principale && romanNames.Count > 0)
+        {
+            SetPrincipal(romanNames[^1]);
+        }
+
+        UpdateRomanNameButtons();
+        UpdateNamingMode();
+    }
+
+    private void SetPrincipalRomanName_Click(object sender, RoutedEventArgs e)
+    {
+        if (SelectedRomanName is { } name)
+        {
+            SetPrincipal(name);
+            UpdateNamingMode();
         }
     }
 
-    private void FiliationFromFather_Click(object sender, RoutedEventArgs e)
+    private void SetPrincipal(RomanNameRecord principal)
     {
-        var father = editingPerson?.FatherId is int fatherId ? store.GetPerson(fatherId) : null;
-        if (father is null)
+        foreach (var name in romanNames.ToList())
         {
-            Feedback.Error(EditorMessage, "Indica prima il padre nella tab «Parentele e relazioni».");
-            return;
+            if (name.Principale != ReferenceEquals(name, principal))
+            {
+                var updated = name.Clone();
+                updated.Principale = ReferenceEquals(name, principal);
+                ReplaceRomanName(name, updated);
+            }
         }
 
-        var filiation = RomanNaming.Filiation(father.Praenomen);
-        if (filiation.Length == 0)
-        {
-            Feedback.Error(EditorMessage, $"Nella scheda di {father.DisplayName} manca il praenomen.");
-            return;
-        }
-
-        FiliationInput.Text = filiation;
-        Feedback.Success(EditorMessage, $"Filiazione composta dal praenomen di {father.DisplayName}.");
+        UpdateRomanNameButtons();
     }
 }

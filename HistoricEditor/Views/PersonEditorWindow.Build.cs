@@ -60,7 +60,7 @@ public partial class PersonEditorWindow
         person.Surname = SurnameInput.Text.Trim();
         person.Suffix = SuffixInput.Text.Trim();
         person.Family = FamilyInput.Text.Trim();
-        person.Gens = GensInput.Text.Trim();
+        person.Gens = gensText.Trim();
         person.Sesso = SelectedSex;
         person.Nickname = NicknameInput.Text.Trim();
         person.MainTitle = MainTitleInput.Text.Trim();
@@ -100,7 +100,7 @@ public partial class PersonEditorWindow
         SurnameInput.Text = person.Surname;
         SuffixInput.Text = person.Suffix;
         FamilyInput.Text = person.Family;
-        GensInput.Text = person.Gens;
+        SetGens(person.Gens);
         SelectSex(person.Sesso);
         NicknameInput.Text = person.Nickname;
         MainTitleInput.Text = person.MainTitle;
@@ -133,7 +133,7 @@ public partial class PersonEditorWindow
         SetTitles(import.Titles);
         SetLocalizedNames(import.LocalizedNames);
         FamilyInput.Text = import.Family;
-        GensInput.Text = import.Gens;
+        SetGens(import.Gens);
         SelectSex(import.Sesso);
         PrefillRomanName(import);
         BirthInput.Text = FormatDateInput(import.BirthDates);

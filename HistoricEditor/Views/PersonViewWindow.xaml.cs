@@ -42,7 +42,7 @@ public partial class PersonViewWindow : Window
         DynastyPathText.Text = LoadDynastyPath();
         DynastyPathText.Visibility = DynastyPathText.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
 
-        var romanNames = PersonSheet.NamesOverTime(person.NomiNelTempo);
+        var romanNames = PersonSheet.NamesOverTime(RomanNaming.NamesOf(person));
         RomanNamesList.ItemsSource = romanNames;
         RomanNamesCard.Visibility = romanNames.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
 

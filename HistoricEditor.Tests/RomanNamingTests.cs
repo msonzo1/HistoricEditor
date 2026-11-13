@@ -111,16 +111,76 @@ public class RomanNamingTests
         => Assert.Equal(expected, RomanNaming.IsRoman(choice, birth, death, hasParts));
 
     [Fact]
-    public void Normalize_TrimsAndDropsEmptyRows()
+    public void Normalize_TrimsDropsEmptyRowsAndKeepsOnePrincipal()
     {
         var names = RomanNaming.Normalize(
         [
             new RomanNameRecord { Nome = " Gaius Octavius ", Motivo = "Nome alla nascita" },
             new RomanNameRecord { Nome = " ", Dal = "", Al = " " },
+            new RomanNameRecord { Praenomen = " Gaius ", Nomen = "Iulius", Cognomen = "Caesar Octavianus", Dal = "44 a.C." },
         ]);
 
-        var name = Assert.Single(names);
-        Assert.Equal("Gaius Octavius", name.Nome);
+        Assert.Equal(2, names.Count);
+        // Il vecchio testo libero passa nel nome latino libero.
+        Assert.Equal(("", "Gaius Octavius"), (names[0].Nome, names[0].NomeLatino));
+        Assert.Equal("Gaius", names[1].Praenomen);
+        // Senza un principale indicato lo diventa l'ultimo.
+        Assert.Equal([false, true], names.Select(n => n.Principale));
+    }
+
+    // Nomi nel tempo (2026-11-13): il principale è allineato ai campi della persona; le schede con i vecchi «Nomi nel tempo»
+    // (solo testo latino) diventano nomi con il testo nel nome latino libero.
+    [Fact]
+    public void NamesOf_BuildsPrincipalFromPersonAndConvertsOldNames()
+    {
+        var person = new HistoricalPerson
+        {
+            Name = "Augusto", Praenomen = "Gaius", Nomen = "Iulius", Cognomen = "Caesar", Prenome = "Gaio", Gentilizio = "Giulio", CognomeRomano = "Cesare",
+            NomiNelTempo =
+            [
+                new RomanNameRecord { Nome = "Gaius Octavius", Al = "44 a.C.", Motivo = "Nome alla nascita" },
+                new RomanNameRecord { Nome = "Gaius Iulius Caesar", Dal = "44 a.C.", Motivo = "Adozione testamentaria" },
+            ],
+        };
+
+        var names = RomanNaming.NamesOf(person);
+
+        Assert.Equal(2, names.Count);
+        Assert.Equal(("Gaius Octavius", false), (names[0].LatinName, names[0].Principale));
+        // Il vecchio nome uguale a quello della persona diventa il principale, con le parti della persona.
+        Assert.True(names[1].Principale);
+        Assert.Equal(("Gaio Giulio Cesare", "Gaius Iulius Caesar", "Adozione testamentaria"), (names[1].DisplayName, names[1].LatinName, names[1].Motivo));
+
+        // Una persona senza nomi salvati ha un solo nome, il principale, che al salvataggio resta nei soli campi della persona.
+        var caesar = Caesar();
+        var single = Assert.Single(RomanNaming.NamesOf(caesar));
+        Assert.True(single.Principale);
+        RomanNaming.SetNames(caesar, [single]);
+        Assert.Empty(caesar.NomiNelTempo);
+        Assert.Equal("Gaius", caesar.Praenomen);
+
+        // Una persona non romana non ha nomi.
+        Assert.Empty(RomanNaming.NamesOf(new HistoricalPerson { Name = "Carlo", Suffix = "V" }));
+    }
+
+    [Fact]
+    public void SetNames_CopiesPrincipalIntoPerson()
+    {
+        var person = new HistoricalPerson { Name = "Marco Aurelio" };
+        RomanNaming.SetNames(person,
+        [
+            new RomanNameRecord { Prenome = "Marco", Gentilizio = "Annio Catilio", CognomeRomano = "Severo", Praenomen = "Marcus", Nomen = "Annius Catilius", Cognomen = "Severus", Motivo = "Nome alla nascita" },
+            new RomanNameRecord { Prenome = "Marco", Gentilizio = "Aurelio", CognomeRomano = "Antonino", Praenomen = "Marcus", Nomen = "Aurelius", Cognomen = "Antoninus", Dal = "161", Principale = true },
+        ]);
+
+        Assert.Equal(("Marco", "Aurelio", "Antonino"), (person.Prenome, person.Gentilizio, person.CognomeRomano));
+        Assert.Equal(("Marcus", "Aurelius", "Antoninus"), (person.Praenomen, person.Nomen, person.Cognomen));
+        Assert.Equal(2, person.NomiNelTempo.Count);
+
+        // Riletti: stesso ordine e stesso principale.
+        var names = RomanNaming.NamesOf(person);
+        Assert.Equal(["Marco Annio Catilio Severo", "Marco Aurelio Antonino"], names.Select(n => n.DisplayName));
+        Assert.Equal([false, true], names.Select(n => n.Principale));
     }
 
     [Fact]
@@ -157,15 +217,18 @@ public class RomanNamingTests
     {
         var names = PersonSheet.NamesOverTime(
         [
-            new RomanNameRecord { Nome = "Gaius Octavius", Al = "44 a.C.", Motivo = "Nome alla nascita" },
-            new RomanNameRecord { Nome = "Gaius Iulius Caesar", Dal = "44 a.C.", Al = "27 a.C.", Motivo = "Adozione testamentaria" },
-            new RomanNameRecord { Nome = "Imperator Caesar Augustus", Dal = "27 a.C." },
+            new RomanNameRecord { NomeLatino = "Gaius Octavius", Prenome = "Gaio", Gentilizio = "Ottavio", Al = "44 a.C.", Motivo = "Nome alla nascita" },
+            new RomanNameRecord { NomeLatino = "Gaius Iulius Caesar", Dal = "44 a.C.", Al = "27 a.C.", Motivo = "Adozione testamentaria" },
+            new RomanNameRecord { NomeLatino = "Imperator Caesar Augustus", Dal = "27 a.C.", Principale = true },
         ]);
 
-        Assert.Equal(["Nome alla nascita", "Adozione testamentaria", "Nome"], names.Select(n => n.Etichetta));
-        Assert.Equal("Gaius Octavius (fino al 44 a.C.)", names[0].Valore);
+        Assert.Equal(["Nome alla nascita", "Adozione testamentaria", "★ Nome (nome principale)"], names.Select(n => n.Etichetta));
+        Assert.Equal("Gaio Ottavio – Gaius Octavius (fino al 44 a.C.)", names[0].Valore);
         Assert.Equal("Gaius Iulius Caesar (dal 44 a.C. al 27 a.C.)", names[1].Valore);
         Assert.Equal("Imperator Caesar Augustus (dal 27 a.C.)", names[2].Valore);
+
+        // Un solo nome senza periodo né motivo non si elenca: è già nei campi del nome.
+        Assert.Empty(PersonSheet.NamesOverTime([new RomanNameRecord { Praenomen = "Gaius", Principale = true }]));
 
         IReadOnlyList<Dinastia> dynasties =
         [
@@ -406,7 +469,7 @@ public class RomanNamingTests
                 // Import o aggiornamento: campi, altre tab, Salva bloccati; l'avanzamento con «Annulla» e «Chiudi» no.
                 setBusy.Invoke(editor, [true, true]);
                 Assert.False(editor.NameInput.IsEnabled);
-                Assert.False(editor.PrenomeInput.IsEnabled);
+                Assert.False(editor.RomanNamesGrid.IsEnabled);
                 Assert.False(editor.LanguageSelector.IsEnabled);
                 Assert.False(editor.SaveButton.IsEnabled);
                 Assert.False(((UIElement)editor.FamilyTab.Content).IsEnabled);

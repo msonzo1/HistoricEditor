@@ -23,8 +23,7 @@ public partial class PersonEditorWindow
     private List<LocalizedPersonName> localizedNames = [];
     // Valori in italiano della scheda, conservati mentre i campi mostrano un'altra lingua.
     private sealed record WorkingNames(
-        string Name, string Suffix, string Nickname, string MainTitle,
-        string Prenome, string Gentilizio, string CognomeRomano, string Agnome);
+        string Name, string Suffix, string Nickname, string MainTitle);
 
     private WorkingNames? workingValues;
     private LocalizedPersonName? shownLanguage;
@@ -81,10 +80,6 @@ public partial class PersonEditorWindow
         SuffixInput.Text = values.Suffisso;
         NicknameInput.Text = values.Soprannome;
         MainTitleInput.Text = values.TitoloPrincipale;
-        PrenomeInput.Text = values.Prenome;
-        GentilizioInput.Text = values.Gentilizio;
-        CognomeRomanoInput.Text = values.CognomeRomano;
-        AgnomeInput.Text = values.Agnome;
         UpdateLanguageNotice();
     }
 
@@ -96,10 +91,6 @@ public partial class PersonEditorWindow
             values.Suffisso = SuffixInput.Text.Trim();
             values.Soprannome = NicknameInput.Text.Trim();
             values.TitoloPrincipale = MainTitleInput.Text.Trim();
-            values.Prenome = PrenomeInput.Text.Trim();
-            values.Gentilizio = GentilizioInput.Text.Trim();
-            values.CognomeRomano = CognomeRomanoInput.Text.Trim();
-            values.Agnome = AgnomeInput.Text.Trim();
         }
     }
 
@@ -125,10 +116,6 @@ public partial class PersonEditorWindow
             SuffixInput.Text = values.Suffix;
             NicknameInput.Text = values.Nickname;
             MainTitleInput.Text = values.MainTitle;
-            PrenomeInput.Text = values.Prenome;
-            GentilizioInput.Text = values.Gentilizio;
-            CognomeRomanoInput.Text = values.CognomeRomano;
-            AgnomeInput.Text = values.Agnome;
             workingValues = null;
         }
 
@@ -140,8 +127,7 @@ public partial class PersonEditorWindow
     private WorkingNames ItalianNames() => workingValues ?? CurrentNames();
 
     private WorkingNames CurrentNames() => new(
-        NameInput.Text, SuffixInput.Text, NicknameInput.Text, MainTitleInput.Text,
-        PrenomeInput.Text, GentilizioInput.Text, CognomeRomanoInput.Text, AgnomeInput.Text);
+        NameInput.Text, SuffixInput.Text, NicknameInput.Text, MainTitleInput.Text);
 
     private void UpdateLanguageNotice()
     {
