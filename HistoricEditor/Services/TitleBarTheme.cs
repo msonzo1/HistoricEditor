@@ -56,8 +56,30 @@ internal static class TitleBarTheme
         {
             DwmSetWindowAttribute(handle, DwmwaUseImmersiveDarkModeBefore20H1, ref value, sizeof(int));
         }
+
+        // La cornice già disegnata non cambia da sola: senza questo la scheda personaggio, che al caricamento compila
+        // molti campi, restava con la barra bianca e senza i pulsanti riduci/ingrandisci finché non si ridimensionava.
+        SetWindowPos(handle, IntPtr.Zero, 0, 0, 0, 0, SwpNoSize | SwpNoMove | SwpNoZOrder | SwpNoActivate | SwpFrameChanged);
+        RedrawWindow(handle, IntPtr.Zero, IntPtr.Zero, RdwFrame | RdwInvalidate | RdwUpdateNow);
     }
+
+    private const uint SwpNoSize = 0x0001;
+    private const uint SwpNoMove = 0x0002;
+    private const uint SwpNoZOrder = 0x0004;
+    private const uint SwpNoActivate = 0x0010;
+    private const uint SwpFrameChanged = 0x0020;
+    private const uint RdwInvalidate = 0x0001;
+    private const uint RdwUpdateNow = 0x0100;
+    private const uint RdwFrame = 0x0400;
 
     [DllImport("dwmapi.dll")]
     private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int value, int size);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool SetWindowPos(IntPtr hwnd, IntPtr insertAfter, int x, int y, int width, int height, uint flags);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool RedrawWindow(IntPtr hwnd, IntPtr updateRect, IntPtr updateRegion, uint flags);
 }
