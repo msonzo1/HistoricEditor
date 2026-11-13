@@ -68,7 +68,12 @@ public sealed class AppDbContext : DbContext
             b.OwnsMany(t => t.FontiDate);
         });
         person.OwnsMany(p => p.LocalizedNames, b => b.ToJson());
-        person.OwnsMany(p => p.NomiNelTempo, b => b.ToJson());
+        person.OwnsMany(p => p.NomiNelTempo, b =>
+        {
+            b.ToJson();
+            b.Ignore(n => n.OrderedParts);
+            b.OwnsMany(n => n.Parti, part => part.Ignore(p => p.AutoItalian));
+        });
         person.OwnsMany(p => p.WikipediaLeads, b => b.ToJson());
 
         person.HasIndex(p => p.Name);

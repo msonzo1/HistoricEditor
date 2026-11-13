@@ -20,17 +20,54 @@
         <DockPanel DockPanel.Dock="Bottom" Margin="0,16,0,0">
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                 <Button Content="Annulla" IsCancel="True" Padding="14,7" Margin="0,0,8,0" />
-                <Button Content="Salva" IsDefault="True" Click="Save_Click" Padding="14,7" Style="{StaticResource PrimaryButton}" />
+                <Button Content="Salva" Click="Save_Click" Padding="14,7" Style="{StaticResource PrimaryButton}" />
             </StackPanel>
             <TextBlock x:Name="EditorMessage" Foreground="{DynamicResource SignalBrush}" FontSize="11" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,12,0" />
         </DockPanel>
 
         <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="0,0,6,0">
-                <TextBlock Text="Nome portato in un periodo della vita: le parti in italiano compongono il nome mostrato, quelle in latino il nome latino e la forma epigrafica." FontSize="11" Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" Margin="0,0,0,10" />
+                <TextBlock Text="Nome portato in un periodo della vita. Ogni riga è una parte del nome, in latino e in italiano, nell'ordine in cui si legge: il latino compone il nome latino e la forma epigrafica, l'italiano il nome mostrato. Scrivendo il latino, l'italiano vuoto viene proposto da solo." FontSize="11" Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" Margin="0,0,0,10" />
 
-                <TextBlock Text="IN ITALIANO" Style="{StaticResource SectionTitle}" />
-                <Grid>
+                <TextBlock Text="PARTI DEL NOME" Style="{StaticResource SectionTitle}" />
+                <DataGrid x:Name="PartsGrid" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserSortColumns="False" CanUserReorderColumns="False"
+                          HeadersVisibility="Column" SelectionMode="Single" SelectionUnit="FullRow" RowHeight="38" MaxHeight="300" SelectionChanged="PartsGrid_SelectionChanged" AutomationProperties.Name="Parti del nome">
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Header="Parte" Width="150">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ComboBox ItemsSource="{x:Static local:TipiParteNome.All}" SelectedItem="{Binding Tipo, UpdateSourceTrigger=PropertyChanged}" Margin="2" VerticalContentAlignment="Center" AutomationProperties.Name="Tipo della parte" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="Latino" Width="*">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox Text="{Binding Latino, UpdateSourceTrigger=PropertyChanged}" Margin="2" Background="{DynamicResource AppSurface}" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" VerticalContentAlignment="Center" AutomationProperties.Name="Parte in latino" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="Italiano" Width="*">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBox Text="{Binding Italiano, UpdateSourceTrigger=PropertyChanged}" Margin="2" Background="{DynamicResource AppSurface}" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" VerticalContentAlignment="Center" AutomationProperties.Name="Parte in italiano" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                    <Button x:Name="AddPartButton" Content="+ Aggiungi parte ▾" Click="AddPart_Click" Padding="12,5" ToolTip="Aggiunge un altro praenomen, nomen, cognomen, agnomen o titolo" AutomationProperties.Name="Aggiungi una parte del nome">
+                        <Button.ContextMenu>
+                            <ContextMenu x:Name="AddPartMenu" />
+                        </Button.ContextMenu>
+                    </Button>
+                    <Button x:Name="MoveUpButton" Content="↑" Click="MoveUp_Click" Padding="12,5" Margin="8,0,0,0" ToolTip="Sposta la parte prima" AutomationProperties.Name="Sposta la parte prima" />
+                    <Button x:Name="MoveDownButton" Content="↓" Click="MoveDown_Click" Padding="12,5" Margin="4,0,0,0" ToolTip="Sposta la parte dopo" AutomationProperties.Name="Sposta la parte dopo" />
+                    <Button x:Name="RemovePartButton" Content="Elimina" Click="RemovePart_Click" Padding="12,5" Margin="8,0,0,0" AutomationProperties.Name="Elimina la parte selezionata" />
+                </StackPanel>
+
+                <Grid Margin="0,14,0,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="14" />
@@ -41,54 +78,6 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
                     <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,0,10">
-                        <Label Content="Pr_enome" Target="{Binding ElementName=PrenomeInput}" />
-                        <TextBox x:Name="PrenomeInput" Height="34" TextChanged="Part_Changed" AutomationProperties.Name="Prenome" ToolTip="Nome personale (praenomen), ad esempio «Gaio»" />
-                    </StackPanel>
-                    <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,0,10">
-                        <Label Content="Nome gent_ilizio" Target="{Binding ElementName=GentilizioInput}" />
-                        <TextBox x:Name="GentilizioInput" Height="34" TextChanged="Part_Changed" AutomationProperties.Name="Nome gentilizio" ToolTip="Nome della gens (nomen), ad esempio «Giulio»; per le donne al femminile, «Giulia»" />
-                    </StackPanel>
-                    <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,0,10">
-                        <Label Content="Cogn_ome" Target="{Binding ElementName=CognomeRomanoInput}" />
-                        <TextBox x:Name="CognomeRomanoInput" Height="34" TextChanged="Part_Changed" AutomationProperties.Name="Cognome romano" ToolTip="Ramo della gens o soprannome ereditario (cognomen), ad esempio «Cesare»" />
-                    </StackPanel>
-                    <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,0,0,10">
-                        <Label Content="Ag_nome" Target="{Binding ElementName=AgnomeInput}" />
-                        <TextBox x:Name="AgnomeInput" Height="34" TextChanged="Part_Changed" AutomationProperties.Name="Agnome" ToolTip="Soprannome personale o onorifico (agnomen), ad esempio «Africano»" />
-                    </StackPanel>
-                </Grid>
-
-                <TextBlock Text="IN LATINO" Style="{StaticResource SectionTitle}" Margin="0,8,0,6" />
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="14" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-                    <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,0,10">
-                        <Label Content="_Praenomen" Target="{Binding ElementName=PraenomenInput}" />
-                        <ComboBox x:Name="PraenomenInput" Height="34" IsEditable="True" VerticalContentAlignment="Center" TextBoxBase.TextChanged="Part_Changed"
-                                  AutomationProperties.Name="Praenomen" ToolTip="Nome personale, ad esempio «Gaius» (abbreviato «C.»)" />
-                    </StackPanel>
-                    <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,0,10">
-                        <Label Content="No_men" Target="{Binding ElementName=NomenInput}" />
-                        <TextBox x:Name="NomenInput" Height="34" TextChanged="Part_Changed" AutomationProperties.Name="Nomen" ToolTip="Nome della gens, ad esempio «Iulius»; per le donne al femminile, «Iulia»" />
-                    </StackPanel>
-                    <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,0,10">
-                        <Label Content="Co_gnomen" Target="{Binding ElementName=CognomenInput}" />
-                        <TextBox x:Name="CognomenInput" Height="34" TextChanged="Part_Changed" AutomationProperties.Name="Cognomen" ToolTip="Ramo della gens o soprannome ereditario, ad esempio «Caesar»; più cognomina separati da spazio" />
-                    </StackPanel>
-                    <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,0,0,10">
-                        <Label Content="Agnomen" Target="{Binding ElementName=AgnomenInput}" />
-                        <TextBox x:Name="AgnomenInput" Height="34" TextChanged="Part_Changed" AutomationProperties.Name="Agnomen" ToolTip="Soprannome personale o onorifico, ad esempio «Africanus»" />
-                    </StackPanel>
-                    <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,0,10">
                         <Label Content="Filia_zione" Target="{Binding ElementName=FiliationInput}" />
                         <DockPanel>
                             <Button DockPanel.Dock="Right" Content="Dal padre" Click="FiliationFromFather_Click" Height="34" Padding="10,0" Margin="6,0,0,0"
@@ -96,12 +85,12 @@
                             <TextBox x:Name="FiliationInput" Height="34" TextChanged="Part_Changed" AutomationProperties.Name="Filiazione" ToolTip="Praenomen del padre abbreviato, ad esempio «C. f.» (Gai filius)" />
                         </DockPanel>
                     </StackPanel>
-                    <StackPanel Grid.Row="2" Grid.Column="2" Margin="0,0,0,10">
+                    <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,0,10">
                         <Label Content="_Tribù" Target="{Binding ElementName=TribeInput}" />
                         <ComboBox x:Name="TribeInput" Height="34" IsEditable="True" VerticalContentAlignment="Center" TextBoxBase.TextChanged="Part_Changed"
                                   AutomationProperties.Name="Tribù" ToolTip="Tribù di voto, ad esempio «Fabia» (abbreviata «Fab.» nelle epigrafi)" />
                     </StackPanel>
-                    <StackPanel Grid.Row="3" Grid.ColumnSpan="3" Margin="0,0,0,6">
+                    <StackPanel Grid.Row="1" Grid.ColumnSpan="3" Margin="0,0,0,6">
                         <Label Content="Nome latino li_bero" Target="{Binding ElementName=LatinNameInput}" />
                         <TextBox x:Name="LatinNameInput" Height="34" TextChanged="Part_Changed" AutomationProperties.Name="Nome latino libero"
                                  ToolTip="Facoltativo: la forma latina quando non si compone bene dalle parti (donne, liberti, nomi grecanici). Se indicato, è il nome latino mostrato" />
@@ -132,7 +121,7 @@
                     </StackPanel>
                 </Grid>
 
-                <!-- Solo per il nome principale: le stesse parti nelle altre lingue della scheda. -->
+                <!-- Solo per il nome principale: il riassunto per tipo nelle altre lingue della scheda. -->
                 <StackPanel x:Name="LanguagesPanel" Visibility="Collapsed" Margin="0,16,0,0">
                     <TextBlock Text="IN ALTRE LINGUE" Style="{StaticResource SectionTitle}" />
                     <TextBlock Text="Parti del nome principale nelle altre lingue della scheda (le lingue si aggiungono in alto nella scheda)." FontSize="11" Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" Margin="0,0,0,6" />

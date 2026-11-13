@@ -11,9 +11,69 @@ public static class Onomastiche
     public const string Standard = "standard";
 }
 
-// Nome portato in un periodo della vita (alla nascita, dopo un'adozione, all'assunzione del potere…), con le parti in
-// italiano e in latino. Uno dei nomi è il principale: le sue parti sono anche quelle della persona (Prenome, Praenomen…),
-// usate negli elenchi, nel nome latino e nella forma epigrafica.
+// Tipi delle parti del nome romano, nell'ordine in cui si propongono.
+public static class TipiParteNome
+{
+    public const string Praenomen = "Praenomen";
+    public const string Nomen = "Nomen";
+    public const string Cognomen = "Cognomen";
+    public const string Agnomen = "Agnomen";
+    // Imperator, Caesar, Augustus: titoli che fanno parte del nome (praenomen imperatoris, titolo dinastico, titolo imperiale).
+    public const string Titolo = "Titolo";
+
+    public static IReadOnlyList<string> All { get; } = [Praenomen, Nomen, Cognomen, Agnomen, Titolo];
+}
+
+// Una parte del nome romano: tipo, forma latina e forma italiana. Nel modulo del nome, scrivendo il latino, l'italiano
+// vuoto (o ancora uguale a quello proposto) si compone da solo con le regole dell'italiano («Aurelius» → «Aurelio»).
+public sealed class RomanNamePart : System.ComponentModel.INotifyPropertyChanged
+{
+    public event System.ComponentModel.PropertyChangedEventHandler? PropertyChanged;
+
+    public string Tipo
+    {
+        get => field ?? TipiParteNome.Cognomen;
+        set { field = value; Changed(nameof(Tipo)); }
+    } = TipiParteNome.Cognomen;
+
+    public string Latino
+    {
+        get => field ?? string.Empty;
+        set
+        {
+            var proposed = RomanNaming.ItalianForm(field);
+            var follow = AutoItalian && (Italiano.Trim().Length == 0 || string.Equals(Italiano.Trim(), proposed, StringComparison.Ordinal));
+            field = value;
+            Changed(nameof(Latino));
+            if (follow)
+            {
+                Italiano = RomanNaming.ItalianForm(value);
+            }
+        }
+    } = string.Empty;
+
+    public string Italiano
+    {
+        get => field ?? string.Empty;
+        set { field = value; Changed(nameof(Italiano)); }
+    } = string.Empty;
+
+    // Solo nel modulo del nome: altrove (lettura dal database, import) l'italiano non si compone da solo.
+    [System.Text.Json.Serialization.JsonIgnore]
+    public bool AutoItalian { get; set; }
+
+    public bool IsEmpty() => Latino.Trim().Length == 0 && Italiano.Trim().Length == 0;
+
+    public RomanNamePart Clone() => new() { Tipo = Tipo, Latino = Latino, Italiano = Italiano };
+
+    private void Changed(string name) => PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(name));
+}
+
+// Nome portato in un periodo della vita (alla nascita, dopo un'adozione, all'assunzione del potere…). Le parti sono righe
+// ordinate (Parti: tipo, latino, italiano), perché un nome può avere più nomina o cognomina e titoli in posizioni diverse
+// («Caesar Marcus Aurelius Antoninus Augustus»). I campi singoli (Praenomen, Nomen…, Prenome, Gentilizio…) ne sono il
+// riassunto per tipo; nei nomi salvati prima delle righe sono la fonte da cui si ricavano.
+// Uno dei nomi è il principale: il suo riassunto è anche nei campi della persona, usati negli elenchi.
 public sealed class RomanNameRecord
 {
     // Testo libero dei nomi salvati prima del 2026-11-13 (solo il nome latino): alla lettura passa in NomeLatino.
@@ -22,6 +82,8 @@ public sealed class RomanNameRecord
     public string Al { get; set; } = string.Empty;
     public string Motivo { get; set; } = string.Empty;
     public bool Principale { get; set; }
+
+    public List<RomanNamePart> Parti { get => field ??= []; set; } = [];
 
     public string Prenome { get => field ?? string.Empty; set; } = string.Empty;
     public string Gentilizio { get => field ?? string.Empty; set; } = string.Empty;
@@ -35,27 +97,115 @@ public sealed class RomanNameRecord
     public string Tribu { get => field ?? string.Empty; set; } = string.Empty;
     public string NomeLatino { get => field ?? string.Empty; set; } = string.Empty;
 
-    public RomanNameRecord Clone() => (RomanNameRecord)MemberwiseClone();
+    public RomanNameRecord Clone()
+    {
+        var clone = (RomanNameRecord)MemberwiseClone();
+        clone.Parti = [.. Parti.Select(p => p.Clone())];
+        return clone;
+    }
 
     public bool IsEmpty() => new[] { Nome, Dal, Al, Motivo }.All(string.IsNullOrWhiteSpace) && !HasParts;
 
-    public bool HasParts => RomanNaming.HasRomanParts(Prenome, Gentilizio, CognomeRomano, Agnome, Praenomen, Nomen, Cognomen, Agnomen, NomeLatino);
+    [System.Text.Json.Serialization.JsonIgnore]
+    public bool HasParts => Parti.Any(p => !p.IsEmpty())
+        || RomanNaming.HasRomanParts(Prenome, Gentilizio, CognomeRomano, Agnome, Praenomen, Nomen, Cognomen, Agnomen, NomeLatino);
 
-    public string ItalianName => string.Join(' ', new[] { Prenome, Gentilizio, CognomeRomano, Agnome }.Where(p => !string.IsNullOrWhiteSpace(p)).Select(p => p.Trim()));
+    // Righe ricavate dai campi singoli (nomi salvati prima delle righe, campi della persona, import): una riga per parola,
+    // con l'italiano accanto se ha lo stesso numero di parole («Aelius Aurelius» / «Elio Aurelio»), altrimenti nella prima.
+    public void PartsFromFields()
+    {
+        var parts = new List<RomanNamePart>();
+        void Add(string tipo, string latin, string italian)
+        {
+            var latinWords = latin.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var italianWords = italian.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (latinWords.Length == italianWords.Length || latinWords.Length == 0 || italianWords.Length == 0)
+            {
+                var count = Math.Max(latinWords.Length, italianWords.Length);
+                for (var i = 0; i < count; i++)
+                {
+                    parts.Add(new RomanNamePart { Tipo = tipo, Latino = i < latinWords.Length ? latinWords[i] : string.Empty, Italiano = i < italianWords.Length ? italianWords[i] : string.Empty });
+                }
 
-    public string LatinName => RomanNaming.LatinName(Praenomen, Nomen, Cognomen, Agnomen, NomeLatino);
+                return;
+            }
 
-    public string Epigraphic => RomanNaming.Epigraphic(Praenomen, Nomen, Filiazione, Tribu, Cognomen, Agnomen);
+            for (var i = 0; i < latinWords.Length; i++)
+            {
+                parts.Add(new RomanNamePart { Tipo = tipo, Latino = latinWords[i], Italiano = i == 0 ? italian.Trim() : string.Empty });
+            }
+        }
+
+        Add(TipiParteNome.Praenomen, Praenomen, Prenome);
+        Add(TipiParteNome.Nomen, Nomen, Gentilizio);
+        Add(TipiParteNome.Cognomen, Cognomen, CognomeRomano);
+        Add(TipiParteNome.Agnomen, Agnomen, Agnome);
+        Parti = parts;
+    }
+
+    // Campi singoli dal riassunto delle righe (senza righe restano quelli che ci sono).
+    public void FieldsFromParts()
+    {
+        if (Parti.Count == 0)
+        {
+            return;
+        }
+
+        string Join(string tipo, Func<RomanNamePart, string> value)
+            => string.Join(' ', Parti.Where(p => p.Tipo == tipo).Select(value).Select(v => v.Trim()).Where(v => v.Length > 0));
+        Praenomen = Join(TipiParteNome.Praenomen, p => p.Latino);
+        Nomen = Join(TipiParteNome.Nomen, p => p.Latino);
+        Cognomen = Join(TipiParteNome.Cognomen, p => p.Latino);
+        Agnomen = Join(TipiParteNome.Agnomen, p => p.Latino);
+        Prenome = Join(TipiParteNome.Praenomen, p => p.Italiano);
+        Gentilizio = Join(TipiParteNome.Nomen, p => p.Italiano);
+        CognomeRomano = Join(TipiParteNome.Cognomen, p => p.Italiano);
+        Agnome = Join(TipiParteNome.Agnomen, p => p.Italiano);
+    }
+
+    // Righe da mostrare: quelle salvate o, se mancano, quelle ricavate dai campi singoli.
+    [System.Text.Json.Serialization.JsonIgnore]
+    public IReadOnlyList<RomanNamePart> OrderedParts
+    {
+        get
+        {
+            if (Parti.Count > 0)
+            {
+                return Parti;
+            }
+
+            var copy = Clone();
+            copy.PartsFromFields();
+            return copy.Parti;
+        }
+    }
+
+    // Nome latino composto dalle righe, nell'ordine scritto (titoli compresi).
+    [System.Text.Json.Serialization.JsonIgnore]
+    public string ComposedLatin => string.Join(' ', OrderedParts.Select(p => p.Latino.Trim()).Where(v => v.Length > 0));
+
+    [System.Text.Json.Serialization.JsonIgnore]
+    public string ItalianName => string.Join(' ', OrderedParts.Select(p => p.Italiano.Trim()).Where(v => v.Length > 0));
+
+    [System.Text.Json.Serialization.JsonIgnore]
+    public string LatinName => NomeLatino.Trim().Length > 0 ? NomeLatino.Trim() : ComposedLatin;
+
+    [System.Text.Json.Serialization.JsonIgnore]
+    public string Epigraphic => RomanNaming.Epigraphic(OrderedParts, Filiazione, Tribu);
 
     // Nome negli elenchi: in italiano, altrimenti in latino.
+    [System.Text.Json.Serialization.JsonIgnore]
     public string DisplayName => ItalianName.Length > 0 ? ItalianName : LatinName.Length > 0 ? LatinName : "(nome non indicato)";
 
     // Nome latino sotto quello italiano, se diverso.
+    [System.Text.Json.Serialization.JsonIgnore]
     public string LatinSubtitle => ItalianName.Length > 0 && !string.Equals(LatinName, ItalianName, StringComparison.OrdinalIgnoreCase) ? LatinName : string.Empty;
 
+    [System.Text.Json.Serialization.JsonIgnore]
     public string Marker => Principale ? "★" : string.Empty;
 
     // «dal 138 al 161», «dal 161», «fino al 138».
+    [System.Text.Json.Serialization.JsonIgnore]
     public string Period => (Dal.Trim().Length > 0, Al.Trim().Length > 0) switch
     {
         (true, true) => $"dal {Dal.Trim()} al {Al.Trim()}",
@@ -176,8 +326,11 @@ public static class RomanNaming
         return Join(AbbreviatePraenomen(praenomen), nomen, filiazione, AbbreviateTribe(tribu), cognomen, agnomen);
     }
 
+    // Della persona: dal nome principale (con i titoli e nell'ordine scritto), se c'è.
     public static string Epigraphic(HistoricalPerson person)
-        => Epigraphic(person.Praenomen, person.Nomen, person.Filiazione, person.Tribu, person.Cognomen, person.Agnomen);
+        => NamesOf(person).FirstOrDefault(n => n.Principale) is { } principal
+            ? principal.Epigraphic
+            : Epigraphic(person.Praenomen, person.Nomen, person.Filiazione, person.Tribu, person.Cognomen, person.Agnomen);
 
     // «Gaius» → «C.»; un'abbreviazione già scritta («C.») resta com'è; un praenomen sconosciuto resta per esteso.
     public static string AbbreviatePraenomen(string? praenomen)
@@ -237,6 +390,7 @@ public static class RomanNaming
         ["Paullus"] = "Paolo",
         ["Romulus"] = "Romolo",
         ["Tertius"] = "Terzo",
+        ["Imperator"] = "Imperatore",
     };
 
     private static string ItalianWord(string word)
@@ -276,20 +430,34 @@ public static class RomanNaming
         return char.ToUpperInvariant(w[0]) + w[1..];
     }
 
-    // Valori ripuliti per il salvataggio: spazi tolti, righe vuote scartate, un solo nome principale.
+    // Valori ripuliti per il salvataggio: spazi tolti, righe vuote scartate, un solo nome principale. I nomi senza righe
+    // (salvati prima) le ricavano dai campi singoli; i campi singoli sono poi il riassunto delle righe.
     public static List<RomanNameRecord> Normalize(IEnumerable<RomanNameRecord> names)
     {
-        var result = names
-            .Select(n => new RomanNameRecord
+        var result = new List<RomanNameRecord>();
+        foreach (var n in names)
+        {
+            var name = new RomanNameRecord
             {
                 Dal = n.Dal.Trim(), Al = n.Al.Trim(), Motivo = n.Motivo.Trim(), Principale = n.Principale,
                 Prenome = n.Prenome.Trim(), Gentilizio = n.Gentilizio.Trim(), CognomeRomano = n.CognomeRomano.Trim(), Agnome = n.Agnome.Trim(),
                 Praenomen = n.Praenomen.Trim(), Nomen = n.Nomen.Trim(), Cognomen = n.Cognomen.Trim(), Agnomen = n.Agnomen.Trim(),
                 Filiazione = n.Filiazione.Trim(), Tribu = n.Tribu.Trim(),
                 NomeLatino = n.NomeLatino.Trim().Length > 0 ? n.NomeLatino.Trim() : n.Nome.Trim(),
-            })
-            .Where(n => !n.IsEmpty())
-            .ToList();
+                Parti = [.. n.Parti.Where(p => !p.IsEmpty()).Select(p => new RomanNamePart { Tipo = p.Tipo, Latino = p.Latino.Trim(), Italiano = p.Italiano.Trim() })],
+            };
+            if (name.Parti.Count == 0)
+            {
+                name.PartsFromFields();
+            }
+
+            name.FieldsFromParts();
+            if (!name.IsEmpty())
+            {
+                result.Add(name);
+            }
+        }
+
         var principal = result.FirstOrDefault(n => n.Principale) ?? result.LastOrDefault();
         foreach (var name in result)
         {
@@ -298,6 +466,30 @@ public static class RomanNaming
 
         return result;
     }
+
+    // Nome latino da salvare nella persona per il nome principale: quello libero o, se le righe hanno titoli o un ordine
+    // diverso da praenomen-nomen-cognomen-agnomen («Caesar Marcus Aurelius Antoninus Augustus»), quello composto dalle righe.
+    private static string PersonLatin(RomanNameRecord principal)
+    {
+        if (principal.NomeLatino.Trim().Length > 0)
+        {
+            return principal.NomeLatino.Trim();
+        }
+
+        var composed = principal.ComposedLatin;
+        return string.Equals(composed, Join(principal.Praenomen, principal.Nomen, principal.Cognomen, principal.Agnomen), StringComparison.Ordinal)
+            ? string.Empty
+            : composed;
+    }
+
+    // Il principale salvato corrisponde ancora ai campi della persona (che l'import può aver aggiornato)?
+    private static bool MatchesPerson(RomanNameRecord principal, HistoricalPerson person)
+        => principal.Praenomen == person.Praenomen.Trim() && principal.Nomen == person.Nomen.Trim()
+            && principal.Cognomen == person.Cognomen.Trim() && principal.Agnomen == person.Agnomen.Trim()
+            && principal.Prenome == person.Prenome.Trim() && principal.Gentilizio == person.Gentilizio.Trim()
+            && principal.CognomeRomano == person.CognomeRomano.Trim() && principal.Agnome == person.Agnome.Trim()
+            && principal.Filiazione == person.Filiazione.Trim() && principal.Tribu == person.Tribu.Trim()
+            && PersonLatin(principal) == person.NomeLatino.Trim();
 
     // Nomi della persona per la scheda: quelli salvati, con il principale allineato ai campi della persona (che restano
     // il riferimento: l'import li aggiorna). Senza un principale salvato, i campi della persona diventano il principale:
@@ -313,8 +505,8 @@ public static class RomanNaming
         var saved = (person.NomiNelTempo ?? []).Where(n => !n.IsEmpty()).ToList();
         var principalIndex = saved.FindIndex(n => n.Principale);
         var personLatin = LatinName(person);
-        RomanNameRecord? principal = principalIndex >= 0 ? names[principalIndex] : null;
-        principal ??= names.FirstOrDefault(n => !RomanNaming.HasRomanParts(n.Praenomen, n.Nomen, n.Cognomen, n.Agnomen, n.Prenome, n.Gentilizio, n.CognomeRomano, n.Agnome)
+        RomanNameRecord? principal = principalIndex >= 0 && principalIndex < names.Count ? names[principalIndex] : null;
+        principal ??= names.FirstOrDefault(n => n.Parti.Count == 0
             && personLatin.Length > 0 && string.Equals(n.NomeLatino, personLatin, StringComparison.OrdinalIgnoreCase));
         if (principal is null)
         {
@@ -330,11 +522,15 @@ public static class RomanNaming
         }
 
         principal.Principale = true;
-        CopyParts(person, principal);
+        if (!MatchesPerson(principal, person))
+        {
+            CopyParts(person, principal);
+        }
+
         return HasRomanParts(person) || names.Count > 1 || !principal.IsEmpty() ? names : [];
     }
 
-    // Salva nella persona i nomi e copia le parti del principale nei campi della persona.
+    // Salva nella persona i nomi e copia il riassunto del principale nei campi della persona.
     public static void SetNames(HistoricalPerson person, IEnumerable<RomanNameRecord> names)
     {
         var list = Normalize(names);
@@ -349,9 +545,19 @@ public static class RomanNaming
         person.Agnomen = principal.Agnomen;
         person.Filiazione = principal.Filiazione;
         person.Tribu = principal.Tribu;
-        person.NomeLatino = principal.NomeLatino;
-        // Un solo nome senza periodo né motivo è già tutto nei campi della persona.
-        person.NomiNelTempo = list.Count == 1 && list[0].Dal.Length == 0 && list[0].Al.Length == 0 && list[0].Motivo.Length == 0 ? [] : list;
+        person.NomeLatino = PersonLatin(principal);
+        // Un solo nome senza periodo né motivo, con le parti nell'ordine consueto e senza titoli, è già tutto nei campi
+        // della persona.
+        var plain = list.Count == 1 && list[0].Dal.Length == 0 && list[0].Al.Length == 0 && list[0].Motivo.Length == 0
+            && list[0].Parti.All(p => p.Tipo != TipiParteNome.Titolo) && PlainOrder(list[0]);
+        person.NomiNelTempo = plain ? [] : list;
+    }
+
+    // Righe nell'ordine praenomen, nomen, cognomen, agnomen (quello che si ricava dai campi singoli).
+    private static bool PlainOrder(RomanNameRecord name)
+    {
+        var order = name.Parti.Select(p => Array.IndexOf(new[] { TipiParteNome.Praenomen, TipiParteNome.Nomen, TipiParteNome.Cognomen, TipiParteNome.Agnomen }, p.Tipo)).ToList();
+        return order.Zip(order.Skip(1)).All(pair => pair.First <= pair.Second);
     }
 
     private static void CopyParts(HistoricalPerson person, RomanNameRecord name)
@@ -367,11 +573,62 @@ public static class RomanNaming
         name.Filiazione = person.Filiazione.Trim();
         name.Tribu = person.Tribu.Trim();
         // Il nome latino libero della persona; quello del vecchio testo libero resta se la persona non ne ha.
-        if (person.NomeLatino.Trim().Length > 0 || RomanNaming.HasRomanParts(person.Praenomen, person.Nomen, person.Cognomen, person.Agnomen))
+        if (person.NomeLatino.Trim().Length > 0 || HasRomanParts(person.Praenomen, person.Nomen, person.Cognomen, person.Agnomen))
         {
             name.NomeLatino = person.NomeLatino.Trim();
         }
+
+        name.PartsFromFields();
+        // Un nome latino che è solo la composizione delle righe non è un nome libero.
+        if (string.Equals(name.NomeLatino, name.ComposedLatin, StringComparison.Ordinal))
+        {
+            name.NomeLatino = string.Empty;
+        }
     }
+
+    // Forma epigrafica dalle righe, nell'ordine scritto: praenomen e titoli abbreviati, filiazione e tribù dopo l'ultimo
+    // nomen («IMP. CAES. M. Aurelius M. f. Antoninus AVG.»). Vuota se mancano praenomen e nomen.
+    public static string Epigraphic(IEnumerable<RomanNamePart> parts, string? filiazione, string? tribu)
+    {
+        var list = parts.Where(p => p.Latino.Trim().Length > 0).ToList();
+        if (!list.Any(p => p.Tipo is TipiParteNome.Praenomen or TipiParteNome.Nomen))
+        {
+            return string.Empty;
+        }
+
+        var lastNomen = list.FindLastIndex(p => p.Tipo == TipiParteNome.Nomen);
+        if (lastNomen < 0)
+        {
+            lastNomen = list.FindLastIndex(p => p.Tipo == TipiParteNome.Praenomen);
+        }
+
+        var words = new List<string?>();
+        for (var i = 0; i < list.Count; i++)
+        {
+            var part = list[i];
+            words.Add(part.Tipo switch
+            {
+                TipiParteNome.Praenomen => AbbreviatePraenomen(part.Latino),
+                TipiParteNome.Titolo => TitleAbbreviations.GetValueOrDefault(part.Latino.Trim(), part.Latino.Trim()),
+                _ => part.Latino.Trim(),
+            });
+            if (i == lastNomen)
+            {
+                words.Add(filiazione);
+                words.Add(AbbreviateTribe(tribu));
+            }
+        }
+
+        return Join([.. words]);
+    }
+
+    private static readonly Dictionary<string, string> TitleAbbreviations = new(Comparer)
+    {
+        ["Imperator"] = "IMP.",
+        ["Caesar"] = "CAES.",
+        ["Augustus"] = "AVG.",
+        ["Augusta"] = "AVG.",
+    };
 
     private static string Join(params string?[] parts)
         => string.Join(' ', parts.Where(p => !string.IsNullOrWhiteSpace(p)).Select(p => p!.Trim()));

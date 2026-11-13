@@ -1,14 +1,17 @@
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 
 namespace HistoricEditor;
 
-// Modulo di un nome romano della scheda: parti in italiano e in latino, filiazione, tribù, periodo e motivo.
-// Per il nome principale anche le parti nelle altre lingue della scheda.
+// Modulo di un nome romano della scheda: righe delle parti (tipo, latino, italiano) nell'ordine in cui si leggono,
+// filiazione, tribù, nome latino libero, periodo e motivo. Per il nome principale anche le parti nelle altre lingue.
 public partial class RomanNameEditorWindow : Window
 {
     private readonly HistoricalPerson? father;
     private readonly List<LocalizedPersonName> languages;
+    private readonly ObservableCollection<RomanNamePart> parts = [];
 
     public RomanNameRecord Result { get; private set; }
 
@@ -21,17 +24,26 @@ public partial class RomanNameEditorWindow : Window
         this.father = father;
         Result = name.Clone();
         Title = name.IsEmpty() ? "Nuovo nome romano" : $"Nome romano – {name.DisplayName}";
-        PraenomenInput.ItemsSource = RomanNaming.Praenomina;
         TribeInput.ItemsSource = RomanNaming.Tribes;
 
-        PrenomeInput.Text = name.Prenome;
-        GentilizioInput.Text = name.Gentilizio;
-        CognomeRomanoInput.Text = name.CognomeRomano;
-        AgnomeInput.Text = name.Agnome;
-        PraenomenInput.Text = name.Praenomen;
-        NomenInput.Text = name.Nomen;
-        CognomenInput.Text = name.Cognomen;
-        AgnomenInput.Text = name.Agnomen;
+        // Un nome nuovo parte con praenomen, nomen e cognomen.
+        var initial = name.OrderedParts.Count > 0
+            ? name.OrderedParts.Select(p => p.Clone())
+            : new[] { TipiParteNome.Praenomen, TipiParteNome.Nomen, TipiParteNome.Cognomen }.Select(t => new RomanNamePart { Tipo = t });
+        foreach (var part in initial)
+        {
+            AddPart(part, parts.Count);
+        }
+
+        parts.CollectionChanged += (_, _) => { UpdatePreview(); UpdatePartButtons(); };
+        PartsGrid.ItemsSource = parts;
+        foreach (var tipo in TipiParteNome.All)
+        {
+            var item = new MenuItem { Header = tipo };
+            item.Click += (_, _) => InsertPart(tipo);
+            AddPartMenu.Items.Add(item);
+        }
+
         FiliationInput.Text = name.Filiazione;
         TribeInput.Text = name.Tribu;
         LatinNameInput.Text = name.NomeLatino;
@@ -47,22 +59,97 @@ public partial class RomanNameEditorWindow : Window
         }
 
         UpdatePreview();
-        Loaded += (_, _) => PrenomeInput.Focus();
+        UpdatePartButtons();
     }
 
+    private void AddPart(RomanNamePart part, int index)
+    {
+        part.AutoItalian = true;
+        part.PropertyChanged += Part_PropertyChanged;
+        parts.Insert(index, part);
+    }
+
+    private void Part_PropertyChanged(object? sender, PropertyChangedEventArgs e) => UpdatePreview();
+
     private void Part_Changed(object sender, TextChangedEventArgs e) => UpdatePreview();
+
+    // Una parte nuova va dopo l'ultima dello stesso tipo, altrimenti dopo quelle che di solito la precedono
+    // (praenomen, nomen, cognomen, agnomen); i titoli in fondo, da spostare con ↑ ↓ (Caesar va prima del praenomen).
+    private void InsertPart(string tipo)
+    {
+        var order = TipiParteNome.All.ToList();
+        var index = parts.Select((p, i) => (p, i)).LastOrDefault(x => x.p.Tipo == tipo, (null!, -1)).Item2;
+        if (index < 0)
+        {
+            index = parts.Select((p, i) => (p, i)).LastOrDefault(x => order.IndexOf(x.p.Tipo) < order.IndexOf(tipo) && x.p.Tipo != TipiParteNome.Titolo, (null!, -1)).Item2;
+            if (tipo == TipiParteNome.Titolo)
+            {
+                index = parts.Count - 1;
+            }
+        }
+
+        var part = new RomanNamePart { Tipo = tipo };
+        AddPart(part, index + 1);
+        PartsGrid.SelectedItem = part;
+        PartsGrid.ScrollIntoView(part);
+    }
+
+    private void AddPart_Click(object sender, RoutedEventArgs e)
+    {
+        AddPartMenu.PlacementTarget = AddPartButton;
+        AddPartMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+        AddPartMenu.IsOpen = true;
+    }
+
+    private RomanNamePart? SelectedPart => PartsGrid.SelectedItem as RomanNamePart;
+
+    private void PartsGrid_SelectionChanged(object sender, SelectionChangedEventArgs e) => UpdatePartButtons();
+
+    private void UpdatePartButtons()
+    {
+        var index = SelectedPart is { } part ? parts.IndexOf(part) : -1;
+        MoveUpButton.IsEnabled = index > 0;
+        MoveDownButton.IsEnabled = index >= 0 && index < parts.Count - 1;
+        RemovePartButton.IsEnabled = index >= 0;
+    }
+
+    private void MoveUp_Click(object sender, RoutedEventArgs e) => Move(-1);
+
+    private void MoveDown_Click(object sender, RoutedEventArgs e) => Move(1);
+
+    private void Move(int offset)
+    {
+        if (SelectedPart is not { } part)
+        {
+            return;
+        }
+
+        var index = parts.IndexOf(part);
+        var target = index + offset;
+        if (target < 0 || target >= parts.Count)
+        {
+            return;
+        }
+
+        parts.Move(index, target);
+        PartsGrid.SelectedItem = part;
+        UpdatePartButtons();
+    }
+
+    private void RemovePart_Click(object sender, RoutedEventArgs e)
+    {
+        if (SelectedPart is { } part)
+        {
+            part.PropertyChanged -= Part_PropertyChanged;
+            parts.Remove(part);
+        }
+    }
 
     private RomanNameRecord ReadForm()
     {
         var name = Result.Clone();
-        name.Prenome = PrenomeInput.Text.Trim();
-        name.Gentilizio = GentilizioInput.Text.Trim();
-        name.CognomeRomano = CognomeRomanoInput.Text.Trim();
-        name.Agnome = AgnomeInput.Text.Trim();
-        name.Praenomen = PraenomenInput.Text.Trim();
-        name.Nomen = NomenInput.Text.Trim();
-        name.Cognomen = CognomenInput.Text.Trim();
-        name.Agnomen = AgnomenInput.Text.Trim();
+        name.Parti = [.. parts.Where(p => !p.IsEmpty()).Select(p => new RomanNamePart { Tipo = p.Tipo, Latino = p.Latino.Trim(), Italiano = p.Italiano.Trim() })];
+        name.FieldsFromParts();
         name.Filiazione = FiliationInput.Text.Trim();
         name.Tribu = TribeInput.Text.Trim();
         name.NomeLatino = LatinNameInput.Text.Trim();
@@ -75,7 +162,7 @@ public partial class RomanNameEditorWindow : Window
 
     private void UpdatePreview()
     {
-        if (LatinPreview is null)
+        if (LatinPreview is null || FiliationInput is null || TribeInput is null || LatinNameInput is null)
         {
             return;
         }
@@ -111,12 +198,12 @@ public partial class RomanNameEditorWindow : Window
 
     private void Save_Click(object sender, RoutedEventArgs e)
     {
+        PartsGrid.CommitEdit(DataGridEditingUnit.Row, exitEditingMode: true);
         LanguagesGrid.CommitEdit(DataGridEditingUnit.Row, exitEditingMode: true);
         var name = ReadForm();
         if (!name.HasParts)
         {
-            EditorMessage.Text = "Indicare almeno una parte del nome, in italiano o in latino.";
-            PrenomeInput.Focus();
+            EditorMessage.Text = "Indicare almeno una parte del nome, in latino o in italiano.";
             return;
         }
 

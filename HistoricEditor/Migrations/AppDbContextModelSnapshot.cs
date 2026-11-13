@@ -1773,6 +1773,34 @@ namespace HistoricEditor.Migrations
 
                             b1.WithOwner()
                                 .HasForeignKey("HistoricalPersonId");
+
+                            b1.OwnsMany("HistoricEditor.RomanNamePart", "Parti", b2 =>
+                                {
+                                    b2.Property<int>("RomanNameRecordHistoricalPersonId");
+
+                                    b2.Property<int>("RomanNameRecord__synthesizedOrdinal");
+
+                                    b2.Property<int>("__synthesizedOrdinal")
+                                        .ValueGeneratedOnAddOrUpdate();
+
+                                    b2.Property<string>("Italiano")
+                                        .IsRequired();
+
+                                    b2.Property<string>("Latino")
+                                        .IsRequired();
+
+                                    b2.Property<string>("Tipo")
+                                        .IsRequired();
+
+                                    b2.HasKey("RomanNameRecordHistoricalPersonId", "RomanNameRecord__synthesizedOrdinal", "__synthesizedOrdinal");
+
+                                    b2.ToTable("People");
+
+                                    b2.WithOwner()
+                                        .HasForeignKey("RomanNameRecordHistoricalPersonId", "RomanNameRecord__synthesizedOrdinal");
+                                });
+
+                            b1.Navigation("Parti");
                         });
 
                     b.OwnsMany("HistoricEditor.WikipediaLeadRecord", "WikipediaLeads", b1 =>

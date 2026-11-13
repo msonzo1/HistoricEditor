@@ -141,6 +141,8 @@ public partial class PersonEditorWindow
         var principal = PrincipalName;
         var created = principal is null;
         principal = principal?.Clone() ?? new RomanNameRecord { Principale = true };
+        principal.FieldsFromParts();
+        var before = (principal.Praenomen, principal.Nomen, principal.Cognomen, principal.Agnomen, principal.Prenome, principal.Gentilizio, principal.CognomeRomano, principal.Agnome);
 
         static string Pick(string imported, string current) => imported.Trim().Length > 0 ? imported.Trim() : current;
         principal.Praenomen = Pick(import.Praenomen, principal.Praenomen);
@@ -152,6 +154,11 @@ public partial class PersonEditorWindow
         principal.Gentilizio = Pick(import.Gentilizio, principal.Gentilizio);
         principal.CognomeRomano = Pick(import.CognomeRomano, principal.CognomeRomano);
         principal.Agnome = Pick(import.Agnome, principal.Agnome);
+        // Le righe si ricompongono solo se l'import ha cambiato qualcosa: i titoli e l'ordine scritti a mano restano.
+        if (before != (principal.Praenomen, principal.Nomen, principal.Cognomen, principal.Agnomen, principal.Prenome, principal.Gentilizio, principal.CognomeRomano, principal.Agnome))
+        {
+            principal.PartsFromFields();
+        }
 
         if (created)
         {
@@ -191,7 +198,7 @@ public partial class PersonEditorWindow
 
     private string RomanSnapshot()
         => string.Join("\u001e", romanNames.Select(n => string.Join("|",
-            n.Principale, n.Prenome, n.Gentilizio, n.CognomeRomano, n.Agnome, n.Praenomen, n.Nomen, n.Cognomen, n.Agnomen,
+            n.Principale, string.Join(";", n.OrderedParts.Select(p => $"{p.Tipo}:{p.Latino.Trim()}:{p.Italiano.Trim()}")),
             n.Filiazione, n.Tribu, n.NomeLatino, n.Dal, n.Al, n.Motivo)))
             + "\u001d" + SelectedNaming + "\u001d" + gensText.Trim();
 
