@@ -263,7 +263,7 @@ public sealed partial class WikipediaImportService
         var surnameIds = ReadEntityIds(claims, "P734").Distinct(StringComparer.Ordinal).ToArray();
 
         // Onomastica romana: praenomen, nomen gentilicium, cognomina, agnomina e gens.
-        var romanPartIds = RomanNameProperties.ToDictionary(p => p, p => ReadRomanPartIds(claims, p), StringComparer.Ordinal);
+        var romanPartIds = ReadRomanNameParts(claims);
         var gensIds = ReadEntityIds(claims, "P5025").ToArray();
         progress.Step(7, "Lettura di famiglie e titoli…");
         var rawTitles = ReadTitleStatements(claims, "P39").Concat(ReadTitleStatements(claims, "P97")).ToList();
@@ -1170,6 +1170,21 @@ public sealed partial class WikipediaImportService
 
     // Praenomen, nomen gentilicium, cognomen e agnomen.
     private static readonly string[] RomanNameProperties = ["P2358", "P2359", "P2365", "P2366"];
+
+    // Elementi di tutte le parti del nome romano. Un agnomen si aggiunge a un cognomen e non lo sostituisce: se il
+    // cognomen manca (o era solo contestato) e c'è un agnomen, l'agnomen diventa il cognomen. Vespasiano ha su Wikidata
+    // il cognomen «Sabinus» contestato e «Vespasianus» come agnomen, ma è «Titus Flavius Vespasianus» con
+    // Vespasianus cognomen, come il figlio Tito.
+    internal static Dictionary<string, string[]> ReadRomanNameParts(JsonElement claims)
+    {
+        var parts = RomanNameProperties.ToDictionary(p => p, p => ReadRomanPartIds(claims, p), StringComparer.Ordinal);
+        if (parts["P2365"].Length == 0 && parts["P2366"].Length > 0)
+        {
+            parts["P2365"] = parts["P2366"];
+            parts["P2366"] = [];
+        }
+        return parts;
+    }
 
     // Elementi di una parte del nome romano, senza quelli deprecati o contestati (P5102 «natura dell'affermazione»
     // = Q18912752 «contestato»): Vespasiano ha il cognomen «Sabinus» contestato, che non fa parte del suo nome.

@@ -140,13 +140,14 @@ public class ImportRegressionTests
         Assert.Equal("Vespasiano", person.DisplayName);
         Assert.Empty(r.UnreadEditions);
 
-        // Nome: il cognomen «Sabinus» è contestato su Wikidata e non conta; le parti italiane vengono dall'introduzione
+        // Nome: il cognomen «Sabinus» è contestato su Wikidata e non conta, e senza cognomen l'agnomen «Vespasianus»
+        // diventa il cognomen (come per il figlio Tito); le parti italiane vengono dall'introduzione
         // («Nato Tito Flavio Vespasiano»), perché etichetta («Vespasiano») ed elementi Wikidata non le danno in italiano.
-        Assert.Equal(("Titus", "Flavius", "", "Vespasianus"), (r.Praenomen, r.Nomen, r.Cognomen, r.Agnomen));
-        Assert.Equal(("Tito", "Flavio", "", "Vespasiano"), (r.Prenome, r.Gentilizio, r.CognomeRomano, r.Agnome));
+        Assert.Equal(("Titus", "Flavius", "Vespasianus", ""), (r.Praenomen, r.Nomen, r.Cognomen, r.Agnomen));
+        Assert.Equal(("Tito", "Flavio", "Vespasiano", ""), (r.Prenome, r.Gentilizio, r.CognomeRomano, r.Agnome));
         Assert.Equal("", r.NomeLatino); // P1559 «Titus Flavius Vespasianus» coincide con il nome composto
-        Assert.Equal(("Titus", "Flavius", ""), RomanParts(r, "de"));
-        Assert.Equal(("Tito", "Flavio", ""), RomanParts(r, "es"));
+        Assert.Equal(("Titus", "Flavius", "Vespasianus"), RomanParts(r, "de"));
+        Assert.Equal(("Tito", "Flavio", "Vespasiano"), RomanParts(r, "es"));
 
         // Date: 17 novembre 9 – 23 giugno 79 nelle introduzioni (anni a una e due cifre).
         Assert.Equal("17/11/0009", person.Birth);

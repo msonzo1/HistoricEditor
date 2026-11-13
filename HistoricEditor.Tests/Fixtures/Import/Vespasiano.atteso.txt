@@ -14,17 +14,17 @@ Morte: 23/06/0079 [calendario: giuliano]
 Edizioni non lette: 
 
 ## Nome romano
-Latino (praenomen / nomen / cognomen / agnomen): Titus / Flavius /  / Vespasianus
+Latino (praenomen / nomen / cognomen / agnomen): Titus / Flavius / Vespasianus / 
 Nome latino: 
-Italiano (prenome / gentilizio / cognome / agnome): Tito / Flavio /  / Vespasiano
+Italiano (prenome / gentilizio / cognome / agnome): Tito / Flavio / Vespasiano / 
 
 ## Nomi nelle lingue
 it: Vespasiano | suffisso  | soprannome  | titolo imperatore romano | parti  /  /  / 
-en: Vespasian | suffisso  | soprannome  | titolo Roman emperor | parti Titus / Flavius /  / Vespasianus
-de: Vespasian | suffisso  | soprannome  | titolo römischer Kaiser | parti Titus / Flavius /  / Vespasianus
-fr: Vespasien | suffisso  | soprannome  | titolo empereur romain | parti Titus / Flavius /  / Vespasianus
-es: Vespasiano | suffisso  | soprannome  | titolo emperador romano | parti Tito / Flavio /  / Vespasiano
-nl: Vespasianus | suffisso  | soprannome  | titolo Romeinse keizer | parti Titus / Flavius /  / Vespasianus
+en: Vespasian | suffisso  | soprannome  | titolo Roman emperor | parti Titus / Flavius / Vespasianus / 
+de: Vespasian | suffisso  | soprannome  | titolo römischer Kaiser | parti Titus / Flavius / Vespasianus / 
+fr: Vespasien | suffisso  | soprannome  | titolo empereur romain | parti Titus / Flavius / Vespasianus / 
+es: Vespasiano | suffisso  | soprannome  | titolo emperador romano | parti Tito / Flavio / Vespasiano / 
+nl: Vespasianus | suffisso  | soprannome  | titolo Romeinse keizer | parti Titus / Flavius / Vespasianus / 
 
 ## Dinastie
 Q200565: Dinastia flavia ←

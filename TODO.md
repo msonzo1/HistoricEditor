@@ -42,6 +42,8 @@
 - [x] Terme di Cotilia: luogo storico «Cotilia» (latino Aquae Cutiliae) e, al suo interno, il luogo specifico «Terme di Cotilia» di tipo Terme; regola generale per i nomi che cominciano con un edificio (2026-11-11).
 - [x] Vespasiano e Tito una volta sola nell'elenco: Dinastia flavia collegata come ramo di Flavii Sabini (gens Flavia) all'import (2026-11-11). *Superato il 2026-11-12*: gens e dinastia separate (vedi sotto).
 - [ ] Provare l'app: reimport di Vespasiano e Tito (Cittareale con coordinate dopo la conferma, Cotilia con le terme, Dinastia flavia sotto Flavii Sabini e persona una volta sola), contesto storico senza il nome all'epoca.
+- [x] Vespasiano: «Vespasianus» da agnomen a cognomen (su Wikidata manca un cognomen valido); senza cognomen l'agnomen diventa il cognomen (2026-11-13).
+- [ ] Provare l'app: reimport di Vespasiano, con Vespasiano nel campo Cognome e Agnome vuoto.
 - [ ] Schede importate prima: convertire in luoghi storici i luoghi specifici antichi già creati (oggi restano come sono; basta «Aggiorna da Wikipedia» e scegliere il nuovo luogo).
 
 ## Date discordanti, luoghi storici, gens e dinastia (2026-11-12, da Cesare, Vespasiano e Traiano)

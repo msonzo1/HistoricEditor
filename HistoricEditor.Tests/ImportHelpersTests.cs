@@ -92,6 +92,36 @@ public class ImportHelpersTests
     }
 
     [Fact]
+    public void ReadRomanNameParts_AgnomenBecomesCognomen_WhenCognomenIsMissing()
+    {
+        // Vespasiano: cognomen «Sabinus» contestato, «Vespasianus» come agnomen.
+        using var claims = JsonDocument.Parse("""
+            {"P2365":[{"rank":"normal","mainsnak":{"datavalue":{"value":{"id":"Q61042185"}}},"qualifiers":{"P5102":[{"datavalue":{"value":{"id":"Q18912752"}}}]}}],
+             "P2366":[{"rank":"normal","mainsnak":{"datavalue":{"value":{"id":"Q107607683"}}}}]}
+            """);
+
+        var parts = WikipediaImportService.ReadRomanNameParts(claims.RootElement);
+
+        Assert.Equal(["Q107607683"], parts["P2365"]);
+        Assert.Empty(parts["P2366"]);
+    }
+
+    [Fact]
+    public void ReadRomanNameParts_KeepsAgnomen_WhenCognomenIsPresent()
+    {
+        // Scipione Africano: cognomen Scipio, agnomen Africanus.
+        using var claims = JsonDocument.Parse("""
+            {"P2365":[{"rank":"normal","mainsnak":{"datavalue":{"value":{"id":"Q10"}}}}],
+             "P2366":[{"rank":"normal","mainsnak":{"datavalue":{"value":{"id":"Q11"}}}}]}
+            """);
+
+        var parts = WikipediaImportService.ReadRomanNameParts(claims.RootElement);
+
+        Assert.Equal(["Q10"], parts["P2365"]);
+        Assert.Equal(["Q11"], parts["P2366"]);
+    }
+
+    [Fact]
     public void NearbyMunicipality_QueryAndResult()
     {
         var query = WikipediaImportService.NearbyMunicipalityQuery(42.59361111, 13.17055556, ["Q954172", "Q747074"]);
