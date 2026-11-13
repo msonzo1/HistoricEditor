@@ -61,7 +61,27 @@ internal static class TitleBarTheme
         // molti campi, restava con la barra bianca e senza i pulsanti riduci/ingrandisci finché non si ridimensionava.
         SetWindowPos(handle, IntPtr.Zero, 0, 0, 0, 0, SwpNoSize | SwpNoMove | SwpNoZOrder | SwpNoActivate | SwpFrameChanged);
         RedrawWindow(handle, IntPtr.Zero, IntPtr.Zero, RdwFrame | RdwInvalidate | RdwUpdateNow);
+
+        // Su Windows 10 non basta: la barra cambia solo quando la finestra cambia dimensione (come ingrandendola a mano).
+        // Si allarga di un pixel e la si riporta subito com'era.
+        if (window.WindowState == WindowState.Normal && GetWindowRect(handle, out var rect))
+        {
+            var (width, height) = (rect.Right - rect.Left, rect.Bottom - rect.Top);
+            const uint flags = SwpNoMove | SwpNoZOrder | SwpNoActivate;
+            SetWindowPos(handle, IntPtr.Zero, 0, 0, width + 1, height, flags);
+            SetWindowPos(handle, IntPtr.Zero, 0, 0, width, height, flags);
+        }
     }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct Rect
+    {
+        public int Left, Top, Right, Bottom;
+    }
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetWindowRect(IntPtr hwnd, out Rect rect);
 
     private const uint SwpNoSize = 0x0001;
     private const uint SwpNoMove = 0x0002;

@@ -34,3 +34,6 @@ Thumbs.db
 
 # Riepiloghi degli import diversi da quelli attesi (test di HistoricEditor.Tests)
 *.ottenuto.txt
+
+# Immagini e risultati delle prove da far controllare
+HistoricEditor.Tests/TestResults/
