@@ -25,7 +25,13 @@
 				<Button x:Name="ClearButton" DockPanel.Dock="Right" Style="{StaticResource PlaceIconButton}" Content="&#xE738;" Click="Clear_Click" ToolTip="Rimuovi il luogo da questo personaggio" />
 				<Button x:Name="EditButton" DockPanel.Dock="Right" Style="{StaticResource PlaceIconButton}" Content="&#xE70F;" Click="Edit_Click" ToolTip="Modifica il luogo" />
 				<Border Style="{StaticResource PlaceValueBox}">
-					 <TextBlock x:Name="ClassicText" Text="Nessun luogo selezionato" Foreground="{DynamicResource InkBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+					 <DockPanel>
+						  <!-- Luogo storico (non esiste più): icona della storia e nome in corsivo, come nell'albero dei luoghi. -->
+						  <TextBlock x:Name="HistoricIcon" DockPanel.Dock="Left" Visibility="Collapsed" Text="&#xE81C;" FontFamily="Segoe MDL2 Assets" FontSize="13"
+									 Foreground="{DynamicResource SignalBrush}" VerticalAlignment="Center" Margin="0,0,7,0"
+									 ToolTip="Luogo storico: non esiste più" AutomationProperties.Name="Luogo storico" />
+						  <TextBlock x:Name="ClassicText" Text="Nessun luogo selezionato" Foreground="{DynamicResource InkBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+					 </DockPanel>
 				</Border>
 		  </DockPanel>
 		  <DockPanel x:Name="SpecificRow" Visibility="Collapsed" Margin="0,6,0,0">
@@ -38,8 +44,9 @@
 
         <CheckBox x:Name="HistoricToggle" Content="Aggiungi contesto storico" Margin="0,8,0,0" Checked="HistoricToggle_Changed" Unchecked="HistoricToggle_Changed" />
         <StackPanel x:Name="HistoricPanel" Visibility="Collapsed">
-            <Label Content="Nome del luogo all’epoca" Target="{Binding ElementName=HistoricNameInput}" Margin="0,9,0,0" />
-            <TextBox x:Name="HistoricNameInput" />
+            <!-- Nome all'epoca nascosto (2026-11-11): i nomi storici stanno nel luogo stesso (luoghi storici e nomi con periodo).
+                 Il campo resta per conservare i valori già salvati. -->
+            <TextBox x:Name="HistoricNameInput" Visibility="Collapsed" />
             <Label Content="Entità politica storica (es. Repubblica di Genova)" Target="{Binding ElementName=PolityInput}" Margin="0,9,0,0" />
             <TextBox x:Name="PolityInput" />
             <Grid Margin="0,9,0,0">

@@ -26,6 +26,10 @@ public partial class HistoricPlaceEditorWindow : Window
         ParentText.Text = text.Length > 0 ? text : "Nessuno (luogo di primo livello)";
     }
 
+    // Intestazione della tendina chiusa: «Nome in latino: Vicus Phalacrinae».
+    private void LatinBox_Changed(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        => LatinExpanderHeader.Text = LatinBox.Text.Trim().Length > 0 ? $"Nome in latino: {LatinBox.Text.Trim()}" : "Nome in latino";
+
     private void ChooseParent_Click(object sender, RoutedEventArgs e)
     {
         var picker = new PlacePickerWindow(store, "Luogo che contiene il luogo storico", allowSpecific: false, parentId, null, allowClear: true, startHistoric: true) { Owner = this };
@@ -75,6 +79,7 @@ public partial class HistoricPlaceEditorWindow : Window
         try
         {
             ResultId = store.AddHistoricPlace(nome, tipo, parentId, PeriodoBox.Text, lat, lon, NoteBox.Text);
+            store.SetPlaceLatinName(ResultId.Value, LatinBox.Text);
         }
         catch (DbUpdateException)
         {

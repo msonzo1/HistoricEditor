@@ -3,7 +3,8 @@ using System.Windows;
 namespace HistoricEditor;
 
 // Trasforma un luogo letto da Wikidata in un luogo dell'archivio. Se la gerarchia è incerta la propone
-// nell'editor dei luoghi; i luoghi non amministrativi (castelli, monasteri, campi di battaglia…) diventano luoghi specifici.
+// nell'editor dei luoghi; i luoghi non amministrativi (castelli, monasteri, campi di battaglia…) diventano luoghi specifici,
+// le località antiche o scomparse (Falacrine, Aquae Cutiliae) luoghi storici contenuti nel comune attuale.
 internal static class ImportedPlaceResolver
 {
     public static (int? LuogoId, int? SpecificoId) Resolve(PeopleStore store, HistoricalPlaceRecord place, string role, Window owner)
@@ -16,10 +17,14 @@ internal static class ImportedPlaceResolver
         }
         else
         {
-            var notice = derived.SpecificName is null
-                ? $"{role}: la gerarchia di «{place.CurrentName}» è incompleta o incerta. Verificala prima di salvare."
-                : $"{role}: «{place.CurrentName}» non è un’unità amministrativa e sarà salvato come luogo specifico. Verifica il luogo che lo contiene.";
-            var editor = new PlacesEditorWindow(derived.Levels, notice: notice, store: store) { Owner = owner };
+            var notice = derived.HistoricName is { Length: > 0 } historic
+                ? place.HistoricBuildingName.Trim() is { Length: > 0 } building
+                    ? $"{role}: «{historic}» non esiste più e sarà salvato come luogo storico, con «{building}» (ancora visibile) come luogo specifico al suo interno. Verifica il luogo che lo contiene."
+                    : $"{role}: «{historic}» non esiste più e sarà salvato come luogo storico. Verifica il luogo attuale che lo contiene (comune, o provincia o regione se il comune non si conosce)."
+                : derived.SpecificName is null
+                    ? $"{role}: la gerarchia di «{place.CurrentName}» è incompleta o incerta. Verificala prima di salvare."
+                    : $"{role}: «{place.CurrentName}» non è un’unità amministrativa e sarà salvato come luogo specifico. Verifica il luogo che lo contiene.";
+            var editor = new PlacesEditorWindow(derived.Levels, notice: notice, store: store, allowPartial: derived.HistoricName is { Length: > 0 }) { Owner = owner };
             classicId = editor.ShowDialog() == true
                 ? store.EnsurePlace(editor.ResultLevels, editor.ResultLatitude, editor.ResultLongitude)
                 : null;
@@ -30,7 +35,7 @@ internal static class ImportedPlaceResolver
             return (null, null);
         }
 
-        return ToArchiveIds(store, place, derived.SpecificName, luogoId);
+        return ToArchiveIds(store, place, derived, luogoId);
     }
 
     // Senza finestre: il luogo si crea solo se la gerarchia è certa, altrimenti resta da scegliere nella scheda.
@@ -38,16 +43,31 @@ internal static class ImportedPlaceResolver
     {
         var derived = store.DerivePlace(place);
         return derived.Confident && store.EnsurePlace(derived.Levels, null, null) is int luogoId
-            ? ToArchiveIds(store, place, derived.SpecificName, luogoId)
+            ? ToArchiveIds(store, place, derived, luogoId)
             : (null, null);
     }
 
-    private static (int? LuogoId, int? SpecificoId) ToArchiveIds(PeopleStore store, HistoricalPlaceRecord place, string? specificName, int luogoId)
+    private static (int? LuogoId, int? SpecificoId) ToArchiveIds(PeopleStore store, HistoricalPlaceRecord place, DerivedPlace derived, int luogoId)
     {
-        if (specificName is { Length: > 0 })
+        if (derived.HistoricName is { Length: > 0 } historicName)
+        {
+            var tipo = place.TypeLabel.Length > 0 ? place.TypeLabel : SpecificPlaceTypes.Describe(place.TypeIds);
+            var historicId = store.EnsureHistoricPlace(historicName, derived.LatinName, tipo, luogoId, place.WikidataId, place.Latitudine, place.Longitudine,
+                formerName: place.HistoricBuildingName);
+            store.MergePlaceHistoricNames(historicId, place.HistoricalNames, place.WikidataId);
+            // L'edificio che dà il nome alla località (Terme di Cotilia) è un luogo specifico dentro il luogo storico.
+            if (place.HistoricBuildingName.Trim() is { Length: > 0 } buildingName)
+            {
+                return (null, store.EnsureSpecificPlace(buildingName, historicId, place.WikidataId, place.Latitudine, place.Longitudine, place.HistoricBuildingType, place.SpecificCondition));
+            }
+
+            return (historicId, null);
+        }
+
+        if (derived.SpecificName is { Length: > 0 } specificName)
         {
             return (null, store.EnsureSpecificPlace(specificName, luogoId, place.WikidataId, place.Latitudine, place.Longitudine,
-                place.TypeLabel.Length > 0 ? place.TypeLabel : SpecificPlaceTypes.Describe(place.TypeIds)));
+                place.TypeLabel.Length > 0 ? place.TypeLabel : SpecificPlaceTypes.Describe(place.TypeIds), place.SpecificCondition));
         }
 
         // I nomi storici passano al luogo solo se è proprio quello importato (non uno scelto al suo posto nell'editor).

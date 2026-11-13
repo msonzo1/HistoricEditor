@@ -63,6 +63,15 @@
                     <StackPanel x:Name="PeriodoPanel" Visibility="Collapsed">
                         <Label Content="Periodo (es. 1115–1797)" Target="{Binding ElementName=PeriodoBox}" />
                         <TextBox x:Name="PeriodoBox" Margin="0,0,0,10" />
+                        <Expander x:Name="LatinExpander" IsExpanded="False" Margin="0,0,0,10" Foreground="{DynamicResource InkBrush}" AutomationProperties.Name="Nome in latino">
+                            <Expander.Header>
+                                <TextBlock x:Name="LatinExpanderHeader" Text="Nome in latino" FontWeight="SemiBold" Foreground="{DynamicResource InkBrush}" TextWrapping="Wrap" />
+                            </Expander.Header>
+                            <StackPanel Margin="0,8,0,0">
+                                <Label Content="Nome _latino" Target="{Binding ElementName=LatinBox}" />
+                                <TextBox x:Name="LatinBox" TextChanged="LatinBox_Changed" AutomationProperties.Name="Nome latino del luogo storico" ToolTip="Per i luoghi del mondo romano, es. «Vicus Phalacrinae»" />
+                            </StackPanel>
+                        </Expander>
                     </StackPanel>
 
                     <DockPanel Margin="0,4,0,0">

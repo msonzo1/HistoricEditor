@@ -133,3 +133,22 @@ public static class HistoricalPlaceNames
 
     private static int? Max(int? a, int? b) => a is null ? b : b is null ? a : Math.Max(a.Value, b.Value);
 }
+
+// Nome latino di un luogo storico del mondo romano («Vicus Phalacrinae»), tra i nomi nelle altre lingue con codice «la».
+public static class HistoricPlaceLatin
+{
+    public const string Language = "la";
+
+    public static string Get(Luogo luogo)
+        => luogo.NomiAltreLingue.FirstOrDefault(n => n.Language == Language)?.Name.Trim() ?? string.Empty;
+
+    // Vuoto = nessun nome latino.
+    public static void Set(Luogo luogo, string? name)
+    {
+        luogo.NomiAltreLingue.RemoveAll(n => n.Language == Language);
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            luogo.NomiAltreLingue.Add(new PlaceName { Language = Language, Name = name.Trim() });
+        }
+    }
+}

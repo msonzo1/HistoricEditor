@@ -16,17 +16,60 @@ public sealed class DerivedPlace
 
     // Valorizzato quando il luogo importato non è un'unità amministrativa (monastero, reggia…).
     public string? SpecificName { get; }
+
+    // Località antica o scomparsa (Falacrine): diventa un luogo storico contenuto nell'ultimo livello (il comune),
+    // con questo nome italiano e il nome latino, se noto. In questo caso SpecificName è vuoto.
+    public string? HistoricName { get; init; }
+
+    public string LatinName { get; init; } = string.Empty;
 }
 
 public static class GeographyResolver
 {
     // Deriva i livelli secondo lo schema del Paese ricostruendo la catena amministrativa P131.
+    // Il comune trovato dalle coordinate (il più vicino, non necessariamente quello che contiene il luogo) è solo
+    // una proposta: il luogo non viene creato senza conferma.
+    // Una località antica (HistoricName valorizzato all'import) che non è un'unità amministrativa diventa un luogo
+    // storico nel comune che la contiene, invece di un luogo specifico.
     public static DerivedPlace DeriveLevels(AppDbContext context, HistoricalPlaceRecord place)
+    {
+        var derived = DeriveLevelsCore(context, place);
+        var confident = derived.Confident && !place.AdministrativeDivisions.Any(d => d.Relation == PlaceDivision.NearbyMunicipalityRelation);
+        if (place.HistoricName.Trim().Length > 0)
+        {
+            if (derived.SpecificName is not null)
+            {
+                return new DerivedPlace(derived.Levels, confident, null) { HistoricName = place.HistoricName.Trim(), LatinName = place.LatinName.Trim() };
+            }
+
+            // Nessun comune che lo contenga (né da Wikidata né dalle coordinate): il luogo storico, messo al posto del
+            // comune, sta invece sotto l'ultimo livello conosciuto, una provincia o una regione. Un luogo storico non
+            // sempre si può ricondurre a un solo comune di oggi.
+            var above = derived.Levels.Take(derived.Levels.Count - 1).ToList();
+            while (above.Count > 1 && (above[^1].Assente || string.IsNullOrWhiteSpace(above[^1].Nome)))
+            {
+                above.RemoveAt(above.Count - 1);
+            }
+
+            if (above.Count > 0 && IsComplete(above))
+            {
+                return new DerivedPlace(above, confident && GeoSchemas.IsKnown(place.CurrentCountry?.Trim() ?? string.Empty), null)
+                {
+                    HistoricName = place.HistoricName.Trim(),
+                    LatinName = place.LatinName.Trim(),
+                };
+            }
+        }
+
+        return confident == derived.Confident ? derived : new DerivedPlace(derived.Levels, confident, derived.SpecificName);
+    }
+
+    private static DerivedPlace DeriveLevelsCore(AppDbContext context, HistoricalPlaceRecord place)
     {
         var country = place.CurrentCountry?.Trim() ?? string.Empty;
         var placeName = place.CurrentName?.Trim() ?? string.Empty;
         var schema = GeoSchemas.For(country);
-        var ancestors = BuildAncestors(place, GeoSchemas.LevelTypes(country));
+        var ancestors = BuildAncestors(place, schema, GeoSchemas.LevelTypes(country));
         var leafIndex = schema.Length - 1;
         var countryNames = CountryNames(place, country);
         var (countryLat, countryLon) = CountryCoordinate(place, country);
@@ -225,7 +268,7 @@ public static class GeographyResolver
         return new DerivedPlace(levels, confident && IsComplete(levels), specificName);
     }
 
-    private static List<Ancestor> BuildAncestors(HistoricalPlaceRecord place, IReadOnlyDictionary<string, HashSet<string>>? levelTypes)
+    private static List<Ancestor> BuildAncestors(HistoricalPlaceRecord place, string[] schema, IReadOnlyDictionary<string, HashSet<string>>? levelTypes)
     {
         var countryIds = place.AdministrativeDivisions
             .Where(d => d.Relation.StartsWith("Paese", StringComparison.OrdinalIgnoreCase))
@@ -235,10 +278,23 @@ public static class GeographyResolver
 
         // Con più P131 per lo stesso luogo (es. provincia di Anversa → Belgio e Regione fiamminga) si preferisce
         // il genitore con un tipo previsto dallo schema, poi uno diverso dallo Stato, infine il primo.
+        // Tra quelli con un tipo previsto vince il livello più basso: il Mausoleo di Augusto indica insieme
+        // Campo Marzio, Municipio I, Lazio e Roma, e il genitore diretto è il comune, non la regione.
         int Rank(PlaceDivision division)
-            => levelTypes is not null && levelTypes.Values.Any(types => division.TypeIds.Any(types.Contains)) ? 2
-                : countryIds.Contains(division.WikidataId) ? 0
-                : 1;
+        {
+            if (levelTypes is not null)
+            {
+                for (var level = schema.Length - 1; level >= 1; level--)
+                {
+                    if (levelTypes.TryGetValue(schema[level], out var types) && division.TypeIds.Any(types.Contains))
+                    {
+                        return 2 + level;
+                    }
+                }
+            }
+
+            return countryIds.Contains(division.WikidataId) ? 0 : 1;
+        }
 
         var parentOf = new Dictionary<string, PlaceDivision>(StringComparer.Ordinal);
         foreach (var division in place.AdministrativeDivisions)

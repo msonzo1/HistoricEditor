@@ -69,6 +69,8 @@ public partial class PlacesView : UserControl
         var current = store?.GetPlace(luogo.Id) ?? luogo;
         NoteEditor.Text = current.Note;
         LoadHistoricNames(current.NomiStorici);
+        LatinBox.Text = HistoricPlaceLatin.Get(current);
+        LatinExpander.IsExpanded = false;
         if (store is not null)
         {
             AttachmentsView.Load(store, AmbitiAllegato.Luogo, luogo.Id);
@@ -88,6 +90,10 @@ public partial class PlacesView : UserControl
             SenzaLivelloBox.Visibility = Visibility.Collapsed;
         }
     }
+
+    // Intestazione della tendina chiusa: «Nome in latino: Vicus Phalacrinae».
+    private void LatinBox_Changed(object sender, TextChangedEventArgs e)
+        => LatinExpanderHeader.Text = LatinBox.Text.Trim().Length > 0 ? $"Nome in latino: {LatinBox.Text.Trim()}" : "Nome in latino";
 
     private void StoricoBox_Changed(object sender, RoutedEventArgs e)
         => PeriodoPanel.Visibility = StoricoBox.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
@@ -129,6 +135,7 @@ public partial class PlacesView : UserControl
         {
             store.UpdatePlace(selected.Id, nome, lat, lon, storico, storico ? PeriodoBox.Text : string.Empty, NoteEditor.Text, senzaLivello);
             store.SetPlaceHistoricNames(selected.Id, names);
+            store.SetPlaceLatinName(selected.Id, storico ? LatinBox.Text : string.Empty);
         }
         catch (DbUpdateException)
         {

@@ -1,6 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
+using System.Windows.Documents;
 
 namespace HistoricEditor;
 
@@ -68,15 +69,47 @@ public partial class PlaceFieldControl : UserControl
         }
 
         var description = Store.DescribeRole(LuogoId, LuogoSpecificoId);
-        ClassicText.Text = description.Classic.Length > 0 ? description.Classic : "Nessun luogo selezionato";
+        ShowClassic(description.Classic);
         var hasSpecific = LuogoSpecificoId is not null;
         SpecificText.Text = description.Specific.Length > 0 ? description.Specific : "Nessun luogo specifico";
         SpecificRow.Visibility = hasSpecific || LuogoId is not null ? Visibility.Visible : Visibility.Collapsed;
         ClearButton.Visibility = hasSpecific || LuogoId is not null ? Visibility.Visible : Visibility.Collapsed;
         ClearSpecificButton.Visibility = hasSpecific ? Visibility.Visible : Visibility.Collapsed;
-        ClassicText.ToolTip = ClassicText.Text;
         SpecificText.ToolTip = SpecificText.Text;
         DisplayText = description.DisplayText;
+    }
+
+    // Le parti che sono luoghi storici (non esistono più) in corsivo, con l'icona della storia davanti:
+    // «Aquae Cutiliae, Castel Sant'Angelo, provincia di Rieti, Lazio, Italia».
+    private void ShowClassic(string text)
+    {
+        ClassicText.Inlines.Clear();
+        int? placeId = LuogoSpecificoId is int specificId ? Store?.GetSpecificPlace(specificId)?.LuogoId : LuogoId;
+        var parts = text.Length > 0 && Store is not null ? Store.DescribePlaceParts(placeId) : [];
+        var historic = parts.Where(p => p.Storico).Select(p => p.Nome).ToList();
+        if (parts.Count == 0 || historic.Count == 0)
+        {
+            ClassicText.Text = text.Length > 0 ? text : "Nessun luogo selezionato";
+        }
+        else
+        {
+            for (var i = 0; i < parts.Count; i++)
+            {
+                if (i > 0)
+                {
+                    ClassicText.Inlines.Add(new Run(", "));
+                }
+
+                ClassicText.Inlines.Add(parts[i].Storico ? new Run(parts[i].Nome) { FontStyle = FontStyles.Italic } : new Run(parts[i].Nome));
+            }
+        }
+
+        HistoricIcon.Visibility = historic.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+        var tooltip = historic.Count > 0
+            ? $"{text}\nLuogo storico, non esiste più: {string.Join(", ", historic)}"
+            : ClassicText.Text;
+        ClassicText.ToolTip = tooltip;
+        AutomationProperties.SetName(ClassicText, historic.Count > 0 ? $"{text}. Luogo storico, non esiste più: {string.Join(", ", historic)}" : ClassicText.Text);
     }
 
     public void Clear()
@@ -148,7 +181,9 @@ public partial class PlaceFieldControl : UserControl
             return;
         }
 
-        var dialog = new PlacePickerWindow(Store, Title, allowSpecific: true, LuogoId, LuogoSpecificoId, allowClear: true) { Owner = Window.GetWindow(this) };
+        // Un luogo storico (Falacrine) si mostra tra i luoghi storici, che il selettore apre per primi.
+        var historic = LuogoSpecificoId is null && LuogoId is int luogoId && Store.GetPlace(luogoId)?.Storico == true;
+        var dialog = new PlacePickerWindow(Store, Title, allowSpecific: true, LuogoId, LuogoSpecificoId, allowClear: true, startHistoric: historic) { Owner = Window.GetWindow(this) };
         if (dialog.ShowDialog() == true)
         {
             SetPlace(dialog.ResultLuogoId, dialog.ResultSpecificoId);

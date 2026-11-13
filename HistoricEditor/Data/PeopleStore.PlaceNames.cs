@@ -45,6 +45,19 @@ public sealed partial class PeopleStore
         SaveOrRevert();
     }
 
+    // Nome latino di un luogo storico (vuoto = nessuno).
+    public void SetPlaceLatinName(int id, string? latin)
+    {
+        var luogo = context.Luoghi.Find(id);
+        if (luogo is null || HistoricPlaceLatin.Get(luogo) == (latin ?? string.Empty).Trim())
+        {
+            return;
+        }
+
+        HistoricPlaceLatin.Set(luogo, latin);
+        SaveOrRevert();
+    }
+
     // Come DescribePlace, ma ogni livello che nell'anno aveva un altro nome appare come «Costantinopoli (oggi Istanbul)».
     public string DescribePlaceAt(int? luogoId, int? year)
     {

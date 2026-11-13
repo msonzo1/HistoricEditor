@@ -9,7 +9,16 @@
         FontFamily="Segoe UI" FontSize="13">
     <StackPanel Margin="18">
         <Label Content="Nome *" Target="{Binding ElementName=NomeBox}" />
-        <TextBox x:Name="NomeBox" Padding="8,6" Margin="0,0,0,10" AutomationProperties.Name="Nome del luogo storico" />
+        <TextBox x:Name="NomeBox" Padding="8,6" Margin="0,0,0,6" AutomationProperties.Name="Nome del luogo storico" ToolTip="Nome in italiano, es. «Falacrine»" />
+        <Expander x:Name="LatinExpander" IsExpanded="False" Margin="0,0,0,10" Foreground="{DynamicResource InkBrush}" AutomationProperties.Name="Nome in latino">
+            <Expander.Header>
+                <TextBlock x:Name="LatinExpanderHeader" Text="Nome in latino" FontWeight="SemiBold" Foreground="{DynamicResource InkBrush}" TextWrapping="Wrap" />
+            </Expander.Header>
+            <StackPanel Margin="0,8,0,0">
+                <Label Content="Nome _latino" Target="{Binding ElementName=LatinBox}" />
+                <TextBox x:Name="LatinBox" Padding="8,6" TextChanged="LatinBox_Changed" AutomationProperties.Name="Nome latino del luogo storico" ToolTip="Per i luoghi del mondo romano, es. «Vicus Phalacrinae»" />
+            </StackPanel>
+        </Expander>
 
         <Label Content="Tipo (es. Stato, Ducato, Contea)" Target="{Binding ElementName=TipoBox}" />
         <ComboBox x:Name="TipoBox" IsEditable="True" IsTextSearchEnabled="True" Margin="0,0,0,10" AutomationProperties.Name="Tipo del luogo storico" />

@@ -86,6 +86,32 @@ public class GeographyResolverTests : IDisposable
         Assert.Equal(new[] { "Italia", "Toscana", "Città metropolitana di Firenze", "Firenze" }, result.Levels.Select(l => l.Nome));
     }
 
+    // Un luogo storico senza comune (né da Wikidata né dalle coordinate) sta sotto l'ultimo livello conosciuto, qui la
+    // regione, invece di diventare un comune con il proprio nome (2026-11-12).
+    [Fact]
+    public void DeriveLevels_HistoricPlaceWithoutMunicipality_StaysUnderTheRegion()
+    {
+        var place = new HistoricalPlaceRecord
+        {
+            WikidataId = "Qantica",
+            CurrentName = "Località antica",
+            CurrentCountry = "Italia",
+            HistoricName = "Località antica",
+            AdministrativeDivisions =
+            [
+                new PlaceDivision { Relation = "Unità amministrativa (P131)", WikidataId = "Qreg", SubjectWikidataId = "Qantica", Name = "Lazio" },
+                new PlaceDivision { Relation = "Unità amministrativa (P131)", WikidataId = "Qit", SubjectWikidataId = "Qreg", Name = "Italia" },
+                new PlaceDivision { Relation = "Paese (P17)", WikidataId = "Qit", SubjectWikidataId = "Qantica", Name = "Italia" },
+            ],
+        };
+
+        var result = GeographyResolver.DeriveLevels(context, place);
+
+        Assert.Equal("Località antica", result.HistoricName);
+        Assert.Null(result.SpecificName);
+        Assert.Equal(["Italia", "Lazio"], result.Levels.Select(l => l.Nome));
+    }
+
     [Fact]
     public void DeriveLevels_Portugal_UsesInfoboxDivisions()
     {
@@ -371,6 +397,34 @@ public class GeographyResolverTests : IDisposable
         Assert.True(result.Confident);
         Assert.Equal("Reggia di Caserta", result.SpecificName);
         Assert.Equal(new[] { "Italia", "Campania", "provincia di Caserta", "Caserta" }, result.Levels.Select(l => l.Nome));
+    }
+
+    [Fact]
+    public void DeriveLevels_ItalyTypes_SeveralParentsPreferComune()
+    {
+        // Mausoleo di Augusto (Q770847): P131 = Campo Marzio, Municipio Roma I, Lazio, Roma.
+        var place = new HistoricalPlaceRecord
+        {
+            WikidataId = "Q770847", CurrentName = "Mausoleo di Augusto", CurrentCountry = "Italia", TypeIds = ["Q839954", "Q3822604"],
+            AdministrativeDivisions =
+            [
+                P131("Q770847", "Q1031426", "Campo Marzio", "Q1229454", "Q123705"),
+                P131("Q770847", "Q550592", "Municipio Roma I", "Q525504"),
+                P131("Q770847", "Q1282", "Lazio", "Q16110"),
+                P131("Q770847", "Q220", "Roma", "Q902814", "Q747074"),
+                P131("Q1031426", "Q220", "Roma", "Q902814", "Q747074"),
+                P131("Q220", "Q15119", "città metropolitana di Roma Capitale", "Q15110"),
+                P131("Q15119", "Q1282", "Lazio", "Q16110"),
+                P131("Q1282", "Q38", "Italia"),
+                P17("Q770847", "Q38", "Italia"),
+            ],
+        };
+
+        var result = GeographyResolver.DeriveLevels(context, place);
+
+        Assert.True(result.Confident);
+        Assert.Equal("Mausoleo di Augusto", result.SpecificName);
+        Assert.Equal(new[] { "Italia", "Lazio", "città metropolitana di Roma Capitale", "Roma" }, result.Levels.Select(l => l.Nome));
     }
 
     [Fact]

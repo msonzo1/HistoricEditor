@@ -789,6 +789,67 @@ public sealed partial class PeopleStore : IDisposable
         return luogo.Id;
     }
 
+    // Luogo storico importato (località antica): riusa quello con lo stesso codice Wikidata o con lo stesso nome nello
+    // stesso contenitore; completa coordinate e nome latino solo se mancano, per non sovrascrivere correzioni manuali.
+    // formerName: nome che un import precedente dava al luogo («Terme di Cotilia», prima che le terme diventassero un
+    // luogo specifico); se il luogo ha ancora quel nome prende il nuovo, altrimenti il nome scritto a mano resta.
+    public int EnsureHistoricPlace(string nome, string latino, string tipo, int? parentId, string wikidataId, double? latitudine, double? longitudine, string formerName = "")
+    {
+        nome = nome.Trim();
+        latino = latino.Trim();
+        tipo = tipo.Trim().Length > 0 ? tipo.Trim() : "Luogo storico";
+        wikidataId = wikidataId.Trim();
+        var existing = (wikidataId.Length > 0 ? context.Luoghi.FirstOrDefault(l => l.Storico && l.WikidataId == wikidataId) : null)
+            ?? context.Luoghi.FirstOrDefault(l => l.ParentId == parentId && l.Nome == nome && (l.Storico || l.Tipo == tipo));
+        if (existing is null)
+        {
+            existing = new Luogo { Nome = nome, Tipo = tipo, ParentId = parentId, Storico = true, WikidataId = wikidataId };
+            context.Luoghi.Add(existing);
+        }
+
+        existing.Latitudine ??= latitudine;
+        existing.Longitudine ??= longitudine;
+        if (existing.WikidataId.Length == 0)
+        {
+            existing.WikidataId = wikidataId;
+        }
+
+        if (latino.Length > 0 && !existing.NomiAltreLingue.Any(n => n.Language == HistoricPlaceLatin.Language && n.Name.Trim().Length > 0))
+        {
+            HistoricPlaceLatin.Set(existing, latino);
+        }
+
+        var renamed = existing.Id != 0 && formerName.Trim().Length > 0 && nome.Length > 0
+            && existing.Nome == formerName.Trim() && existing.Nome != nome;
+        if (renamed)
+        {
+            existing.Nome = nome;
+        }
+
+        SaveOrRevert();
+        if (renamed)
+        {
+            SyncPlaceTexts();
+        }
+
+        return existing.Id;
+    }
+
+    // Le parti di DescribePlace, dal luogo allo Stato, con l'indicazione dei luoghi storici (che non esistono più),
+    // per mostrarli in modo diverso nel campo del luogo.
+    public IReadOnlyList<(string Nome, bool Storico)> DescribePlaceParts(int? luogoId)
+    {
+        var parts = new List<(string, bool)>();
+        var current = luogoId is int id ? context.Luoghi.Find(id) : null;
+        while (current is not null && parts.Count < 32)
+        {
+            parts.Add((current.Nome, current.Storico));
+            current = current.ParentId is int parentId ? context.Luoghi.Find(parentId) : null;
+        }
+
+        return parts;
+    }
+
     // Formato "Comune, Provincia, Regione, Stato".
     public string DescribePlace(int? luogoId)
     {
@@ -943,8 +1004,9 @@ public sealed partial class PeopleStore : IDisposable
         SaveOrRevert();
     }
 
-    // Riusa il luogo specifico già importato (stesso Wikidata o stesso nome nello stesso luogo).
-    public int EnsureSpecificPlace(string nome, int luogoId, string wikidataId, double? latitudine = null, double? longitudine = null, string tipo = "")
+    // Riusa il luogo specifico già importato (stesso Wikidata o stesso nome nello stesso luogo). La condizione
+    // («In rovina» per i resti di un luogo antico) vale solo per un luogo nuovo: quella di uno esistente può essere stata corretta.
+    public int EnsureSpecificPlace(string nome, int luogoId, string wikidataId, double? latitudine = null, double? longitudine = null, string tipo = "", string condizione = "")
     {
         nome = nome.Trim();
         tipo = (tipo ?? string.Empty).Trim();
@@ -965,6 +1027,11 @@ public sealed partial class PeopleStore : IDisposable
         }
 
         var created = new LuogoSpecifico { Nome = nome, Tipo = tipo, LuogoId = luogoId, WikidataId = wikidataId, Latitudine = latitudine, Longitudine = longitudine };
+        if (CondizioniLuogo.Tutte.Contains(condizione))
+        {
+            created.Condizione = condizione;
+        }
+
         context.LuoghiSpecifici.Add(created);
         SaveOrRevert();
         return created.Id;

@@ -13,22 +13,34 @@ public partial class PlacesEditorWindow : Window
     private readonly Dictionary<string, bool> absent = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<TextBox, string> lastSuggested = [];
     private readonly List<LevelRow> rows = [];
+    // Livelli proposti (di solito dall'import): nomi nelle altre lingue e coordinate passano al livello salvato
+    // se l'utente ne conferma il nome.
+    private readonly Dictionary<string, GeoLevel> prefilled = new(StringComparer.OrdinalIgnoreCase);
+    private readonly string prefilledLeafName = string.Empty;
+    private readonly string prefilledLatitudeText = string.Empty;
+    private readonly string prefilledLongitudeText = string.Empty;
     private bool ready;
+
+    // Luogo storico: i livelli più bassi (il comune, anche la provincia) possono restare vuoti, perché un luogo che non
+    // esiste più non sempre si riconduce a un solo comune di oggi; il luogo storico sta allora nell'ultimo livello indicato.
+    private readonly bool allowPartial;
 
     public List<GeoLevel> ResultLevels { get; private set; } = [];
     public double? ResultLatitude { get; private set; }
     public double? ResultLongitude { get; private set; }
 
-    public PlacesEditorWindow(IEnumerable<GeoLevel> prefill, double? latitude = null, double? longitude = null, string? notice = null, PeopleStore? store = null)
+    public PlacesEditorWindow(IEnumerable<GeoLevel> prefill, double? latitude = null, double? longitude = null, string? notice = null, PeopleStore? store = null, bool allowPartial = false)
     {
         InitializeComponent();
         this.store = store;
+        this.allowPartial = allowPartial;
 
         var levels = prefill.ToList();
         foreach (var level in levels)
         {
             values[level.Tipo] = level.Nome;
             absent[level.Tipo] = level.Assente;
+            prefilled[level.Tipo] = level;
         }
 
         foreach (var country in GeoSchemas.KnownCountries)
@@ -36,9 +48,21 @@ public partial class PlacesEditorWindow : Window
             StatoBox.Items.Add(country);
         }
 
+        // Senza coordinate esplicite si propongono quelle del livello più basso (es. Cittareale, comune proposto
+        // per Falacrine): restano sue solo se il nome non viene cambiato (vedi Save_Click).
+        var leaf = levels.LastOrDefault(l => !l.Assente);
+        if (latitude is null && longitude is null && leaf is not null)
+        {
+            latitude = leaf.Latitudine;
+            longitude = leaf.Longitudine;
+        }
+
+        prefilledLeafName = leaf?.Nome.Trim() ?? string.Empty;
         StatoBox.Text = levels.FirstOrDefault()?.Nome ?? string.Empty;
         LatitudeBox.Text = CoordinateText.Format(latitude);
         LongitudeBox.Text = CoordinateText.Format(longitude);
+        prefilledLatitudeText = LatitudeBox.Text;
+        prefilledLongitudeText = LongitudeBox.Text;
         if (!string.IsNullOrWhiteSpace(notice))
         {
             NoticeText.Text = notice;
@@ -80,7 +104,7 @@ public partial class PlacesEditorWindow : Window
             var isLeaf = i == schema.Length - 1;
             var box = new TextBox { Text = values.GetValueOrDefault(tipo, string.Empty) };
             AutomationProperties.SetName(box, tipo);
-            var label = new Label { Content = isLeaf ? $"{tipo} *" : tipo, Target = box };
+            var label = new Label { Content = isLeaf && !allowPartial ? $"{tipo} *" : tipo, Target = box };
             var line = new DockPanel { Margin = new Thickness(0, 0, 0, 8) };
 
             CheckBox? absentBox = null;
@@ -162,10 +186,11 @@ public partial class PlacesEditorWindow : Window
             return;
         }
 
-        var levels = new List<GeoLevel> { new(GeoSchemas.For(stato)[0], stato) };
+        var levels = new List<GeoLevel> { WithPrefilledData(new(GeoSchemas.For(stato)[0], stato)) };
         var previousAbsent = false;
-        foreach (var row in rows)
+        for (var index = 0; index < rows.Count; index++)
         {
+            var row = rows[index];
             var isAbsent = row.Absent?.IsChecked == true;
             if (isAbsent)
             {
@@ -181,6 +206,18 @@ public partial class PlacesEditorWindow : Window
             else
             {
                 var nome = row.Box.Text.Trim();
+                if (nome.Length == 0 && allowPartial && levels.Count > 1
+                    && rows.Skip(index).All(r => r.Box.Text.Trim().Length == 0 && r.Absent?.IsChecked != true))
+                {
+                    // Luogo storico sotto una provincia o una regione: i livelli vuoti in fondo si tralasciano.
+                    while (levels.Count > 1 && levels[^1].Assente)
+                    {
+                        levels.RemoveAt(levels.Count - 1);
+                    }
+
+                    break;
+                }
+
                 if (nome.Length == 0)
                 {
                     EditorMessage.Text = row.Absent is null
@@ -190,7 +227,7 @@ public partial class PlacesEditorWindow : Window
                     return;
                 }
 
-                levels.Add(new GeoLevel(row.Tipo, nome));
+                levels.Add(WithPrefilledData(new GeoLevel(row.Tipo, nome)));
             }
 
             previousAbsent = isAbsent;
@@ -210,10 +247,33 @@ public partial class PlacesEditorWindow : Window
             return;
         }
 
+        // Coordinate proposte e non toccate, ma il luogo è cambiato (Cittareale → Amatrice): non sono del nuovo luogo.
+        var leafName = levels.LastOrDefault(l => !l.Assente)?.Nome ?? string.Empty;
+        if (!string.Equals(leafName, prefilledLeafName, StringComparison.OrdinalIgnoreCase)
+            && LatitudeBox.Text == prefilledLatitudeText && LongitudeBox.Text == prefilledLongitudeText)
+        {
+            lat = null;
+            lon = null;
+        }
+
         ResultLevels = levels;
         ResultLatitude = lat;
         ResultLongitude = lon;
         DialogResult = true;
+    }
+
+    // Stesso livello e stesso nome della proposta: conserva i nomi nelle altre lingue e le coordinate lette all'import.
+    private GeoLevel WithPrefilledData(GeoLevel level)
+    {
+        if (prefilled.TryGetValue(level.Tipo, out var proposed) && !proposed.Assente
+            && string.Equals(proposed.Nome.Trim(), level.Nome, StringComparison.OrdinalIgnoreCase))
+        {
+            level.Nomi = [.. proposed.Nomi];
+            level.Latitudine = proposed.Latitudine;
+            level.Longitudine = proposed.Longitudine;
+        }
+
+        return level;
     }
 
     private void Cancel_Click(object sender, RoutedEventArgs e) => DialogResult = false;
