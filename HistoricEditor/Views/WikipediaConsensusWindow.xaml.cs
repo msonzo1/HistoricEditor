@@ -4,7 +4,7 @@ using System.Windows.Media;
 
 namespace HistoricEditor;
 
-// Elenco delle edizioni di Wikipedia usate per il LED di concordanza, con i collegamenti alle pagine.
+// Elenco delle edizioni di Wikipedia usate per il LED di concordanza (più i dati di Wikidata), con i collegamenti alle pagine.
 public partial class WikipediaConsensusWindow : Window
 {
     private readonly IReadOnlyList<ConsensusEdition> editions;
@@ -14,6 +14,8 @@ public partial class WikipediaConsensusWindow : Window
         InitializeComponent();
         editions = result.Editions;
         SummaryText.Text = result.Summary;
+        DateNotesText.Text = result.DateNotes.Count == 0 ? string.Empty : "Date discordanti tra le fonti:" + Environment.NewLine + string.Join(Environment.NewLine, result.DateNotes);
+        DateNotesText.Visibility = result.DateNotes.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
         var agree = (Brush)FindResource("GreenBrush");
         var differ = (Brush)FindResource("DangerBrush");
         EditionsList.ItemsSource = editions.Select(e => new EditionRow(e, e.Agrees ? agree : differ)).ToList();
@@ -55,7 +57,8 @@ public partial class WikipediaConsensusWindow : Window
     {
         public string Mark => Edition.Agrees ? "✓" : "✗";
         public Visibility LinkVisibility => Edition.Url.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
-        public string LinkName => $"Apri Wikipedia in {Edition.LanguageName} nel browser";
-        public string AccessibleName => $"Wikipedia in {Edition.LanguageName}, {Edition.Title}: {(Edition.Agrees ? "concorda" : "diversa")}. Nascita {Edition.Birth}. Morte {Edition.Death}. {Edition.DifferencesText}";
+        private string Source => Edition.IsWikidata ? "Wikidata" : $"Wikipedia in {Edition.LanguageName}";
+        public string LinkName => $"Apri {Source} nel browser";
+        public string AccessibleName => $"{Source},{Edition.Title}: {(Edition.Agrees ? "concorda" : "diversa")}. Nascita {Edition.Birth}. Morte {Edition.Death}. {Edition.DifferencesText}";
     }
 }

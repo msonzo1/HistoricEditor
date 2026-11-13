@@ -66,6 +66,7 @@
             </Border>
             <StackPanel VerticalAlignment="Center">
                 <TextBlock x:Name="HeaderText" FontFamily="Georgia" FontSize="26" Foreground="{DynamicResource InkBrush}" TextWrapping="Wrap" AutomationProperties.HeadingLevel="Level1" />
+                <TextBlock x:Name="HeaderLatin" FontFamily="Georgia" FontStyle="Italic" FontSize="15" Foreground="{DynamicResource InkBrush}" Margin="0,2,0,0" TextWrapping="Wrap" Visibility="Collapsed" />
                 <TextBlock x:Name="HeaderSubtitle" Foreground="{DynamicResource QuietBrush}" FontSize="13" Margin="0,4,0,0" TextWrapping="Wrap" />
             </StackPanel>
         </DockPanel>
@@ -77,6 +78,13 @@
                         <TextBlock Text="DATI PRINCIPALI" Style="{StaticResource SectionTitle}" AutomationProperties.HeadingLevel="Level2" />
                         <ItemsControl x:Name="MainList" ItemTemplate="{StaticResource FieldTemplate}" Focusable="False" />
                         <TextBlock x:Name="DynastyPathText" Foreground="{DynamicResource QuietBrush}" FontSize="12" TextWrapping="Wrap" Margin="170,0,0,4" />
+                    </StackPanel>
+                </Border>
+
+                <Border x:Name="RomanNamesCard" Style="{StaticResource Card}" Visibility="Collapsed">
+                    <StackPanel>
+                        <TextBlock Text="NOMI NEL TEMPO" Style="{StaticResource SectionTitle}" AutomationProperties.HeadingLevel="Level2" />
+                        <ItemsControl x:Name="RomanNamesList" ItemTemplate="{StaticResource FieldTemplate}" Focusable="False" />
                     </StackPanel>
                 </Border>
 
@@ -92,12 +100,6 @@
                         <TextBlock Text="NASCITA, MORTE E SEPOLTURA" Style="{StaticResource SectionTitle}" AutomationProperties.HeadingLevel="Level2" />
                         <ItemsControl x:Name="LifeList" ItemTemplate="{StaticResource FieldTemplate}" Focusable="False" />
                         <TextBlock x:Name="LifeEmptyText" Text="Nessuna data o luogo indicato." Style="{StaticResource Empty}" />
-                        <Border x:Name="DateNoticePanel" Visibility="Collapsed" Margin="0,8,0,0" Background="{DynamicResource AppSurfaceAlt}" BorderBrush="{DynamicResource SignalBrush}" BorderThickness="1" CornerRadius="8" Padding="12,10">
-                            <StackPanel>
-                                <Label Content="Differenze tra le fonti" Target="{Binding ElementName=DateNoticeText}" FontWeight="SemiBold" />
-                                <TextBox x:Name="DateNoticeText" Style="{StaticResource ReadOnlyValue}" FontSize="12" AutomationProperties.Name="Differenze tra le date indicate dalle fonti" />
-                            </StackPanel>
-                        </Border>
                     </StackPanel>
                 </Border>
 
@@ -234,6 +236,10 @@
                     <StackPanel>
                         <TextBlock Text="FONTI" Style="{StaticResource SectionTitle}" AutomationProperties.HeadingLevel="Level2" />
                         <TextBlock x:Name="NoSourcesText" Text="Nessuna fonte indicata." Style="{StaticResource Empty}" />
+                        <StackPanel x:Name="DateNoticePanel" Visibility="Collapsed" Margin="0,0,0,8">
+                            <Label Content="Date discordanti tra le fonti" Target="{Binding ElementName=DateNoticeText}" FontWeight="SemiBold" Padding="0,0,0,2" />
+                            <TextBox x:Name="DateNoticeText" Style="{StaticResource ReadOnlyValue}" FontSize="12" AutomationProperties.Name="Date discordanti tra le fonti" />
+                        </StackPanel>
                         <ItemsControl x:Name="SourcesList" Focusable="False" AutomationProperties.Name="Fonti">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>

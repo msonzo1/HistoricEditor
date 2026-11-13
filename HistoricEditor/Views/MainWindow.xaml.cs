@@ -44,6 +44,9 @@ public partial class MainWindow : Window
 		  RecordNavigator.Mode = openMode;
 		  SyncOpenMode();
 		  AddShortcut(System.Windows.Input.Key.M, ToggleOpenMode);
+		  ApplyLatinNames(SettingsStore.Load().ShowLatinNames);
+		  AddShortcut(System.Windows.Input.Key.L, () => SetLatinNames(!showLatinNames));
+		  BuildDateFormatMenu();
 		  SectionShortcuts();
 		  FamiliesViewToggle.IsChecked = true;
 		  PeopleTab.IsChecked = true;
@@ -181,6 +184,59 @@ public partial class MainWindow : Window
 		  OpenEditToggle.IsChecked = openMode == PersonOpenMode.Edit;
 		  OpenViewMenuItem.IsChecked = openMode == PersonOpenMode.View;
 		  OpenEditMenuItem.IsChecked = openMode == PersonOpenMode.Edit;
+	 }
+
+	 // Visualizza → Formato delle date: una voce per formato, la scelta resta in settings.json. Le date già salvate
+	 // si mostrano nel nuovo formato nelle schede e si riscrivono così quando una scheda viene salvata.
+	 private void BuildDateFormatMenu()
+	 {
+		  DateFormatMenu.Items.Clear();
+		  foreach (var option in DateFormats.All)
+		  {
+				var item = new System.Windows.Controls.MenuItem { Header = option.Etichetta, IsCheckable = true, IsChecked = option.Codice == DateFormats.Current, Tag = option.Codice };
+				item.Click += (_, _) => SetDateFormat(option);
+				DateFormatMenu.Items.Add(item);
+		  }
+	 }
+
+	 private void SetDateFormat(DateFormatOption option)
+	 {
+		  DateFormats.Current = option.Codice;
+		  SettingsStore.Update(s => s.DateFormat = option.Codice);
+		  foreach (var item in DateFormatMenu.Items.OfType<System.Windows.Controls.MenuItem>())
+		  {
+				item.IsChecked = (string)item.Tag == option.Codice;
+		  }
+
+		  Feedback.Success(StatusMessage, $"Formato delle date: {option.Codice}. Le date già salvate si mostrano così nelle schede.");
+		  LoadPeople();
+	 }
+
+	 // «Nomi latini» (Ctrl+L): il nome latino dei personaggi romani sotto quello italiano; la scelta resta in settings.json.
+	 private bool showLatinNames;
+
+	 private void LatinNames_Click(object sender, RoutedEventArgs e)
+		  => SetLatinNames(sender == LatinNamesToggle ? LatinNamesToggle.IsChecked == true : LatinNamesMenuItem.IsChecked);
+
+	 private void SetLatinNames(bool show)
+	 {
+		  if (show != showLatinNames)
+		  {
+				SettingsStore.Update(s => s.ShowLatinNames = show);
+				Feedback.Success(StatusMessage, show
+					 ? "Nomi latini visibili sotto il nome italiano dei personaggi romani (Ctrl+L per nasconderli)."
+					 : "Nomi latini nascosti (Ctrl+L per mostrarli).");
+		  }
+
+		  ApplyLatinNames(show);
+	 }
+
+	 private void ApplyLatinNames(bool show)
+	 {
+		  showLatinNames = show;
+		  PeopleTree.Resources["LatinNamesVisibility"] = show ? Visibility.Visible : Visibility.Collapsed;
+		  LatinNamesToggle.IsChecked = show;
+		  LatinNamesMenuItem.IsChecked = show;
 	 }
 
 	 // Apertura «predefinita» di un personaggio secondo la modalità scelta.

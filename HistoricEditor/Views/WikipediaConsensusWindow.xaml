@@ -13,7 +13,11 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <TextBlock x:Name="SummaryText" Grid.Row="0" Margin="20,18,20,8" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{DynamicResource InkBrush}" />
+        <StackPanel Grid.Row="0" Margin="20,18,20,8">
+            <TextBlock x:Name="SummaryText" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{DynamicResource InkBrush}" />
+            <TextBox x:Name="DateNotesText" Visibility="Collapsed" Margin="0,8,0,0" IsReadOnly="True" BorderThickness="0" Background="Transparent" TextWrapping="Wrap"
+                     FontSize="12" Foreground="{DynamicResource InkBrush}" AutomationProperties.Name="Date discordanti tra le fonti" />
+        </StackPanel>
         <ListBox x:Name="EditionsList" Grid.Row="1" Margin="20,0,20,0" HorizontalContentAlignment="Stretch"
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                  KeyboardNavigation.TabNavigation="Continue"

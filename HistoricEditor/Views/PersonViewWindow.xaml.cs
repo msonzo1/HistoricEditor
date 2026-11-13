@@ -35,10 +35,16 @@ public partial class PersonViewWindow : Window
         Title = $"Scheda di lettura – {person.DisplayName}";
         HeaderText.Text = person.DisplayName.Length > 0 ? person.DisplayName : "Personaggio senza nome";
         HeaderSubtitle.Text = string.Join(" · ", new[] { person.LifeSpan, person.MainTitle.Trim() }.Where(s => s.Length > 0));
+        HeaderLatin.Text = PersonSheet.LatinSubtitle(person);
+        HeaderLatin.Visibility = HeaderLatin.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
 
         MainList.ItemsSource = PersonSheet.MainFields(person);
         DynastyPathText.Text = LoadDynastyPath();
         DynastyPathText.Visibility = DynastyPathText.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        var romanNames = PersonSheet.NamesOverTime(person.NomiNelTempo);
+        RomanNamesList.ItemsSource = romanNames;
+        RomanNamesCard.Visibility = romanNames.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
 
         var languages = PersonSheet.LocalizedNames(person.LocalizedNames);
         LanguagesList.ItemsSource = languages;
@@ -96,6 +102,12 @@ public partial class PersonViewWindow : Window
             // Col nome dell'epoca: «Costantinopoli (oggi Istanbul)».
             var text = luogoId is null && specificoId is null ? fallback : store.DescribeRoleAt(luogoId, specificoId, year).DisplayText;
             AddField(label, text.Trim().Length > 0 ? text : fallback);
+            // Luogo storico del mondo romano: anche il nome latino («Vicus Phalacrinae»).
+            if (specificoId is null && luogoId is int id && store.GetPlace(id) is { Storico: true } luogo)
+            {
+                AddField($"{label} (nome latino)", HistoricPlaceLatin.Get(luogo));
+            }
+
             AddField(contextLabel, PersonSheet.DescribeHistoricalContext(places));
         }
 

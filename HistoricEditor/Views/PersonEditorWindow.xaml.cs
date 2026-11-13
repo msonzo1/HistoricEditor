@@ -32,6 +32,7 @@ public partial class PersonEditorWindow : Window
     {
         InitializeComponent();
         InitializeCalendarInputs();
+        InitializeRomanInputs();
         this.store = store;
         editingPerson = existing;
         pendingImport = import;
@@ -79,10 +80,10 @@ public partial class PersonEditorWindow : Window
         }
 
         // Se è mostrata un'altra lingua, il confronto usa i valori modificabili della scheda.
-        var (name, suffix, nickname, mainTitle) = workingValues ?? (NameInput.Text, SuffixInput.Text, NicknameInput.Text, MainTitleInput.Text);
+        var (name, suffix, nickname, mainTitle, _, _, _, _) = ItalianNames();
         return string.Join("\u001f",
-            name.Trim(), SurnameInput.Text.Trim(), suffix.Trim(), FamilyInput.Text.Trim(), SelectedSex,
-            nickname.Trim(), mainTitle.Trim(), TitlesSnapshot(), LocalizedNamesSnapshot(),
+            name.Trim(), SurnameInput.Text.Trim(), suffix.Trim(), FamilyInput.Text.Trim(), GensInput.Text.Trim(), SelectedSex,
+            nickname.Trim(), mainTitle.Trim(), TitlesSnapshot(), LocalizedNamesSnapshot(), RomanSnapshot(),
             BirthInput.Text.Trim(), DeathInput.Text.Trim(), DateCalendarsSnapshot(), birthSources, deathSources, sourceUrl, wikiTreeId,
             Place(BirthPlaceField), Place(DeathPlaceField), Place(BurialPlaceField), NoteEditor.Text);
     }
@@ -117,22 +118,27 @@ public partial class PersonEditorWindow : Window
         }
     }
 
+    // Le date discordanti tra le fonti (più ipotesi o date scartate perché indicate da una sola fonte) stanno nella
+    // riga delle fonti, accanto al LED di concordanza, che le comprende.
     private void UpdateDateNotice()
     {
         UpdateConsensusLed();
         var (birth, death) = CurrentDateEvidence();
-        var show = DateDiscrepancy.HasAny(birth, death);
-        DateNoticePanel.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
-        if (show)
-        {
-            DateNoticeText.Text = "Le date di nascita/morte differiscono tra le fonti o le edizioni linguistiche di Wikipedia.";
-        }
+        var text = DateDiscrepancy.DescribeAll(birth, death);
+        DateDiscordanceText.Text = text.Length == 0 ? string.Empty : "Date discordanti tra le fonti." + Environment.NewLine + text;
+        DateDiscordanceText.Visibility = text.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    private WikipediaConsensusResult EvaluateConsensus()
+    {
+        var leads = pendingImport is not null ? pendingImport.WikipediaLeads : editingPerson?.WikipediaLeads;
+        var (birth, death) = CurrentDateEvidence();
+        return WikipediaConsensus.Evaluate(leads, birth, death);
     }
 
     private void UpdateConsensusLed()
     {
-        var leads = pendingImport is not null ? pendingImport.WikipediaLeads : editingPerson?.WikipediaLeads;
-        var result = WikipediaConsensus.Evaluate(leads);
+        var result = EvaluateConsensus();
         if (result.Level == ConsensusLevel.Hidden)
         {
             ConsensusLed.Visibility = Visibility.Collapsed;
@@ -154,8 +160,7 @@ public partial class PersonEditorWindow : Window
 
     private void ConsensusLed_Click(object sender, RoutedEventArgs e)
     {
-        var leads = pendingImport is not null ? pendingImport.WikipediaLeads : editingPerson?.WikipediaLeads;
-        var result = WikipediaConsensus.Evaluate(leads);
+        var result = EvaluateConsensus();
         if (result.Level == ConsensusLevel.Hidden)
         {
             return;
@@ -168,7 +173,7 @@ public partial class PersonEditorWindow : Window
     {
         if (pendingImport is not null)
         {
-            return (pendingImport.BirthDates, pendingImport.DeathDates);
+            return ([.. pendingImport.AllBirthEvidence], [.. pendingImport.AllDeathEvidence]);
         }
 
         if (editingPerson is not null)
@@ -177,18 +182,6 @@ public partial class PersonEditorWindow : Window
         }
 
         return ([], []);
-    }
-
-    private void DateDetails_Click(object sender, RoutedEventArgs e)
-    {
-        var (birth, death) = CurrentDateEvidence();
-        var details = DateDiscrepancy.DescribeAll(birth, death);
-        MessageBox.Show(
-            this,
-            details.Length > 0 ? details : "Nessuna differenza di data registrata.",
-            "Differenze tra le date",
-            MessageBoxButton.OK,
-            MessageBoxImage.Information);
     }
 
     private void Sources_Click(object sender, RoutedEventArgs e)
@@ -353,14 +346,21 @@ public partial class PersonEditorWindow : Window
         }
 
         Saved = true;
-        RegisterFamilyAsDynasty(person.Family);
+        // Le dinastie importate vanno registrate prima di quelle scritte, così una gens indicata da Wikidata ha il tipo giusto.
+        var firstImportSave = pendingImport is not null && !relativesLinked;
+        if (firstImportSave)
+        {
+            RegisterImportedDynasties(pendingImport!);
+        }
+
+        RegisterFamilyAsDynasty(person.Family, TipiDinastia.Dinastia);
+        RegisterFamilyAsDynasty(person.Gens, TipiDinastia.Gens);
         savedSnapshot = FormSnapshot();
         HeaderText.Text = person.DisplayName;
         Feedback.Success(EditorMessage, "Scheda salvata.");
 
-        if (pendingImport is not null && !relativesLinked)
+        if (firstImportSave)
         {
-            RegisterImportedDynasties(pendingImport);
             LinkImportedRelatives();
             RefreshInheritedFamily();
         }
@@ -375,41 +375,52 @@ public partial class PersonEditorWindow : Window
         try
         {
             var text = FamilyInput.Text;
+            var gensText = GensInput.Text;
             dynasties = store.GetDynasties();
-            FamilyInput.ItemsSource = dynasties.Select(d => d.Nome).ToList();
+            // Nel campo Famiglia/Dinastia le dinastie, nel campo Gens le gens (e i loro rami).
+            FamilyInput.ItemsSource = dynasties.Where(d => !d.IsGens).Select(d => d.Nome).ToList();
+            GensInput.ItemsSource = dynasties.Where(d => d.IsGens).Select(d => d.Nome).ToList();
             FamilyInput.Text = text;
+            GensInput.Text = gensText;
         }
         catch (Exception ex) when (ex is DbUpdateException or InvalidOperationException)
         {
             dynasties = [];
             FamilyInput.ItemsSource = null;
+            GensInput.ItemsSource = null;
         }
 
         UpdateDynastyPath();
+        UpdateGensPath();
     }
 
     private IReadOnlyList<Dinastia> dynasties = [];
 
     // Mostra sotto il campo la posizione di ciascuna famiglia nella gerarchia, es. «Ramo di: Asburgo».
-    private void UpdateDynastyPath()
+    private void UpdateDynastyPath() => DynastyPathText.Text = DescribeDynasties(FamilyInput.Text, gens: false);
+
+    private void UpdateGensPath() => GensPathText.Text = DescribeDynasties(GensInput.Text, gens: true);
+
+    private string DescribeDynasties(string text, bool gens)
     {
-        var names = PeopleGrouping.FamilyNames(FamilyInput.Text);
-        DynastyPathText.Text = names.Count switch
+        var names = PeopleGrouping.FamilyNames(text);
+        return names.Count switch
         {
             0 => string.Empty,
-            1 => DescribeDynasty(names[0]),
-            _ => string.Join(" · ", names.Select(n => $"{n} – {DescribeDynasty(n)}")),
+            1 => DescribeDynasty(names[0], gens),
+            _ => string.Join(" · ", names.Select(n => $"{n} – {DescribeDynasty(n, gens)}")),
         };
     }
 
-    private string DescribeDynasty(string name)
+    private string DescribeDynasty(string name, bool gens)
     {
         var dynasty = dynasties.FirstOrDefault(d => PeopleGrouping.FamilyComparer.Equals(d.Nome.Trim(), name));
         if (dynasty is null)
         {
-            return "Nuova dinastia: verrà registrata al salvataggio";
+            return gens ? "Nuova gens: verrà registrata al salvataggio" : "Nuova dinastia: verrà registrata al salvataggio";
         }
 
+        var isGens = dynasty.IsGens;
         var parents = new List<string>();
         var visited = new HashSet<int>();
         while (dynasty?.ParentId is int p && visited.Add(p) && dynasties.FirstOrDefault(d => d.Id == p) is { } parent)
@@ -418,34 +429,41 @@ public partial class PersonEditorWindow : Window
             dynasty = parent;
         }
 
-        return parents.Count > 0 ? $"Ramo di: {string.Join(" › ", parents)}" : "Dinastia principale";
+        return parents.Count > 0 ? $"Ramo di: {string.Join(" › ", parents)}" : isGens ? "Gens romana" : "Dinastia principale";
     }
 
     private void FamilyInput_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e) => UpdateDynastyPath();
 
-    private void EditDynasty_Click(object sender, RoutedEventArgs e)
+    private void GensInput_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e) => UpdateGensPath();
+
+    private void EditDynasty_Click(object sender, RoutedEventArgs e) => EditDynasties(FamilyInput);
+
+    private void EditGens_Click(object sender, RoutedEventArgs e) => EditDynasties(GensInput);
+
+    private void EditDynasties(System.Windows.Controls.ComboBox input)
     {
-        var names = PeopleGrouping.FamilyNames(FamilyInput.Text);
+        var names = PeopleGrouping.FamilyNames(input.Text);
         var window = new DynastiesWindow(store, names.FirstOrDefault()) { Owner = this };
         window.ShowDialog();
         LoadDynastyChoices();
         // Se una dinastia è stata rinominata nella finestra, la scheda segue il nuovo nome.
         if (names.Count > 0)
         {
-            FamilyInput.Text = PeopleGrouping.JoinFamilyNames(names.Select(window.ResolveRename).Distinct(PeopleGrouping.FamilyComparer));
+            input.Text = PeopleGrouping.JoinFamilyNames(names.Select(window.ResolveRename).Distinct(PeopleGrouping.FamilyComparer));
         }
 
         UpdateDynastyPath();
+        UpdateGensPath();
     }
 
-    // Una famiglia scritta a mano diventa una dinastia (senza ramo superiore) se non esiste già.
-    private void RegisterFamilyAsDynasty(string family)
+    // Una famiglia (o una gens, dal campo Gens) scritta a mano viene registrata senza ramo superiore, se non esiste già.
+    private void RegisterFamilyAsDynasty(string family, string tipo)
     {
         try
         {
             foreach (var name in family.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
             {
-                store.EnsureDynasty(name, string.Empty, null);
+                store.EnsureDynasty(name, string.Empty, null, tipo);
             }
         }
         catch (Exception ex) when (ex is DbUpdateException or InvalidOperationException)
@@ -482,14 +500,31 @@ public partial class PersonEditorWindow : Window
     // altrimenti un nuovo salvataggio la cancellerebbe.
     private void RefreshInheritedFamily()
     {
-        if (editingPerson is not { } person || FamilyInput.Text.Trim().Length > 0
-            || store.GetPerson(person.Id)?.Family is not { Length: > 0 } family)
+        if (editingPerson is not { } person || store.GetPerson(person.Id) is not { } saved)
         {
             return;
         }
 
-        FamilyInput.Text = family;
-        person.Family = family;
+        var changed = false;
+        if (FamilyInput.Text.Trim().Length == 0 && saved.Family.Length > 0)
+        {
+            FamilyInput.Text = saved.Family;
+            person.Family = saved.Family;
+            changed = true;
+        }
+
+        if (GensInput.Text.Trim().Length == 0 && saved.Gens.Length > 0)
+        {
+            GensInput.Text = saved.Gens;
+            person.Gens = saved.Gens;
+            changed = true;
+        }
+
+        if (!changed)
+        {
+            return;
+        }
+
         savedSnapshot = FormSnapshot();
         LoadDynastyChoices();
     }

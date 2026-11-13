@@ -195,6 +195,9 @@
                     <MenuItem Header="Con_vertitore di date…" Click="OpenCalendarConverter_Click" />
                     <MenuItem Header="_Opere d'arte…" Click="OpenArtworks_Click" />
                     <Separator />
+                    <MenuItem x:Name="LatinNamesMenuItem" Header="Nomi la_tini nell'elenco" Click="LatinNames_Click" IsCheckable="True" InputGestureText="Ctrl+L" />
+                    <MenuItem x:Name="DateFormatMenu" Header="_Formato delle date" />
+                    <Separator />
                     <MenuItem x:Name="OpenViewMenuItem" Header="Doppio clic apre la scheda di l_ettura" Click="OpenModeView_Click" IsCheckable="True" InputGestureText="Ctrl+M" />
                     <MenuItem x:Name="OpenEditMenuItem" Header="Doppio clic apre la scheda di mo_difica" Click="OpenModeEdit_Click" IsCheckable="True" InputGestureText="Ctrl+M" />
                 </MenuItem>
@@ -314,6 +317,10 @@
 									 <RadioButton x:Name="PedigreeViewToggle" GroupName="PeopleView" Style="{StaticResource ViewToggle}" Checked="PeopleView_Checked" ToolTip="Albero genealogico del personaggio selezionato, fino ai trisnonni" AutomationProperties.Name="Vista albero genealogico">
 										  <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE9D5;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" VerticalAlignment="Center" /><TextBlock Text="Albero genealogico" /></StackPanel>
 									 </RadioButton>
+									 <Rectangle Width="1" Margin="6,4" Fill="{DynamicResource AppBorder}" />
+									 <ToggleButton x:Name="LatinNamesToggle" Style="{StaticResource OptionToggle}" Click="LatinNames_Click" ToolTip="Mostra il nome latino dei personaggi romani sotto quello italiano (Ctrl+L)" AutomationProperties.Name="Nomi latini" AutomationProperties.AcceleratorKey="Ctrl+L">
+										  <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8D2;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" VerticalAlignment="Center" /><TextBlock Text="Nomi latini" /></StackPanel>
+									 </ToggleButton>
 								</StackPanel>
 						  </DockPanel>
 					 </Border>
@@ -370,7 +377,23 @@
 															 <ColumnDefinition Width="120" />
 															 <ColumnDefinition Width="*" MinWidth="140" />
 														</Grid.ColumnDefinitions>
-														<TextBlock Grid.Column="0" Text="{Binding Nome}" Foreground="{DynamicResource InkBrush}" FontFamily="Georgia" FontSize="15" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="{Binding RelativeSource={RelativeSource AncestorType=TreeViewItem}, Converter={StaticResource TreeIndentCompensation}, ConverterParameter=Name}" ToolTip="{Binding Nome}" />
+														<StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="{Binding RelativeSource={RelativeSource AncestorType=TreeViewItem}, Converter={StaticResource TreeIndentCompensation}, ConverterParameter=Name}" ToolTip="{Binding Suggerimento}">
+															 <TextBlock Text="{Binding Nome}" Foreground="{DynamicResource InkBrush}" FontFamily="Georgia" FontSize="15" TextTrimming="CharacterEllipsis" />
+															 <!-- Nome latino: visibile con «Nomi latini» (Ctrl+L) e solo se la persona ne ha uno. -->
+															 <Border Visibility="{DynamicResource LatinNamesVisibility}">
+																  <TextBlock Text="{Binding NomeLatino}" Foreground="{DynamicResource QuietBrush}" FontFamily="Georgia" FontStyle="Italic" FontSize="12" TextTrimming="CharacterEllipsis">
+																		<TextBlock.Style>
+																			 <Style TargetType="TextBlock">
+																				  <Style.Triggers>
+																						<DataTrigger Binding="{Binding HasNomeLatino}" Value="False">
+																							 <Setter Property="Visibility" Value="Collapsed" />
+																						</DataTrigger>
+																				  </Style.Triggers>
+																			 </Style>
+																		</TextBlock.Style>
+																  </TextBlock>
+															 </Border>
+														</StackPanel>
 														<TextBlock Grid.Column="1" Text="{Binding Sesso}" Foreground="{DynamicResource QuietBrush}" FontSize="12" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="0,0,8,0" />
 														<TextBlock Grid.Column="2" Text="{Binding Nascita}" Foreground="{DynamicResource QuietBrush}" FontFamily="Consolas" FontSize="11" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="0,0,8,0" ToolTip="{Binding Nascita}" />
 														<TextBlock Grid.Column="3" Text="{Binding LuogoNascita}" Foreground="{DynamicResource QuietBrush}" FontSize="12" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="0,0,8,0" ToolTip="{Binding LuogoNascita}" />

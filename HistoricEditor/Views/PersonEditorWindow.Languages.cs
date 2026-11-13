@@ -21,7 +21,12 @@ public partial class PersonEditorWindow
     }
 
     private List<LocalizedPersonName> localizedNames = [];
-    private (string Name, string Suffix, string Nickname, string MainTitle)? workingValues;
+    // Valori in italiano della scheda, conservati mentre i campi mostrano un'altra lingua.
+    private sealed record WorkingNames(
+        string Name, string Suffix, string Nickname, string MainTitle,
+        string Prenome, string Gentilizio, string CognomeRomano, string Agnome);
+
+    private WorkingNames? workingValues;
     private LocalizedPersonName? shownLanguage;
     private bool switchingLanguage;
 
@@ -70,12 +75,16 @@ public partial class PersonEditorWindow
             return;
         }
 
-        workingValues ??= (NameInput.Text, SuffixInput.Text, NicknameInput.Text, MainTitleInput.Text);
+        workingValues ??= CurrentNames();
         shownLanguage = values;
         NameInput.Text = values.Nome;
         SuffixInput.Text = values.Suffisso;
         NicknameInput.Text = values.Soprannome;
         MainTitleInput.Text = values.TitoloPrincipale;
+        PrenomeInput.Text = values.Prenome;
+        GentilizioInput.Text = values.Gentilizio;
+        CognomeRomanoInput.Text = values.CognomeRomano;
+        AgnomeInput.Text = values.Agnome;
         UpdateLanguageNotice();
     }
 
@@ -87,6 +96,10 @@ public partial class PersonEditorWindow
             values.Suffisso = SuffixInput.Text.Trim();
             values.Soprannome = NicknameInput.Text.Trim();
             values.TitoloPrincipale = MainTitleInput.Text.Trim();
+            values.Prenome = PrenomeInput.Text.Trim();
+            values.Gentilizio = GentilizioInput.Text.Trim();
+            values.CognomeRomano = CognomeRomanoInput.Text.Trim();
+            values.Agnome = AgnomeInput.Text.Trim();
         }
     }
 
@@ -112,12 +125,23 @@ public partial class PersonEditorWindow
             SuffixInput.Text = values.Suffix;
             NicknameInput.Text = values.Nickname;
             MainTitleInput.Text = values.MainTitle;
+            PrenomeInput.Text = values.Prenome;
+            GentilizioInput.Text = values.Gentilizio;
+            CognomeRomanoInput.Text = values.CognomeRomano;
+            AgnomeInput.Text = values.Agnome;
             workingValues = null;
         }
 
         shownLanguage = null;
         UpdateLanguageNotice();
     }
+
+    // Valori in italiano: quelli conservati se è mostrata un'altra lingua, altrimenti quelli dei campi.
+    private WorkingNames ItalianNames() => workingValues ?? CurrentNames();
+
+    private WorkingNames CurrentNames() => new(
+        NameInput.Text, SuffixInput.Text, NicknameInput.Text, MainTitleInput.Text,
+        PrenomeInput.Text, GentilizioInput.Text, CognomeRomanoInput.Text, AgnomeInput.Text);
 
     private void UpdateLanguageNotice()
     {
@@ -175,6 +199,6 @@ public partial class PersonEditorWindow
     {
         CommitShownLanguage();
         return string.Join("\u001e", LocalizedPersonName.Normalize(localizedNames).Select(n =>
-            $"{n.Lingua}|{n.Nome}|{n.Suffisso}|{n.Soprannome}|{n.TitoloPrincipale}"));
+            $"{n.Lingua}|{n.Nome}|{n.Suffisso}|{n.Soprannome}|{n.TitoloPrincipale}|{n.Prenome}|{n.Gentilizio}|{n.CognomeRomano}|{n.Agnome}"));
     }
 }

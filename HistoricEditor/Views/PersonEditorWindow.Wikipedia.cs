@@ -24,9 +24,12 @@ public partial class PersonEditorWindow
             : Visibility.Collapsed;
     }
 
-    private void SetBusy(bool busy)
+    // lockForm: durante import e aggiornamento la scheda non si modifica, perché i dati in arrivo sovrascriverebbero
+    // quelli scritti nel frattempo. La sola ricerca non blocca nulla.
+    private void SetBusy(bool busy, bool lockForm = false)
     {
         isBusy = busy;
+        SetFormLocked(busy && lockForm);
         LoadingPanel.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
         if (!busy)
         {
@@ -40,6 +43,25 @@ public partial class PersonEditorWindow
         WikipediaResults.IsEnabled = !busy;
         ImportWikipediaButton.IsEnabled = !busy && chosenResult is not null;
         RefreshWikipediaButton.IsEnabled = !busy;
+    }
+
+    // Blocca i campi della scheda, le altre tab, «Salva» ed «Elimina»; restano attivi «Annulla» (nell'avanzamento),
+    // «Chiudi» (che annulla l'import) e il passaggio tra le tab per guardare la scheda. Si bloccano i contenitori,
+    // così allo sblocco ogni pulsante interno torna allo stato che aveva.
+    private void SetFormLocked(bool locked)
+    {
+        UIElement?[] elements =
+        [
+            LanguagePanel, NamingRow, SourcesActions, SaveButton, DeletePersonButton,
+            FamilyTab.Content as UIElement, TitlesTab.Content as UIElement, EventsTab.Content as UIElement,
+            .. FormGrid.Children.OfType<UIElement>().Where(child => child != SourcesRow),
+        ];
+        foreach (var element in elements.OfType<UIElement>())
+        {
+            element.IsEnabled = !locked;
+        }
+
+        FormLockedNotice.Visibility = locked ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void CancelWikipedia_Click(object sender, RoutedEventArgs e)
@@ -137,7 +159,7 @@ public partial class PersonEditorWindow
             return;
         }
 
-        SetBusy(true);
+        SetBusy(true, lockForm: true);
         Feedback.Info(WikipediaStatus, "Lettura della pagina e delle affermazioni Wikidata…");
         using var cancellation = new CancellationTokenSource();
         wikipediaCancellation = cancellation;
@@ -184,8 +206,16 @@ public partial class PersonEditorWindow
         ApplyImport(result);
         Feedback.Success(WikipediaStatus, result.WikidataId.Length == 0
             ? "Pagina senza collegamento a Wikidata: completa i dati nella scheda."
-            : "Dati importati: controllali prima di salvare.");
+            : "Dati importati: controllali prima di salvare." + UnreadEditionsNotice(result));
     }
+
+    // Edizioni non lette (es. Wikipedia ha risposto «troppe richieste»): il confronto tra le lingue è incompleto.
+    internal static string UnreadEditionsNotice(WikipediaImportResult result) => result.UnreadEditions.Count switch
+    {
+        0 => string.Empty,
+        1 => $" Non è stato possibile leggere Wikipedia in {result.UnreadEditions[0]}: riprova più tardi con «Aggiorna da Wikipedia».",
+        _ => $" Non è stato possibile leggere Wikipedia in {string.Join(", ", result.UnreadEditions)}: riprova più tardi con «Aggiorna da Wikipedia».",
+    };
 
     private void ApplyImport(WikipediaImportResult import)
     {
@@ -241,7 +271,7 @@ public partial class PersonEditorWindow
             return;
         }
 
-        SetBusy(true);
+        SetBusy(true, lockForm: true);
         RefreshPanel.Visibility = Visibility.Visible;
         Feedback.Info(RefreshStatus, "Lettura della pagina e delle affermazioni Wikidata…");
         using var cancellation = new CancellationTokenSource();
@@ -295,7 +325,7 @@ public partial class PersonEditorWindow
 
         ApplyImport(result);
         HeaderSubtitle.Text = "Aggiornata da Wikipedia: verifica i dati e premi «Salva».";
-        Feedback.Success(RefreshStatus, "Dati aggiornati: controllali prima di salvare.");
+        Feedback.Success(RefreshStatus, "Dati aggiornati: controllali prima di salvare." + UnreadEditionsNotice(result));
     }
 
     private void WikipediaResults_MouseLeftButtonUp(object sender, MouseButtonEventArgs e) => ChooseResult();

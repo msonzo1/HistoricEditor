@@ -12,7 +12,11 @@ public partial class PersonEditorWindow
         titles.Clear();
         foreach (var title in source)
         {
-            titles.Add(title.Clone());
+            // Le date dei titoli si mostrano nel formato in uso («24/06/79 d.C.» → «24/06/0079»).
+            var copy = title.Clone();
+            copy.Inizio = DateFormats.Normalize(copy.Inizio);
+            copy.Fine = DateFormats.Normalize(copy.Fine);
+            titles.Add(copy);
         }
 
         TitlesGrid.ItemsSource = titles;
@@ -56,14 +60,16 @@ public partial class PersonEditorWindow
         person.Surname = SurnameInput.Text.Trim();
         person.Suffix = SuffixInput.Text.Trim();
         person.Family = FamilyInput.Text.Trim();
+        person.Gens = GensInput.Text.Trim();
         person.Sesso = SelectedSex;
         person.Nickname = NicknameInput.Text.Trim();
         person.MainTitle = MainTitleInput.Text.Trim();
         TitlesGrid.CommitEdit();
         person.Titles = titles.Where(t => !t.IsEmpty()).Select(t => t.Clone()).ToList();
         person.LocalizedNames = LocalizedPersonName.Normalize(localizedNames);
-        person.Birth = BirthInput.Text.Trim();
-        person.Death = DeathInput.Text.Trim();
+        FillRomanName(person);
+        person.Birth = DateFormats.Normalize(BirthInput.Text.Trim());
+        person.Death = DateFormats.Normalize(DeathInput.Text.Trim());
         FillDateCalendars(person);
         person.BirthPlace = BirthPlaceField.DisplayText;
         person.DeathPlace = DeathPlaceField.DisplayText;
@@ -73,8 +79,8 @@ public partial class PersonEditorWindow
         person.WikipediaExtract = pendingImport?.Extract ?? person.WikipediaExtract;
         person.WikidataId = pendingImport?.WikidataId ?? person.WikidataId;
         person.WikiTreeId = wikiTreeId;
-        person.BirthDateEvidence = BuildDateEvidence(BirthInput.Text, birthSources, pendingImport?.BirthDates ?? editingPerson?.BirthDateEvidence);
-        person.DeathDateEvidence = BuildDateEvidence(DeathInput.Text, deathSources, pendingImport?.DeathDates ?? editingPerson?.DeathDateEvidence);
+        person.BirthDateEvidence = BuildDateEvidence(BirthInput.Text, birthSources, pendingImport?.AllBirthEvidence ?? editingPerson?.BirthDateEvidence);
+        person.DeathDateEvidence = BuildDateEvidence(DeathInput.Text, deathSources, pendingImport?.AllDeathEvidence ?? editingPerson?.DeathDateEvidence);
         person.BirthPlaces = BuildPlaceRecords(BirthPlaceField.ImportedRecords, BirthPlaceField.GetHistoricalContext());
         person.DeathPlaces = BuildPlaceRecords(DeathPlaceField.ImportedRecords, DeathPlaceField.GetHistoricalContext());
         person.BurialPlaces = BuildPlaceRecords(BurialPlaceField.ImportedRecords, BurialPlaceField.GetHistoricalContext());
@@ -94,14 +100,15 @@ public partial class PersonEditorWindow
         SurnameInput.Text = person.Surname;
         SuffixInput.Text = person.Suffix;
         FamilyInput.Text = person.Family;
+        GensInput.Text = person.Gens;
         SelectSex(person.Sesso);
         NicknameInput.Text = person.Nickname;
         MainTitleInput.Text = person.MainTitle;
         SetTitles(person.Titles);
         SetLocalizedNames(person.LocalizedNames);
 
-        BirthInput.Text = person.BirthDateEvidence.Count > 0 ? FormatDateInput(person.BirthDateEvidence) : person.Birth;
-        DeathInput.Text = person.DeathDateEvidence.Count > 0 ? FormatDateInput(person.DeathDateEvidence) : person.Death;
+        BirthInput.Text = person.BirthDateEvidence.Count > 0 ? FormatDateInput(person.BirthDateEvidence) : DateFormats.Normalize(person.Birth);
+        DeathInput.Text = person.DeathDateEvidence.Count > 0 ? FormatDateInput(person.DeathDateEvidence) : DateFormats.Normalize(person.Death);
         SetDateCalendars(person.BirthCalendario, person.BirthStile, person.DeathCalendario, person.DeathStile);
         birthSources = JoinEvidenceSources(person.BirthDateEvidence);
         deathSources = JoinEvidenceSources(person.DeathDateEvidence);
@@ -112,6 +119,7 @@ public partial class PersonEditorWindow
         LoadPlaceField(DeathPlaceField, person.DeathPlaces, person.DeathLuogoId, person.DeathLuogoSpecificoId);
         LoadPlaceField(BurialPlaceField, person.BurialPlaces, person.BurialLuogoId, person.BurialLuogoSpecificoId);
         NoteEditor.Text = person.Note;
+        LoadRomanName(person);
     }
 
     private void PrefillFromImport(WikipediaImportResult import)
@@ -125,7 +133,9 @@ public partial class PersonEditorWindow
         SetTitles(import.Titles);
         SetLocalizedNames(import.LocalizedNames);
         FamilyInput.Text = import.Family;
+        GensInput.Text = import.Gens;
         SelectSex(import.Sesso);
+        PrefillRomanName(import);
         BirthInput.Text = FormatDateInput(import.BirthDates);
         DeathInput.Text = FormatDateInput(import.DeathDates);
         SetDateCalendars(ImportedCalendar(import.BirthDates), HistoricalCalendar.StileComune, ImportedCalendar(import.DeathDates), HistoricalCalendar.StileComune);
@@ -272,6 +282,7 @@ public partial class PersonEditorWindow
 
     private static string JoinEvidenceSources(IEnumerable<HistoricalDateEvidence> evidence) =>
         string.Join("; ", evidence
+            .Where(item => !item.Scartata)
             .SelectMany(item => item.Sources)
             .Select(source => source.Url)
             .Where(url => url.Length > 0)

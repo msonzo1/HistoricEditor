@@ -106,7 +106,7 @@ public partial class MapWindow : Window
         var people = store.LoadAll();
         var events = store.GetEvents();
         allPoints = HistoricalMap.BuildPoints(people, events, store.GetAllPlaces(), store.GetSpecificPlaces());
-        familyOfPerson = people.ToDictionary(p => p.Id, p => (p.Family ?? string.Empty).Trim());
+        familyOfPerson = people.ToDictionary(p => p.Id, p => string.Join("; ", PeopleGrouping.AllFamilyNames(p)));
 
         var selectedPerson = (PersonBox.SelectedItem as PersonOption)?.Id;
         var personOptions = new List<PersonOption> { new(null, "Tutti i personaggi") };
@@ -157,7 +157,7 @@ public partial class MapWindow : Window
             Add(root, 0, []);
         }
 
-        foreach (var family in people.SelectMany(p => PeopleGrouping.FamilyNames(p.Family))
+        foreach (var family in people.SelectMany(PeopleGrouping.AllFamilyNames)
                      .Where(f => !known.Contains(f))
                      .Distinct(HistoricalMap.FamilyComparer)
                      .OrderBy(f => f, HistoricalMap.FamilyComparer))
