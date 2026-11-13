@@ -53,6 +53,7 @@
 - [x] Luogo storico (non esiste più) / luogo specifico (esiste, anche in rovina): Teatro di Pompeo storico, Tempio del Divo Giulio sito archeologico, Aquae Cutiliae con le Terme di Cotilia, Italica e Selinunte con il sito archeologico; luogo storico anche sotto provincia o regione.
 - [x] Luogo storico con icona e corsivo nei campi dei luoghi della scheda.
 - [x] Gens e dinastia in campi separati (migrazione `PersonGens`); nell'elenco la persona compare solo sotto la dinastia.
+- [x] Nell'elenco la persona compare sotto la gens; sotto la dinastia solo se non ha una gens (2026-11-13).
 - [x] Barra del titolo scura ridisegnata subito all'apertura della scheda.
 - [x] Test di non regressione di Traiano; test su introduzioni, date scartate, luogo storico sotto la regione, raggruppamento gens/dinastia.
 - [ ] Provare l'app con il tema scuro: barra del titolo della scheda personaggio appena aperta (la correzione non è stata vista a schermo).

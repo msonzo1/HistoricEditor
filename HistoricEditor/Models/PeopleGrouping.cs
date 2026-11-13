@@ -121,7 +121,7 @@ public static class PeopleGrouping
         => [.. FamilyNames(person.Family).Concat(FamilyNames(person.Gens)).Distinct(Comparer)];
 
     // Raggruppa per dinastia: le persone collegate (links) vanno sotto ciascuna delle loro dinastie,
-    // quelle non collegate secondo i nomi scritti nel campo «Famiglia» (senza distinguere maiuscole).
+    // quelle non collegate secondo i nomi scritti nei campi «Gens» o «Famiglia» (senza distinguere maiuscole).
     // Le famiglie registrate come rami di una dinastia vengono annidate sotto di essa; chi è sia nella dinastia sia in un suo ramo
     // compare solo nel ramo. Le persone senza famiglia vanno in fondo.
     public static List<PersonGroup> Build(IEnumerable<HistoricalPerson> people, IEnumerable<Dinastia>? dynasties = null, IEnumerable<PersonaDinastia>? links = null)
@@ -134,40 +134,29 @@ public static class PeopleGrouping
         var byFamily = new Dictionary<string, List<HistoricalPerson>>(Comparer);
         foreach (var person in people)
         {
-            var linked = linksByPerson[person.Id].Distinct().ToList();
+            // Una persona compare sotto la sua gens; sotto le dinastie solo se non ha una gens (Traiano: nella gens Ulpia,
+            // ramo Ulpii Traiani, non anche nella Dinastia Nerva-Antonina).
+            var allLinked = linksByPerson[person.Id].Distinct().ToList();
+            var gensNames = FamilyNames(person.Gens);
+            var gensLinks = allLinked.Where(id => byId[id].IsGens).ToList();
+            var useGens = gensLinks.Count > 0 || gensNames.Count > 0;
+            List<int> linked = useGens ? gensLinks : [.. allLinked.Where(id => !byId[id].IsGens)];
+            var written = useGens ? gensNames : FamilyNames(person.Family);
 
-            // Una persona compare sotto le sue dinastie; sotto la gens solo se non ha una dinastia (Traiano: nella
-            // Dinastia Nerva-Antonina, non anche nella gens Ulpia). Vale anche per le gens scritte nel campo Famiglia
-            // delle schede salvate prima che la gens avesse un campo proprio.
-            var dynastyLinks = linked.Where(id => !byId[id].IsGens).ToList();
-            var dynastyNames = FamilyNames(person.Family)
-                .Where(n => !dynastyList.Any(d => d.IsGens && Comparer.Equals(d.Nome.Trim(), n)))
-                .ToList();
-            if (dynastyLinks.Count > 0 || dynastyNames.Count > 0)
+            foreach (var id in linked)
             {
-                linked = dynastyLinks;
+                Members(byDynasty, id).Add(person);
             }
 
-            if (linked.Count > 0)
+            // Le famiglie scritte nella scheda ma non (ancora) registrate restano raggruppate per nome;
+            // senza gens né dinastia si raggruppa per cognome.
+            var linkedNames = new HashSet<string>(linked.Select(id => byId[id].Nome.Trim()), Comparer);
+            if (linked.Count == 0 && written.Count == 0)
             {
-                foreach (var id in linked)
-                {
-                    Members(byDynasty, id).Add(person);
-                }
-
-                // Le famiglie scritte nella scheda ma non (ancora) registrate restano raggruppate per nome.
-                var linkedNames = new HashSet<string>(linked.Select(id => byId[id].Nome.Trim()), Comparer);
-                var written = dynastyLinks.Count > 0 || dynastyNames.Count > 0 ? dynastyNames : FamilyNames(person.Gens);
-                foreach (var name in written.Where(n => !linkedNames.Contains(n)))
-                {
-                    Members(byFamily, name).Add(person);
-                }
-
-                continue;
+                written = [(person.Surname ?? string.Empty).Trim()];
             }
 
-            var names = GroupKeys(person);
-            foreach (var name in names)
+            foreach (var name in written.Where(n => !linkedNames.Contains(n)))
             {
                 Members(byFamily, name).Add(person);
             }
@@ -240,18 +229,6 @@ public static class PeopleGrouping
         }
 
         return list;
-    }
-
-    // Senza famiglia (dinastia) i Romani si raggruppano per gens, i personaggi moderni per cognome.
-    private static List<string> GroupKeys(HistoricalPerson person)
-    {
-        var names = FamilyNames(person.Family);
-        if (names.Count == 0)
-        {
-            names = FamilyNames(person.Gens);
-        }
-
-        return names.Count > 0 ? names : [(person.Surname ?? string.Empty).Trim()];
     }
 
     public static string DescribeDates(string? birth, string? death)

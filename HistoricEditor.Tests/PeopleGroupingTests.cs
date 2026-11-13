@@ -25,11 +25,10 @@ public class PeopleGroupingTests
         Assert.Equal("1 PERSONA", groups[1].Conteggio);
     }
 
-    // Gens e dinastia separate (2026-11-12): Traiano (gens Ulpia, ramo Ulpii Traiani, Dinastia Nerva-Antonina) compare una
-    // sola volta, nella dinastia; Cesare, che ha solo la gens, compare nel ramo della gens. Vale anche per una scheda
-    // salvata prima, con la gens scritta nel campo Famiglia (Adriano).
+    // Gens prima della dinastia (2026-11-13): Traiano (gens Ulpia, ramo Ulpii Traiani, Dinastia Nerva-Antonina) compare una
+    // sola volta, nel ramo della gens; Antonino Pio, che qui ha solo la dinastia, compare nella dinastia.
     [Fact]
-    public void Build_ShowsThePersonUnderTheDynasty_NotAlsoUnderTheGens()
+    public void Build_ShowsThePersonUnderTheGens_NotAlsoUnderTheDynasty()
     {
         Dinastia[] dynasties =
         [
@@ -37,26 +36,29 @@ public class PeopleGroupingTests
             new() { Id = 2, Nome = "Ulpii Traiani", Tipo = TipiDinastia.Gens, ParentId = 1 },
             new() { Id = 3, Nome = "Dinastia Nerva-Antonina" },
             new() { Id = 4, Nome = "gens Giulia", Tipo = TipiDinastia.Gens },
-            new() { Id = 5, Nome = "gens Aelia", Tipo = TipiDinastia.Gens },
         ];
         HistoricalPerson[] people =
         [
             new() { Id = 10, Name = "Traiano", Gens = "gens Ulpia; Ulpii Traiani", Family = "Dinastia Nerva-Antonina" },
             new() { Id = 11, Name = "Gaio Giulio Cesare", Gens = "gens Giulia" },
-            new() { Id = 12, Name = "Adriano", Family = "gens Aelia; Dinastia Nerva-Antonina" },
+            new() { Id = 12, Name = "Antonino Pio", Family = "Dinastia Nerva-Antonina" },
+            new() { Id = 13, Name = "Marco Aurelio", Gens = "gens Annia", Family = "Dinastia Nerva-Antonina" },
         ];
         PersonaDinastia[] links =
         [
             new() { PersonaId = 10, DinastiaId = 1 }, new() { PersonaId = 10, DinastiaId = 2 }, new() { PersonaId = 10, DinastiaId = 3 },
             new() { PersonaId = 11, DinastiaId = 4 },
-            new() { PersonaId = 12, DinastiaId = 5 }, new() { PersonaId = 12, DinastiaId = 3 },
+            new() { PersonaId = 12, DinastiaId = 3 },
+            new() { PersonaId = 13, DinastiaId = 3 },
         ];
 
         var groups = PeopleGrouping.Build(people, dynasties, links);
         var all = groups.SelectMany(g => g.SelfAndDescendants()).SelectMany(g => g.Persone.Select(p => (Group: g.Famiglia, p.Nome))).ToList();
-        Assert.Equal([("Dinastia Nerva-Antonina", "Traiano")], all.Where(e => e.Nome == "Traiano"));
-        Assert.Equal([("Dinastia Nerva-Antonina", "Adriano")], all.Where(e => e.Nome == "Adriano"));
+        Assert.Equal([("Ulpii Traiani", "Traiano")], all.Where(e => e.Nome == "Traiano"));
         Assert.Equal([("gens Giulia", "Gaio Giulio Cesare")], all.Where(e => e.Nome == "Gaio Giulio Cesare"));
+        Assert.Equal([("Dinastia Nerva-Antonina", "Antonino Pio")], all.Where(e => e.Nome == "Antonino Pio"));
+        // Gens scritta ma non (ancora) registrata: vale comunque come gens.
+        Assert.Equal([("gens Annia", "Marco Aurelio")], all.Where(e => e.Nome == "Marco Aurelio"));
     }
 
     [Fact]
