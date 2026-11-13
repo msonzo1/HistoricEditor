@@ -13,6 +13,51 @@
 - [x] Pulsante «Aggiorna da Wikipedia» per reimportare una scheda già salvata tramite il suo WikidataId.
 - [x] Scheda di lettura («Visualizza» nella barra e nel menu contestuale): tutte le informazioni in una pagina senza campi modificabili; parenti, relazioni, eventi, fonti e titoli cliccabili (il titolo apre la cronologia della carica); pulsante «Modifica…».
 
+## Onomastica romana (2026-11-10)
+- [x] Modello: `Onomastica`, praenomen, nomen, cognomen, agnomen, filiazione, tribù, nome latino libero, nomi nel tempo (`RomanNaming`, `RomanNameRecord`); `Tipo` delle dinastie (gens). Migrazione `RomanNames`.
+- [x] Archivio: `Update` copia i nuovi campi; `SaveDynasty` salva il tipo; `EnsureDynasty` con tipo (una esistente diventa gens solo se lo indica Wikidata).
+- [x] Import Wikidata: P2358/P2359/P2365/P2366 (etichetta latina), P5025 gens, P1559 in latino se diverso dal nome composto; nomen al femminile per le donne; dinastie importate registrate prima di quelle scritte.
+- [x] Scheda di modifica: selettore «Onomastica» (automatica/romana/standard), pannello «Nome romano» con anteprima e forma epigrafica, «Dal padre» per la filiazione, nomi nel tempo, campo Famiglia → «Gens», nome latino sotto il titolo.
+- [x] Finestra Dinastie: campo «Tipo» (dinastia o gens romana).
+- [x] Compilazione verificata (corretto un errore XAML nella finestra Dinastie).
+- [x] Scheda di lettura (`PersonSheet.MainFields`): per le schede romane mostrare nome latino, forma epigrafica, parti del nome e «Gens» al posto di «Famiglia»; sezione «Nomi nel tempo» in `PersonViewWindow`; nome latino nel sottotitolo; `DynastyPath` con «Gens romana».
+- [x] Elenco principale: interruttore «Nomi latini» (Ctrl+L, ricordato in `settings.json`) che mostra il nome latino sotto quello italiano in `PersonEntry`; suggerimento con il nome latino.
+- [x] Test: `RomanNaming` (composizione, forma epigrafica, abbreviazioni, filiazione, femminile, regola automatica), `ImportedLatinName`, round-trip dei campi nell'archivio e nel backup JSON, tipo gens in `EnsureDynasty`/`RegisterDynasties`.
+- [x] Documentato in README e DECISIONI.md.
+- [x] Import di Giulio Cesare (10/11): corretti la lettura delle introduzioni (it, fr, es, nl), il confronto dei luoghi contenuti in altri (en) e la lettura delle edizioni con «troppe richieste» (fr); verificato prima/dopo anche su Carlo V, Mussolini e Carlo Magno, invariati.
+- [x] Parti del nome nella lingua della scheda (Prenome, Nome gentilizio, Cognome, Agnome) per ogni lingua, latino nella tendina chiusa «Nome in latino»; migrazione `RomanNamesByLanguage`.
+- [ ] Provare l'app: import di Giulio Cesare (parti in italiano e inglese, tendina latina), Augusto, una donna (es. Livia Drusilla: Giulia/Livia al femminile) e un greco dell'epoca (deve poter passare a «Standard»).
+
+## Date, Wikidata e luoghi antichi (2026-11-10, da Vespasiano e Tito)
+- [x] Stesso anno con giorni diversi: vince il giorno letto più volte (Vespasiano: «23/06/0079», non il 4 giugno di Wikidata); fonti solo compatibili.
+- [x] Riga «Wikidata» nell'elenco del LED di concordanza, confrontata con la maggioranza delle edizioni.
+- [x] Formato standard GG/MM/AAAA (anno a quattro cifre, «a.C.» solo prima di Cristo), scelta del formato nel menu Visualizza; date salvate mostrate e riscritte nel nuovo formato.
+- [x] Calendario cliccabile accanto ai campi data (anche a.C. e calendario giuliano).
+- [x] Località antiche importate come luoghi storici nel comune attuale, con nome italiano e latino (tendina «Nome in latino»).
+- [x] Test: `DateFormatsTests`, `HistoricPlacesTests`, non regressione di Vespasiano/Tito/Cesare aggiornata (nuova richiesta registrata).
+- [ ] Provare l'app: calendario nei moduli (tema chiaro e scuro, tastiera), cambio del formato delle date, import di Vespasiano e Tito (Falacrine e Terme di Cotilia come luoghi storici, LED con la riga Wikidata).
+- [ ] Calendario anche per le date dei titoli (oggi sono celle di una tabella).
+- [x] Comune proposto dalle coordinate (Falacrine → Cittareale): latitudine, longitudine e nomi nelle altre lingue salvati anche dopo la conferma nella finestra dei luoghi (2026-11-11).
+- [x] «Nome del luogo all'epoca» nascosto nel contesto storico del luogo (i valori già scritti restano) (2026-11-11).
+- [x] Terme di Cotilia: luogo storico «Cotilia» (latino Aquae Cutiliae) e, al suo interno, il luogo specifico «Terme di Cotilia» di tipo Terme; regola generale per i nomi che cominciano con un edificio (2026-11-11).
+- [x] Vespasiano e Tito una volta sola nell'elenco: Dinastia flavia collegata come ramo di Flavii Sabini (gens Flavia) all'import (2026-11-11). *Superato il 2026-11-12*: gens e dinastia separate (vedi sotto).
+- [ ] Provare l'app: reimport di Vespasiano e Tito (Cittareale con coordinate dopo la conferma, Cotilia con le terme, Dinastia flavia sotto Flavii Sabini e persona una volta sola), contesto storico senza il nome all'epoca.
+- [ ] Schede importate prima: convertire in luoghi storici i luoghi specifici antichi già creati (oggi restano come sono; basta «Aggiorna da Wikipedia» e scegliere il nuovo luogo).
+
+## Date discordanti, luoghi storici, gens e dinastia (2026-11-12, da Cesare, Vespasiano e Traiano)
+- [x] Archivio svuotato (copia di `historic.db` e `people.json` messa da parte) per ripartire con gli import.
+- [x] Vince la data con più fonti; altre date tenute se indicate da almeno due fonti («7 o 8 agosto»), le altre scartate e mostrate come date discordanti nella sezione Fonti (tolto il riquadro separato).
+- [x] Introduzioni: giorno alternativo («8 ou 9 août»), anno breve seguito da virgola (tedesco), parte con «†» sempre morte, francese «né sous le nom de…».
+- [x] Luogo storico (non esiste più) / luogo specifico (esiste, anche in rovina): Teatro di Pompeo storico, Tempio del Divo Giulio sito archeologico, Aquae Cutiliae con le Terme di Cotilia, Italica e Selinunte con il sito archeologico; luogo storico anche sotto provincia o regione.
+- [x] Luogo storico con icona e corsivo nei campi dei luoghi della scheda.
+- [x] Gens e dinastia in campi separati (migrazione `PersonGens`); nell'elenco la persona compare solo sotto la dinastia.
+- [x] Barra del titolo scura ridisegnata subito all'apertura della scheda.
+- [x] Test di non regressione di Traiano; test su introduzioni, date scartate, luogo storico sotto la regione, raggruppamento gens/dinastia.
+- [ ] Provare l'app con il tema scuro: barra del titolo della scheda personaggio appena aperta (la correzione non è stata vista a schermo).
+- [ ] Provare l'app: import di Cesare, Vespasiano, Tito e Traiano (date discordanti nella riga Fonti e nel LED, icona del luogo storico, campi Gens e Dinastia, una sola riga per persona nell'elenco).
+- [ ] Nome italiano della «Nerva–Antonine dynasty»: Wikidata non ha né etichetta né voce italiana (oggi va rinominata a mano).
+- [ ] Indicare il luogo storico anche nella scheda di lettura e negli elenchi (oggi solo nei campi del modulo e nell'albero dei luoghi).
+
 ## Dinastie
 - [x] Dinastie con rami (es. Asburgo → Asburgo di Spagna): finestra «Dinastie…», vista Famiglie annidata, conteggi cumulativi, backup JSON.
 - [x] Campo Famiglia della scheda come scelta tra le dinastie (o nome nuovo, registrato al salvataggio), con pulsante «Dinastia…» e indicazione del ramo.
@@ -172,4 +217,4 @@
 - [x] Schede di sola lettura per opere d'arte ed eventi; dal pittore si passa alle sue opere (scheda di lettura, galleria filtrata per artista, pulsante «Opere d'arte…» nell'editor).
 - [x] Eventi filtrabili per tipo, dinastia e persona; dalla dinastia si aprono i suoi eventi e la linea del tempo.
 - [x] Import Wikidata: scartate le «famiglie» che sono Stati o periodi storici; chi non ha famiglia eredita quella del padre (es. figli naturali di Carlo V).
-- [ ] Chiarire a cosa serve il campo «Stile dell'anno» (editor degli eventi, convertitore di calendario). Ipotesi: è un'impostazione dell'app e non va nel modulo. Se invece deve restare per ogni data, spostarlo in una sezione separata più piccola, aperta da un pulsante.
+- [x] Chiarire a cosa serve il campo «Stile dell'anno» (editor degli eventi, convertitore di calendario). Tolto dai moduli (anno sempre dal 1° gennaio), resta nel convertitore con «Usa questa data»; aggiunta una «i» che spiega calendari e stili.
