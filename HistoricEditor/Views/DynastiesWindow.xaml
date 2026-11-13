@@ -19,7 +19,7 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Grid.ColumnSpan="3" Text="Una dinastia può essere ramo di un’altra (es. «Asburgo di Spagna» ramo di «Asburgo»). Nella vista Famiglie i rami compaiono dentro la dinastia principale; le persone si collegano tramite il campo Famiglia." Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" Margin="0,0,0,12" />
+        <TextBlock Grid.Row="0" Grid.ColumnSpan="3" Text="Una dinastia può essere ramo di un’altra (es. «Asburgo di Spagna» ramo di «Asburgo»). Lo stesso vale per le gentes romane (es. «Cornelii Scipiones» ramo della «gens Cornelia»). Nella vista Famiglie i rami compaiono dentro la dinastia principale; le persone si collegano tramite il campo Famiglia (o Gens)." Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" Margin="0,0,0,12" />
 
         <DockPanel Grid.Row="1" Grid.Column="0">
             <Label DockPanel.Dock="Top" Content="_Dinastie registrate" Target="{Binding ElementName=DynastyList}" />
@@ -43,6 +43,13 @@
         <StackPanel Grid.Row="1" Grid.Column="2">
             <Label Content="N_ome" Target="{Binding ElementName=NameBox}" />
             <ComboBox x:Name="NameBox" IsEditable="True" Margin="0,0,0,10" AutomationProperties.Name="Nome della dinastia" ToolTip="Puoi scegliere una famiglia già usata nelle schede" />
+
+            <Label Content="_Tipo" Target="{Binding ElementName=TypeBox}" />
+            <ComboBox x:Name="TypeBox" Margin="0,0,0,10" SelectedIndex="0" AutomationProperties.Name="Tipo: dinastia o gens romana"
+                      ToolTip="Una gens romana (es. gens Iulia) raccoglie le persone con lo stesso nomen; i suoi rami (es. Cornelii Scipiones) si indicano con «Ramo di»">
+                <ComboBoxItem Content="Dinastia o casata" Tag="" />
+                <ComboBoxItem Content="Gens romana" Tag="gens" />
+            </ComboBox>
 
             <Label Content="_Ramo di" Target="{Binding ElementName=ParentBox}" />
             <ComboBox x:Name="ParentBox" DisplayMemberPath="Percorso" Margin="0,0,0,10" AutomationProperties.Name="Dinastia principale di cui è ramo" />

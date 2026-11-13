@@ -251,14 +251,14 @@ public static class DynastySheet
             p.DisplayName,
             string.IsNullOrWhiteSpace(p.Birth) && string.IsNullOrWhiteSpace(p.Death)
                 ? string.Empty
-                : $"{(string.IsNullOrWhiteSpace(p.Birth) ? "?" : p.Birth.Trim())} – {(string.IsNullOrWhiteSpace(p.Death) ? "?" : p.Death.Trim())}",
+                : $"{(string.IsNullOrWhiteSpace(p.Birth) ? "?" : DateFormats.Normalize(p.Birth.Trim()))} – {(string.IsNullOrWhiteSpace(p.Death) ? "?" : DateFormats.Normalize(p.Death.Trim()))}",
             Branch(p, dynasty))),
     ];
 
     // Ramo a cui appartiene la persona tra quelli della dinastia (vuoto se è nella dinastia principale).
     public static string Branch(HistoricalPerson person, Dinastia dynasty)
     {
-        var names = PeopleGrouping.FamilyNames(person.Family);
+        var names = PeopleGrouping.AllFamilyNames(person);
         return names.Any(n => PeopleGrouping.FamilyComparer.Equals(n, dynasty.Nome.Trim()))
             ? string.Empty
             : string.Join(", ", names);

@@ -14,4 +14,16 @@ public sealed class Dinastia
 
     public string WikidataId { get; set; } = string.Empty;
     public string Note { get; set; } = string.Empty;
+
+    // Vuoto = dinastia o casata; «gens» = gens romana (vedi TipiDinastia).
+    public string Tipo { get; set; } = string.Empty;
+
+    [JsonIgnore]
+    public bool IsGens => Tipo == TipiDinastia.Gens;
+}
+
+public static class TipiDinastia
+{
+    public const string Dinastia = "";
+    public const string Gens = "gens";
 }

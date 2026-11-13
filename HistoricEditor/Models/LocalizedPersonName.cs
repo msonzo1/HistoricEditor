@@ -1,6 +1,7 @@
 namespace HistoricEditor;
 
-// Nome, suffisso, soprannome e titolo principale letti da Wikidata in una delle lingue d'importazione.
+// Nome, suffisso, soprannome e titolo principale letti da Wikidata in una delle lingue d'importazione;
+// per i personaggi romani anche le parti del nome nella stessa lingua (prenome, nome gentilizio, cognome, agnome).
 public sealed class LocalizedPersonName
 {
     public string Lingua { get; set; } = string.Empty;
@@ -9,10 +10,15 @@ public sealed class LocalizedPersonName
     public string Suffisso { get; set; } = string.Empty;
     public string Soprannome { get; set; } = string.Empty;
     public string TitoloPrincipale { get; set; } = string.Empty;
+    // Mancano nei nomi salvati prima del 10/11/2026: il database li restituisce null, qui diventano vuoti.
+    public string Prenome { get => field ?? string.Empty; set; } = string.Empty;
+    public string Gentilizio { get => field ?? string.Empty; set; } = string.Empty;
+    public string CognomeRomano { get => field ?? string.Empty; set; } = string.Empty;
+    public string Agnome { get => field ?? string.Empty; set; } = string.Empty;
 
     public LocalizedPersonName Clone() => (LocalizedPersonName)MemberwiseClone();
 
-    public bool IsEmpty() => new[] { Nome, Suffisso, Soprannome, TitoloPrincipale }.All(string.IsNullOrWhiteSpace);
+    public bool IsEmpty() => new[] { Nome, Suffisso, Soprannome, TitoloPrincipale, Prenome, Gentilizio, CognomeRomano, Agnome }.All(string.IsNullOrWhiteSpace);
 
     // Lingue aggiungibili a mano nella scheda (le stesse lette dall'import, italiano escluso perché è la scheda stessa).
     public static readonly IReadOnlyList<(string Code, string Name)> EditableLanguages =
@@ -42,6 +48,10 @@ public sealed class LocalizedPersonName
                 Suffisso = n.Suffisso.Trim(),
                 Soprannome = n.Soprannome.Trim(),
                 TitoloPrincipale = n.TitoloPrincipale.Trim(),
+                Prenome = n.Prenome.Trim(),
+                Gentilizio = n.Gentilizio.Trim(),
+                CognomeRomano = n.CognomeRomano.Trim(),
+                Agnome = n.Agnome.Trim(),
             })
             .Where(n => !n.IsEmpty()),
     ];

@@ -38,7 +38,7 @@ public partial class DynastiesWindow : Window
         InitializeComponent();
         this.store = store;
         NameBox.ItemsSource = store.LoadAll()
-            .SelectMany(p => PeopleGrouping.FamilyNames(p.Family))
+            .SelectMany(PeopleGrouping.AllFamilyNames)
             .Distinct(Comparer)
             .OrderBy(f => f, Comparer)
             .ToList();
@@ -136,6 +136,7 @@ public partial class DynastiesWindow : Window
         NameBox.Text = dynasty?.Nome ?? string.Empty;
         WikidataBox.Text = dynasty?.WikidataId ?? string.Empty;
         NoteBox.Text = dynasty?.Note ?? string.Empty;
+        TypeBox.SelectedIndex = dynasty?.IsGens == true ? 1 : 0;
         DeleteButton.IsEnabled = dynasty is not null;
         AttachmentsButton.IsEnabled = dynasty is not null;
 
@@ -167,6 +168,7 @@ public partial class DynastiesWindow : Window
             ParentId = (ParentBox.SelectedItem as DynastyItem)?.Dinastia?.Id,
             WikidataId = WikidataBox.Text,
             Note = NoteBox.Text,
+            Tipo = (TypeBox.SelectedItem as ComboBoxItem)?.Tag as string ?? TipiDinastia.Dinastia,
         };
 
         try

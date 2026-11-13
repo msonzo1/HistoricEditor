@@ -224,11 +224,25 @@ public sealed partial class PeopleStore : IDisposable
         existing.Surname = person.Surname;
         existing.Suffix = person.Suffix;
         existing.Family = person.Family;
+        existing.Gens = person.Gens;
         existing.Sesso = person.Sesso;
         existing.Nickname = person.Nickname;
         existing.MainTitle = person.MainTitle;
         existing.Titles = person.Titles.Select(t => t.Clone()).ToList();
         existing.LocalizedNames = person.LocalizedNames.Select(n => n.Clone()).ToList();
+        existing.Onomastica = person.Onomastica;
+        existing.Praenomen = person.Praenomen;
+        existing.Nomen = person.Nomen;
+        existing.Cognomen = person.Cognomen;
+        existing.Agnomen = person.Agnomen;
+        existing.Filiazione = person.Filiazione;
+        existing.Tribu = person.Tribu;
+        existing.NomeLatino = person.NomeLatino;
+        existing.Prenome = person.Prenome;
+        existing.Gentilizio = person.Gentilizio;
+        existing.CognomeRomano = person.CognomeRomano;
+        existing.Agnome = person.Agnome;
+        existing.NomiNelTempo = person.NomiNelTempo.Select(n => n.Clone()).ToList();
         existing.Birth = person.Birth;
         existing.Death = person.Death;
         existing.BirthCalendario = person.BirthCalendario;
@@ -305,7 +319,7 @@ public sealed partial class PeopleStore : IDisposable
     // Allinea i collegamenti della scheda (tracciata) alle dinastie registrate indicate nel campo «Famiglia».
     private void LinkDynasties(HistoricalPerson person)
     {
-        var names = new HashSet<string>(PeopleGrouping.FamilyNames(person.Family), PeopleGrouping.FamilyComparer);
+        var names = new HashSet<string>(PeopleGrouping.AllFamilyNames(person), PeopleGrouping.FamilyComparer);
         var wanted = names.Count == 0 ? [] : context.Dinastie.AsNoTracking().AsEnumerable()
             .Where(d => names.Contains(d.Nome.Trim()))
             .Select(d => d.Id)
@@ -323,8 +337,8 @@ public sealed partial class PeopleStore : IDisposable
     {
         var name = dynasty.Nome.Trim();
         var linked = dynasty.Id == 0 ? [] : context.PersoneDinastie.Where(l => l.DinastiaId == dynasty.Id).Select(l => l.PersonaId).ToHashSet();
-        foreach (var person in context.People.Where(p => p.Family != null && p.Family.Length > 0).AsEnumerable()
-            .Where(p => !linked.Contains(p.Id) && PeopleGrouping.FamilyNames(p.Family).Contains(name, PeopleGrouping.FamilyComparer)))
+        foreach (var person in context.People.Where(p => (p.Family != null && p.Family.Length > 0) || (p.Gens != null && p.Gens.Length > 0)).AsEnumerable()
+            .Where(p => !linked.Contains(p.Id) && PeopleGrouping.AllFamilyNames(p).Contains(name, PeopleGrouping.FamilyComparer)))
         {
             context.PersoneDinastie.Add(new PersonaDinastia { PersonaId = person.Id, Dinastia = dynasty });
         }
@@ -337,9 +351,9 @@ public sealed partial class PeopleStore : IDisposable
             .GroupBy(d => d.Nome.Trim(), PeopleGrouping.FamilyComparer)
             .ToDictionary(g => g.Key, g => g.First().Id, PeopleGrouping.FamilyComparer);
         context.PersoneDinastie.RemoveRange(context.PersoneDinastie);
-        foreach (var person in context.People.AsNoTracking().Where(p => p.Family != null && p.Family.Length > 0).AsEnumerable())
+        foreach (var person in context.People.AsNoTracking().Where(p => (p.Family != null && p.Family.Length > 0) || (p.Gens != null && p.Gens.Length > 0)).AsEnumerable())
         {
-            foreach (var name in PeopleGrouping.FamilyNames(person.Family))
+            foreach (var name in PeopleGrouping.AllFamilyNames(person))
             {
                 if (byName.TryGetValue(name, out var id))
                 {
@@ -389,6 +403,7 @@ public sealed partial class PeopleStore : IDisposable
             foreach (var person in context.People.Where(p => linkedIds.Contains(p.Id)))
             {
                 person.Family = RenameFamily(person.Family, oldName, nome);
+                person.Gens = RenameFamily(person.Gens, oldName, nome);
             }
         }
 
@@ -396,6 +411,7 @@ public sealed partial class PeopleStore : IDisposable
         entity.ParentId = data.ParentId;
         entity.WikidataId = (data.WikidataId ?? string.Empty).Trim();
         entity.Note = data.Note ?? string.Empty;
+        entity.Tipo = data.Tipo ?? TipiDinastia.Dinastia;
         LinkPeopleByName(entity);
         SaveOrRevert();
         return entity.Id;
@@ -421,7 +437,8 @@ public sealed partial class PeopleStore : IDisposable
     }
 
     // Trova (per Wikidata o per nome) o crea la dinastia; collega il ramo superiore solo se non già indicato.
-    public int EnsureDynasty(string nome, string wikidataId, int? parentId)
+    // Il tipo vale per le dinastie nuove; una esistente diventa gens solo se lo indica Wikidata (wikidataId non vuoto).
+    public int EnsureDynasty(string nome, string wikidataId, int? parentId, string tipo = TipiDinastia.Dinastia)
     {
         nome = (nome ?? string.Empty).Trim();
         wikidataId = (wikidataId ?? string.Empty).Trim();
@@ -429,7 +446,7 @@ public sealed partial class PeopleStore : IDisposable
             ?? context.Dinastie.FirstOrDefault(d => d.Nome == nome);
         if (entity is null)
         {
-            entity = new Dinastia { Nome = nome, WikidataId = wikidataId, ParentId = parentId };
+            entity = new Dinastia { Nome = nome, WikidataId = wikidataId, ParentId = parentId, Tipo = tipo };
             context.Dinastie.Add(entity);
             LinkPeopleByName(entity);
             SaveOrRevert();
@@ -440,6 +457,12 @@ public sealed partial class PeopleStore : IDisposable
         if (entity.WikidataId.Length == 0 && wikidataId.Length > 0)
         {
             entity.WikidataId = wikidataId;
+            changed = true;
+        }
+
+        if (tipo == TipiDinastia.Gens && entity.Tipo != TipiDinastia.Gens && wikidataId.Length > 0)
+        {
+            entity.Tipo = TipiDinastia.Gens;
             changed = true;
         }
 
@@ -674,6 +697,7 @@ public sealed partial class PeopleStore : IDisposable
         "fr" => "Francese",
         "es" => "Spagnolo",
         "nl" => "Olandese",
+        "la" => "Latino",
         _ => code,
     };
 
@@ -1129,18 +1153,35 @@ public sealed partial class PeopleStore : IDisposable
         return result;
     }
 
-    // Una scheda senza famiglia eredita quella del padre (es. figli naturali senza famiglia su Wikidata).
+    // Una scheda senza famiglia eredita quella del padre (es. figli naturali senza famiglia su Wikidata); lo stesso
+    // per la gens, separatamente.
     public bool InheritFatherFamilyIfMissing(int personId)
     {
         var person = context.People.Find(personId);
-        if (person is null || !string.IsNullOrWhiteSpace(person.Family) || person.FatherId is not int fatherId
-            || context.People.AsNoTracking().Where(p => p.Id == fatherId).Select(p => p.Family).FirstOrDefault() is not { } family
-            || string.IsNullOrWhiteSpace(family))
+        if (person is null || person.FatherId is not int fatherId
+            || context.People.AsNoTracking().Where(p => p.Id == fatherId).Select(p => new { p.Family, p.Gens }).FirstOrDefault() is not { } father)
         {
             return false;
         }
 
-        person.Family = family.Trim();
+        var changed = false;
+        if (string.IsNullOrWhiteSpace(person.Family) && !string.IsNullOrWhiteSpace(father.Family))
+        {
+            person.Family = father.Family.Trim();
+            changed = true;
+        }
+
+        if (string.IsNullOrWhiteSpace(person.Gens) && !string.IsNullOrWhiteSpace(father.Gens))
+        {
+            person.Gens = father.Gens.Trim();
+            changed = true;
+        }
+
+        if (!changed)
+        {
+            return false;
+        }
+
         LinkDynasties(person);
         SaveOrRevert();
         return true;

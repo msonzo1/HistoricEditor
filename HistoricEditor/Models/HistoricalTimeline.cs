@@ -104,11 +104,11 @@ public static class HistoricalTimeline
         return ids;
     }
 
-    // Persone che tra le famiglie indicate nella scheda hanno uno dei nomi dati (una dinastia e i suoi rami).
+    // Persone che tra le famiglie (o le gens) indicate nella scheda hanno uno dei nomi dati (una dinastia e i suoi rami).
     public static HashSet<int> FamilyMembers(IEnumerable<HistoricalPerson> people, IEnumerable<string> families)
     {
         var names = new HashSet<string>(families.Select(f => f.Trim()).Where(f => f.Length > 0), Comparer);
-        return [.. people.Where(p => PeopleGrouping.FamilyNames(p.Family).Any(names.Contains)).Select(p => p.Id)];
+        return [.. people.Where(p => PeopleGrouping.AllFamilyNames(p).Any(names.Contains)).Select(p => p.Id)];
     }
 
     // Dinastie registrate e famiglie indicate nelle schede, senza doppioni, in ordine alfabetico.
@@ -119,7 +119,7 @@ public static class HistoricalTimeline
             .Select(d => new TimelineFamilyOption(d.Nome.Trim(), d.Id))
             .ToList();
         var known = new HashSet<string>(options.Select(o => o.Nome), Comparer);
-        foreach (var family in people.SelectMany(p => PeopleGrouping.FamilyNames(p.Family)))
+        foreach (var family in people.SelectMany(PeopleGrouping.AllFamilyNames))
         {
             if (known.Add(family))
             {

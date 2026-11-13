@@ -9,12 +9,40 @@ public sealed class HistoricalPerson
     // Cognome dei personaggi moderni; facoltativo e indipendente da suffisso e famiglia.
     public string Surname { get; set; } = string.Empty;
     public string Suffix { get; set; } = string.Empty;
+    // Dinastie o casate, separate da «;» (es. «Asburgo; Lorena»); per i Romani la dinastia, non la gens.
     public string Family { get; set; } = string.Empty;
+
+    // Gens romana e suoi rami, separati da «;» («gens Ulpia; Ulpii Traiani»), distinta dalla dinastia (Nerva-Antonina).
+    public string Gens { get; set; } = string.Empty;
     public string Sesso { get; set; } = string.Empty;
     public string Nickname { get; set; } = string.Empty;
     public string MainTitle { get; set; } = string.Empty;
     public List<PersonTitle> Titles { get; set; } = [];
     public List<LocalizedPersonName> LocalizedNames { get; set; } = [];
+
+    // Onomastica romana (vedi RomanNaming): vuota = decisa in automatico dall'epoca.
+    public string Onomastica { get; set; } = string.Empty;
+    public string Praenomen { get; set; } = string.Empty;
+    public string Nomen { get; set; } = string.Empty;
+
+    // Uno o più cognomina, separati da spazio («Lentulus Crus»).
+    public string Cognomen { get; set; } = string.Empty;
+    public string Agnomen { get; set; } = string.Empty;
+
+    // Filiazione abbreviata, es. «C. f.» (Gai filius).
+    public string Filiazione { get; set; } = string.Empty;
+    public string Tribu { get; set; } = string.Empty;
+
+    // Nome latino scritto a mano, quando non si compone bene dalle parti; ha la precedenza sulla composizione.
+    public string NomeLatino { get; set; } = string.Empty;
+
+    // Le stesse parti del nome romano in italiano («Gaio», «Giulio», «Cesare»): sono quelle mostrate nella scheda;
+    // le forme latine (Praenomen, Nomen…) stanno nella tendina «Nome in latino». Le altre lingue sono in LocalizedNames.
+    public string Prenome { get; set; } = string.Empty;
+    public string Gentilizio { get; set; } = string.Empty;
+    public string CognomeRomano { get; set; } = string.Empty;
+    public string Agnome { get; set; } = string.Empty;
+    public List<RomanNameRecord> NomiNelTempo { get; set; } = [];
 
     // Un solo padre e una sola madre; i figli si ricavano da questi riferimenti.
     public int? FatherId { get; set; }

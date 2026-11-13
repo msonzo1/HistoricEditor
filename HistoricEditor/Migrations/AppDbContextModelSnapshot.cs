@@ -87,6 +87,10 @@ namespace HistoricEditor.Migrations
                     b.Property<int?>("ParentId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("WikidataId")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -185,6 +189,14 @@ namespace HistoricEditor.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("Agnome")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Agnomen")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Birth")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -217,6 +229,14 @@ namespace HistoricEditor.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("CognomeRomano")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Cognomen")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Death")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -246,6 +266,18 @@ namespace HistoricEditor.Migrations
                     b.Property<int?>("FatherId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("Filiazione")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Gens")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Gentilizio")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("MainTitle")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -261,7 +293,27 @@ namespace HistoricEditor.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("NomeLatino")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Nomen")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Note")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Onomastica")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Praenomen")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Prenome")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -274,6 +326,10 @@ namespace HistoricEditor.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Surname")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Tribu")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -709,6 +765,8 @@ namespace HistoricEditor.Migrations
 
                             b1.Property<string>("RawValue")
                                 .IsRequired();
+
+                            b1.Property<bool>("Scartata");
 
                             b1.Property<string>("Value")
                                 .IsRequired();
@@ -1242,6 +1300,8 @@ namespace HistoricEditor.Migrations
                             b1.Property<string>("RawValue")
                                 .IsRequired();
 
+                            b1.Property<bool>("Scartata");
+
                             b1.Property<string>("Value")
                                 .IsRequired();
 
@@ -1527,6 +1587,15 @@ namespace HistoricEditor.Migrations
                             b1.Property<int>("__synthesizedOrdinal")
                                 .ValueGeneratedOnAddOrUpdate();
 
+                            b1.Property<string>("Agnome")
+                                .IsRequired();
+
+                            b1.Property<string>("CognomeRomano")
+                                .IsRequired();
+
+                            b1.Property<string>("Gentilizio")
+                                .IsRequired();
+
                             b1.Property<string>("Lingua")
                                 .IsRequired();
 
@@ -1534,6 +1603,9 @@ namespace HistoricEditor.Migrations
                                 .IsRequired();
 
                             b1.Property<string>("Nome")
+                                .IsRequired();
+
+                            b1.Property<string>("Prenome")
                                 .IsRequired();
 
                             b1.Property<string>("Soprannome")
@@ -1637,6 +1709,37 @@ namespace HistoricEditor.Migrations
                             b1.Navigation("FontiDate");
                         });
 
+                    b.OwnsMany("HistoricEditor.RomanNameRecord", "NomiNelTempo", b1 =>
+                        {
+                            b1.Property<int>("HistoricalPersonId");
+
+                            b1.Property<int>("__synthesizedOrdinal")
+                                .ValueGeneratedOnAddOrUpdate();
+
+                            b1.Property<string>("Al")
+                                .IsRequired();
+
+                            b1.Property<string>("Dal")
+                                .IsRequired();
+
+                            b1.Property<string>("Motivo")
+                                .IsRequired();
+
+                            b1.Property<string>("Nome")
+                                .IsRequired();
+
+                            b1.HasKey("HistoricalPersonId", "__synthesizedOrdinal");
+
+                            b1.ToTable("People");
+
+                            b1
+                                .ToJson("NomiNelTempo")
+                                .HasColumnType("TEXT");
+
+                            b1.WithOwner()
+                                .HasForeignKey("HistoricalPersonId");
+                        });
+
                     b.OwnsMany("HistoricEditor.WikipediaLeadRecord", "WikipediaLeads", b1 =>
                         {
                             b1.Property<int>("HistoricalPersonId");
@@ -1645,6 +1748,8 @@ namespace HistoricEditor.Migrations
                                 .ValueGeneratedOnAddOrUpdate();
 
                             b1.Property<int?>("BirthDay");
+
+                            b1.Property<int?>("BirthDayAlt");
 
                             b1.Property<int?>("BirthMonth");
 
@@ -1657,6 +1762,8 @@ namespace HistoricEditor.Migrations
                             b1.Property<int?>("BirthYear");
 
                             b1.Property<int?>("DeathDay");
+
+                            b1.Property<int?>("DeathDayAlt");
 
                             b1.Property<int?>("DeathMonth");
 
@@ -1719,6 +1826,8 @@ namespace HistoricEditor.Migrations
                     b.Navigation("LocalizedNames");
 
                     b.Navigation("Mother");
+
+                    b.Navigation("NomiNelTempo");
 
                     b.Navigation("Titles");
 

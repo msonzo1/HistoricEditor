@@ -25,6 +25,40 @@ public class PeopleGroupingTests
         Assert.Equal("1 PERSONA", groups[1].Conteggio);
     }
 
+    // Gens e dinastia separate (2026-11-12): Traiano (gens Ulpia, ramo Ulpii Traiani, Dinastia Nerva-Antonina) compare una
+    // sola volta, nella dinastia; Cesare, che ha solo la gens, compare nel ramo della gens. Vale anche per una scheda
+    // salvata prima, con la gens scritta nel campo Famiglia (Adriano).
+    [Fact]
+    public void Build_ShowsThePersonUnderTheDynasty_NotAlsoUnderTheGens()
+    {
+        Dinastia[] dynasties =
+        [
+            new() { Id = 1, Nome = "gens Ulpia", Tipo = TipiDinastia.Gens },
+            new() { Id = 2, Nome = "Ulpii Traiani", Tipo = TipiDinastia.Gens, ParentId = 1 },
+            new() { Id = 3, Nome = "Dinastia Nerva-Antonina" },
+            new() { Id = 4, Nome = "gens Giulia", Tipo = TipiDinastia.Gens },
+            new() { Id = 5, Nome = "gens Aelia", Tipo = TipiDinastia.Gens },
+        ];
+        HistoricalPerson[] people =
+        [
+            new() { Id = 10, Name = "Traiano", Gens = "gens Ulpia; Ulpii Traiani", Family = "Dinastia Nerva-Antonina" },
+            new() { Id = 11, Name = "Gaio Giulio Cesare", Gens = "gens Giulia" },
+            new() { Id = 12, Name = "Adriano", Family = "gens Aelia; Dinastia Nerva-Antonina" },
+        ];
+        PersonaDinastia[] links =
+        [
+            new() { PersonaId = 10, DinastiaId = 1 }, new() { PersonaId = 10, DinastiaId = 2 }, new() { PersonaId = 10, DinastiaId = 3 },
+            new() { PersonaId = 11, DinastiaId = 4 },
+            new() { PersonaId = 12, DinastiaId = 5 }, new() { PersonaId = 12, DinastiaId = 3 },
+        ];
+
+        var groups = PeopleGrouping.Build(people, dynasties, links);
+        var all = groups.SelectMany(g => g.SelfAndDescendants()).SelectMany(g => g.Persone.Select(p => (Group: g.Famiglia, p.Nome))).ToList();
+        Assert.Equal([("Dinastia Nerva-Antonina", "Traiano")], all.Where(e => e.Nome == "Traiano"));
+        Assert.Equal([("Dinastia Nerva-Antonina", "Adriano")], all.Where(e => e.Nome == "Adriano"));
+        Assert.Equal([("gens Giulia", "Gaio Giulio Cesare")], all.Where(e => e.Nome == "Gaio Giulio Cesare"));
+    }
+
     [Fact]
     public void Build_GroupsBySurnameWhenFamilyIsMissing()
     {

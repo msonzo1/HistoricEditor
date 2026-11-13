@@ -48,9 +48,9 @@ public class PersonSheetTests
     }
 
     [Theory]
-    [InlineData("24 febbraio 1500", "", "", "24 febbraio 1500")]
-    [InlineData("24 febbraio 1500", HistoricalCalendar.Giuliano, "", "24 febbraio 1500 (calendario giuliano)")]
-    [InlineData("10 febbraio 1525", HistoricalCalendar.Giuliano, HistoricalCalendar.StileFiorentino, "10 febbraio 1525 (calendario giuliano, stile Fiorentino (25 marzo))")]
+    [InlineData("24 febbraio 1500", "", "", "24/02/1500")]
+    [InlineData("24 febbraio 1500", HistoricalCalendar.Giuliano, "", "24/02/1500 (calendario giuliano)")]
+    [InlineData("10 febbraio 1525", HistoricalCalendar.Giuliano, HistoricalCalendar.StileFiorentino, "10/02/1525 (calendario giuliano, stile Fiorentino (25 marzo))")]
     [InlineData("  ", HistoricalCalendar.Giuliano, "", "")]
     public void DescribeDate_AddsCalendarAndStyle(string date, string calendar, string style, string expected)
         => Assert.Equal(expected, PersonSheet.DescribeDate(date, calendar, style));

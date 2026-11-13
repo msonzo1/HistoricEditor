@@ -10,6 +10,10 @@ public sealed class HistoricalDateEvidence
     public string Calendario { get; set; } = string.Empty;
     public Dictionary<string, List<string>> Qualifiers { get; set; } = [];
     public List<SourceCitation> Sources { get; set; } = [];
+
+    // Data letta da una sola fonte e diversa da quelle scelte (Cesare: 102 a.C. da un solo riferimento Wikidata, contro
+    // il 100 a.C. di tutte le altre fonti): non entra nel campo della data, ma resta tra le fonti come data discordante.
+    public bool Scartata { get; set; }
 }
 
 public sealed class HistoricalPlaceRecord
@@ -33,10 +37,37 @@ public sealed class HistoricalPlaceRecord
     // Nomi storici letti da Wikidata all'import: passano al luogo dell'archivio e non sono salvati nella scheda.
     [System.Text.Json.Serialization.JsonIgnore]
     public List<NomeStorico> HistoricalNames { get; set; } = [];
+
+    // Località antica o scomparsa (Falacrine, Aquae Cutiliae): nome italiano con cui diventa un luogo storico
+    // nell'archivio, contenuto nel comune attuale. Vuoto per i luoghi attuali. Come i nomi storici, vale solo all'import.
+    [System.Text.Json.Serialization.JsonIgnore]
+    public string HistoricName { get; set; } = string.Empty;
+
+    // Nome latino del luogo storico, solo per i luoghi del mondo romano («Vicus Phalacrinae»).
+    [System.Text.Json.Serialization.JsonIgnore]
+    public string LatinName { get; set; } = string.Empty;
+
+    // Edificio della località antica, ancora visibile, che diventa un luogo specifico dentro il luogo storico
+    // («Terme di Cotilia», tipo «Terme», dentro Cotilia). Vuoto se il nome della località non indica un edificio.
+    [System.Text.Json.Serialization.JsonIgnore]
+    public string HistoricBuildingName { get; set; } = string.Empty;
+
+    [System.Text.Json.Serialization.JsonIgnore]
+    public string HistoricBuildingType { get; set; } = string.Empty;
+
+    // Condizione del luogo specifico creato all'import (CondizioniLuogo): «In rovina» per i resti ancora visibili
+    // (Tempio del Divo Giulio, Terme di Cotilia, Sito archeologico di Italica). Vuoto = esistente.
+    [System.Text.Json.Serialization.JsonIgnore]
+    public string SpecificCondition { get; set; } = string.Empty;
 }
 
 public sealed class PlaceDivision
 {
+    // Comune attuale più vicino, trovato dalle coordinate per un luogo che su Wikidata non indica il comune
+    // (località scomparse come Falacrine, oggi nel territorio di Cittareale). È una proposta da confermare.
+    public const string NearbyMunicipalityRelation = "Unità amministrativa (comune più vicino, dalle coordinate)";
+
+
     public string Relation { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public List<PlaceName> Names { get; set; } = [];
@@ -71,16 +102,27 @@ public sealed class SourceCitation
 // Le chiavi dei luoghi sono il Q-id Wikidata riconosciuto o, in mancanza, il testo normalizzato.
 public sealed class WikipediaLeadRecord
 {
+    // Lingua della riga con i dati di Wikidata, salvata insieme alle edizioni per mostrarla nel confronto.
+    public const string WikidataLanguage = "wikidata";
+
     public string Language { get; set; } = string.Empty;
+
+    [System.Text.Json.Serialization.JsonIgnore]
+    public bool IsWikidata => Language == WikidataLanguage;
+
     public string LanguageName { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;
     public string Url { get; set; } = string.Empty;
     public int? BirthYear { get; set; }
     public int? BirthMonth { get; set; }
     public int? BirthDay { get; set; }
+
+    // Secondo giorno indicato dall'edizione: «mort le 8 ou 9 août 117» → giorno 9, alternativo 8.
+    public int? BirthDayAlt { get; set; }
     public int? DeathYear { get; set; }
     public int? DeathMonth { get; set; }
     public int? DeathDay { get; set; }
+    public int? DeathDayAlt { get; set; }
     public string BirthPlace { get; set; } = string.Empty;
     public string BirthPlaceKey { get; set; } = string.Empty;
     public string DeathPlace { get; set; } = string.Empty;
@@ -98,8 +140,8 @@ public sealed class WikipediaSearchResult
     public override string ToString() => string.IsNullOrWhiteSpace(Snippet) ? Title : $"{Title} — {Snippet}";
 }
 
-// Famiglia letta da Wikidata con l'eventuale dinastia di cui è ramo.
-public sealed record ImportedDynasty(string Nome, string WikidataId, string ParentNome, string ParentWikidataId);
+// Famiglia letta da Wikidata con l'eventuale dinastia di cui è ramo; Gens = gens romana (P5025).
+public sealed record ImportedDynasty(string Nome, string WikidataId, string ParentNome, string ParentWikidataId, bool Gens = false);
 
 public sealed class WikipediaImportResult
 {
@@ -110,7 +152,24 @@ public sealed class WikipediaImportResult
     public string MainTitle { get; init; } = string.Empty;
     public List<PersonTitle> Titles { get; init; } = [];
     public List<LocalizedPersonName> LocalizedNames { get; init; } = [];
+
+    // Nome romano da Wikidata: praenomen (P2358), nomen (P2359), cognomen (P2365), agnomen (P2366)
+    // e nome latino (P1559 in latino) solo se diverso da quello composto dalle parti.
+    public string Praenomen { get; init; } = string.Empty;
+    public string Nomen { get; init; } = string.Empty;
+    public string Cognomen { get; init; } = string.Empty;
+    public string Agnomen { get; init; } = string.Empty;
+    public string NomeLatino { get; init; } = string.Empty;
+
+    // Le stesse parti in italiano, dalle etichette italiane degli stessi elementi Wikidata; le altre lingue sono in LocalizedNames.
+    public string Prenome { get; init; } = string.Empty;
+    public string Gentilizio { get; init; } = string.Empty;
+    public string CognomeRomano { get; init; } = string.Empty;
+    public string Agnome { get; init; } = string.Empty;
     public string Family { get; init; } = string.Empty;
+
+    // Gens e suoi rami («gens Ulpia; Ulpii Traiani»), separati dalle dinastie del campo Family.
+    public string Gens { get; init; } = string.Empty;
     public List<ImportedDynasty> Dynasties { get; init; } = [];
     public string Sesso { get; init; } = string.Empty;
     public string ArticleTitle { get; init; } = string.Empty;
@@ -122,10 +181,21 @@ public sealed class WikipediaImportResult
     public string Extract { get; init; } = string.Empty;
     public List<HistoricalDateEvidence> BirthDates { get; init; } = [];
     public List<HistoricalDateEvidence> DeathDates { get; init; } = [];
+
+    // Date diverse da quelle scelte e indicate da una sola fonte: non vanno nel campo, ma tra le fonti come discordanti.
+    public List<HistoricalDateEvidence> DiscardedBirthDates { get; init; } = [];
+    public List<HistoricalDateEvidence> DiscardedDeathDates { get; init; } = [];
+
+    // Tutte le date lette, con quelle scartate (segnate con Scartata), come si salvano nella scheda.
+    public IEnumerable<HistoricalDateEvidence> AllBirthEvidence => BirthDates.Concat(DiscardedBirthDates);
+    public IEnumerable<HistoricalDateEvidence> AllDeathEvidence => DeathDates.Concat(DiscardedDeathDates);
     public List<HistoricalPlaceRecord> BirthPlaces { get; init; } = [];
     public List<HistoricalPlaceRecord> DeathPlaces { get; init; } = [];
     public List<HistoricalPlaceRecord> BurialPlaces { get; init; } = [];
     public List<WikipediaLeadRecord> WikipediaLeads { get; init; } = [];
+
+    // Edizioni di Wikipedia (nomi delle lingue) che non è stato possibile leggere, ad esempio per troppe richieste.
+    public List<string> UnreadEditions { get; init; } = [];
 
     // Identificativi Wikidata dei parenti (P22 padre, P25 madre, P26 coniugi, P40 figli).
     public List<string> FatherIds { get; init; } = [];

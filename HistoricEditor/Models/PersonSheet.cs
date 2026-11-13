@@ -25,19 +25,86 @@ public static class PersonSheet
         _ => string.Empty,
     };
 
-    public static IReadOnlyList<SheetField> MainFields(HistoricalPerson person) => Fields(
-        ("Nome", person.Name),
-        ("Cognome", person.Surname),
-        ("Suffisso", person.Suffix),
-        ("Soprannome", person.Nickname),
-        ("Titolo principale", person.MainTitle),
-        ("Famiglia", person.Family),
-        ("Sesso", DescribeSex(person.Sesso)));
+    // Per i personaggi romani: nome italiano, nome latino, forma epigrafica, parti del nome e «Gens» al posto di «Famiglia».
+    public static IReadOnlyList<SheetField> MainFields(HistoricalPerson person)
+    {
+        if (!RomanNaming.IsRoman(person))
+        {
+            return Fields(
+                ("Nome", person.Name),
+                ("Cognome", person.Surname),
+                ("Suffisso", person.Suffix),
+                ("Soprannome", person.Nickname),
+                ("Titolo principale", person.MainTitle),
+                ("Famiglia", person.Family),
+                ("Gens", person.Gens),
+                ("Sesso", DescribeSex(person.Sesso)));
+        }
+
+        var latin = RomanNaming.LatinName(person);
+        var epigraphic = RomanNaming.Epigraphic(person);
+        return Fields(
+            ("Nome italiano", person.Name),
+            ("Prenome", person.Prenome),
+            ("Nome gentilizio", person.Gentilizio),
+            ("Cognome", person.CognomeRomano),
+            ("Agnome", person.Agnome),
+            ("Nome latino", latin),
+            ("Forma epigrafica", string.Equals(epigraphic, latin, StringComparison.Ordinal) ? string.Empty : epigraphic),
+            ("Praenomen", person.Praenomen),
+            ("Nomen", person.Nomen),
+            ("Cognomen", person.Cognomen),
+            ("Agnomen", person.Agnomen),
+            ("Filiazione", person.Filiazione),
+            ("Tribù", person.Tribu),
+            ("Cognome (scheda standard)", person.Surname),
+            ("Suffisso", person.Suffix),
+            ("Soprannome", person.Nickname),
+            ("Titolo principale", person.MainTitle),
+            ("Gens", person.Gens),
+            ("Dinastia", person.Family),
+            ("Sesso", DescribeSex(person.Sesso)));
+    }
+
+    // Nome latino da mostrare sotto il nome italiano: vuoto se la scheda non è romana o se coincide con il nome principale.
+    public static string LatinSubtitle(HistoricalPerson person)
+    {
+        if (!RomanNaming.IsRoman(person))
+        {
+            return string.Empty;
+        }
+
+        var latin = RomanNaming.LatinName(person);
+        return string.Equals(latin, person.DisplayName.Trim(), StringComparison.OrdinalIgnoreCase) ? string.Empty : latin;
+    }
+
+    // Nomi portati nel tempo: «Adozione» → «Gaius Iulius Caesar Octavianus (dal 44 a.C. al 27 a.C.)».
+    public static IReadOnlyList<SheetField> NamesOverTime(IEnumerable<RomanNameRecord>? names) =>
+    [
+        .. (names ?? [])
+            .Where(n => !n.IsEmpty())
+            .Select(n =>
+            {
+                var from = n.Dal.Trim();
+                var to = n.Al.Trim();
+                var period = (from.Length > 0, to.Length > 0) switch
+                {
+                    (true, true) => $"dal {from} al {to}",
+                    (true, false) => $"dal {from}",
+                    (false, true) => $"fino al {to}",
+                    _ => string.Empty,
+                };
+                var name = n.Nome.Trim().Length > 0 ? n.Nome.Trim() : "(nome non indicato)";
+                return new SheetField(
+                    n.Motivo.Trim().Length > 0 ? n.Motivo.Trim() : "Nome",
+                    period.Length > 0 ? $"{name} ({period})" : name);
+            }),
+    ];
 
     // Data con il calendario e lo stile dell'anno, se indicati: «10 febbraio 1525 (calendario giuliano, stile fiorentino)».
     public static string DescribeDate(string? date, string? calendario, string? stile)
     {
-        var text = (date ?? string.Empty).Trim();
+        var text = DateFormats.Normalize((date ?? string.Empty).Trim());
         if (text.Length == 0)
         {
             return string.Empty;
@@ -115,8 +182,8 @@ public static class PersonSheet
                 (var d, var c) => $"{d} ({c})",
             };
 
-        var start = WithCause(title.Inizio, title.CausaInizio);
-        var end = WithCause(title.Fine, title.CausaFine);
+        var start = WithCause(DateFormats.Normalize(title.Inizio), title.CausaInizio);
+        var end = WithCause(DateFormats.Normalize(title.Fine), title.CausaFine);
         var period = (start, end) switch
         {
             ("", "") => string.Empty,
@@ -175,7 +242,7 @@ public static class PersonSheet
 
         foreach (var (label, evidence) in new[] { ("nascita", person.BirthDateEvidence), ("morte", person.DeathDateEvidence) })
         {
-            foreach (var source in evidence.SelectMany(e => e.Sources))
+            foreach (var source in evidence.Where(e => !e.Scartata).SelectMany(e => e.Sources))
             {
                 var title = source.Title.Trim().Length > 0 ? source.Title.Trim() : source.Url.Trim();
                 Add($"Data di {label}: {title}", source.Url);
@@ -204,7 +271,8 @@ public static class PersonSheet
                 dynasty = parent;
             }
 
-            return parents.Count > 0 ? $"Ramo di: {string.Join(" › ", parents)}" : "Dinastia principale";
+            var main = dynasty?.IsGens == true ? "Gens romana" : "Dinastia principale";
+            return parents.Count > 0 ? $"Ramo di: {string.Join(" › ", parents)}" : main;
         }
 
         var names = PeopleGrouping.FamilyNames(family ?? string.Empty);

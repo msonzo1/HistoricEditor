@@ -128,7 +128,7 @@ public static class HistoricalMap
         var placesById = places.GroupBy(p => p.Id).ToDictionary(g => g.Key, g => g.First());
         var specificsById = specifics.GroupBy(s => s.Id).ToDictionary(g => g.Key, g => g.First());
         var peopleList = people.ToList();
-        var familyById = peopleList.ToDictionary(p => p.Id, p => (p.Family ?? string.Empty).Trim());
+        var familyById = peopleList.ToDictionary(p => p.Id, p => (p.Family ?? string.Empty).Trim() is { Length: > 0 } family ? family : (p.Gens ?? string.Empty).Trim());
         var points = new List<MapPoint>();
 
         string Describe(int? luogoId, int? specificoId, string fallback)

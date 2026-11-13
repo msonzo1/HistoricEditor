@@ -50,15 +50,22 @@ public sealed class PersonEntry(HistoricalPerson person) : PeopleTreeNode
 
     public string Nome => Person.DisplayName;
 
+    // Nome latino dei personaggi romani (vuoto per gli altri o se coincide con il nome), mostrato con «Nomi latini».
+    public string NomeLatino { get; } = PersonSheet.LatinSubtitle(person);
+
+    public bool HasNomeLatino => NomeLatino.Length > 0;
+
+    public string Suggerimento => HasNomeLatino ? $"{Nome}\n{NomeLatino}" : Nome;
+
     public string Date => PeopleGrouping.DescribeDates(Person.Birth, Person.Death);
 
     public string Sesso => PeopleGrouping.DescribeSex(Person.Sesso);
 
-    public string Nascita => Person.Birth;
+    public string Nascita => DateFormats.Normalize(Person.Birth);
 
     public string LuogoNascita => Person.BirthPlace;
 
-    public string Morte => Person.Death;
+    public string Morte => DateFormats.Normalize(Person.Death);
 
     public string LuogoMorte => Person.DeathPlace;
 
@@ -109,6 +116,10 @@ public static class PeopleGrouping
 
     public static string JoinFamilyNames(IEnumerable<string> names) => string.Join("; ", names);
 
+    // Dinastie e gens della scheda (campi Famiglia e Gens), per i collegamenti con le dinastie registrate.
+    public static List<string> AllFamilyNames(HistoricalPerson person)
+        => [.. FamilyNames(person.Family).Concat(FamilyNames(person.Gens)).Distinct(Comparer)];
+
     // Raggruppa per dinastia: le persone collegate (links) vanno sotto ciascuna delle loro dinastie,
     // quelle non collegate secondo i nomi scritti nel campo «Famiglia» (senza distinguere maiuscole).
     // Le famiglie registrate come rami di una dinastia vengono annidate sotto di essa; chi è sia nella dinastia sia in un suo ramo
@@ -124,6 +135,19 @@ public static class PeopleGrouping
         foreach (var person in people)
         {
             var linked = linksByPerson[person.Id].Distinct().ToList();
+
+            // Una persona compare sotto le sue dinastie; sotto la gens solo se non ha una dinastia (Traiano: nella
+            // Dinastia Nerva-Antonina, non anche nella gens Ulpia). Vale anche per le gens scritte nel campo Famiglia
+            // delle schede salvate prima che la gens avesse un campo proprio.
+            var dynastyLinks = linked.Where(id => !byId[id].IsGens).ToList();
+            var dynastyNames = FamilyNames(person.Family)
+                .Where(n => !dynastyList.Any(d => d.IsGens && Comparer.Equals(d.Nome.Trim(), n)))
+                .ToList();
+            if (dynastyLinks.Count > 0 || dynastyNames.Count > 0)
+            {
+                linked = dynastyLinks;
+            }
+
             if (linked.Count > 0)
             {
                 foreach (var id in linked)
@@ -133,7 +157,8 @@ public static class PeopleGrouping
 
                 // Le famiglie scritte nella scheda ma non (ancora) registrate restano raggruppate per nome.
                 var linkedNames = new HashSet<string>(linked.Select(id => byId[id].Nome.Trim()), Comparer);
-                foreach (var name in FamilyNames(person.Family).Where(n => !linkedNames.Contains(n)))
+                var written = dynastyLinks.Count > 0 || dynastyNames.Count > 0 ? dynastyNames : FamilyNames(person.Gens);
+                foreach (var name in written.Where(n => !linkedNames.Contains(n)))
                 {
                     Members(byFamily, name).Add(person);
                 }
@@ -217,10 +242,15 @@ public static class PeopleGrouping
         return list;
     }
 
-    // Senza famiglia (dinastia) i personaggi moderni si raggruppano per cognome.
+    // Senza famiglia (dinastia) i Romani si raggruppano per gens, i personaggi moderni per cognome.
     private static List<string> GroupKeys(HistoricalPerson person)
     {
         var names = FamilyNames(person.Family);
+        if (names.Count == 0)
+        {
+            names = FamilyNames(person.Gens);
+        }
+
         return names.Count > 0 ? names : [(person.Surname ?? string.Empty).Trim()];
     }
 
@@ -229,12 +259,12 @@ public static class PeopleGrouping
         var parts = new List<string>();
         if (!string.IsNullOrWhiteSpace(birth))
         {
-            parts.Add($"n. {birth.Trim()}");
+            parts.Add($"n. {DateFormats.Normalize(birth.Trim())}");
         }
 
         if (!string.IsNullOrWhiteSpace(death))
         {
-            parts.Add($"m. {death.Trim()}");
+            parts.Add($"m. {DateFormats.Normalize(death.Trim())}");
         }
 
         return parts.Count == 0 ? "Date non indicate" : string.Join(" · ", parts);
