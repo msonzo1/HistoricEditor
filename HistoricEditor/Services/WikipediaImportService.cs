@@ -1,6 +1,8 @@
 ﻿using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Globalization;
+using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
@@ -30,11 +32,21 @@ public sealed partial class WikipediaImportService
     {
         public int? BirthMonth { get; init; }
         public int? BirthDay { get; init; }
+        public int? BirthDayAlt { get; init; }
         public int? DeathMonth { get; init; }
         public int? DeathDay { get; init; }
+        public int? DeathDayAlt { get; init; }
 
         // Periodi di regno dell'infobox, per completare le date dei titoli.
         public IReadOnlyList<InfoboxReign> Reigns { get; init; } = [];
+
+        // Introduzione della voce, dove cercare il nome completo se manca altrove.
+        public string Extract { get; init; } = string.Empty;
+
+        // Luoghi scritti nell'infobox, anche quando l'introduzione li indica: per i luoghi antichi l'infobox italiana
+        // riporta spesso il nome latino («Vicus Phalacrinae»).
+        public string InfoboxBirthPlace { get; init; } = string.Empty;
+        public string InfoboxDeathPlace { get; init; } = string.Empty;
     }
 
     public async Task<IReadOnlyList<WikipediaSearchResult>> SearchAsync(string searchText, IProgress<string>? progress = null, CancellationToken cancellationToken = default)
@@ -85,6 +97,23 @@ public sealed partial class WikipediaImportService
         return await ImportCoreAsync(new WikipediaSearchResult { Title = title }, reporter, cancellationToken);
     }
 
+    // Le lingue senza etichetta Wikidata prendono il titolo della voce di Wikipedia in quella lingua, senza la parte
+    // tra parentesi: Cesare non ha un'etichetta olandese, ma la voce si intitola «Gaius Julius Caesar».
+    internal static Dictionary<string, string> WithSitelinkTitles(Dictionary<string, string> labels, JsonElement sitelinks)
+    {
+        foreach (var (code, _, _, sitelink) in Languages)
+        {
+            if (!labels.ContainsKey(code)
+                && GetString(sitelinks.GetPropertyOrDefault(sitelink), "title") is { Length: > 0 } title
+                && Regex.Replace(title, @"\s*\([^()]*\)\s*$", string.Empty).Trim() is { Length: > 0 } name)
+            {
+                labels[code] = name;
+            }
+        }
+
+        return labels;
+    }
+
     internal static string ReadItalianSitelinkTitle(JsonElement root, string wikidataId)
     {
         if (root.ValueKind != JsonValueKind.Object
@@ -99,6 +128,38 @@ public sealed partial class WikipediaImportService
         return sitelinks.ValueKind == JsonValueKind.Object && sitelinks.TryGetProperty("itwiki", out var itwiki)
             ? GetString(itwiki, "title").Trim()
             : string.Empty;
+    }
+
+    // Famiglie senza etichetta italiana su Wikidata: il nome è il titolo della voce di Wikipedia in italiano, senza la
+    // parte tra parentesi, invece dell'etichetta inglese («Nerva–Antonine dynasty» per Traiano). Una richiesta, solo se serve.
+    private static async Task UseItalianArticleTitlesAsync(Dictionary<string, string> familyLabels, IReadOnlyDictionary<string, JsonElement> related, CancellationToken cancellationToken)
+    {
+        var missing = familyLabels.Keys
+            .Where(id => !(related.TryGetValue(id, out var e) && ReadLabels(e).ContainsKey("it")))
+            .ToList();
+        if (missing.Count == 0)
+        {
+            return;
+        }
+
+        try
+        {
+            using var document = await GetJsonAsync(
+                $"{WikidataApi}?action=wbgetentities&ids={Uri.EscapeDataString(string.Join('|', missing))}&props=sitelinks&sitefilter=itwiki&format=json",
+                cancellationToken);
+            foreach (var id in missing)
+            {
+                var title = Regex.Replace(ReadItalianSitelinkTitle(document.RootElement, id), @"\s*\([^()]*\)\s*$", string.Empty).Trim();
+                if (title.Length > 0)
+                {
+                    familyLabels[id] = title;
+                }
+            }
+        }
+        catch (Exception ex) when (IsOptionalFetchFailure(ex, cancellationToken))
+        {
+            // Resta l'etichetta in un'altra lingua.
+        }
     }
 
     public Task<WikipediaImportResult> ImportAsync(WikipediaSearchResult result, IProgress<ImportProgress>? progress = null, CancellationToken cancellationToken = default)
@@ -131,7 +192,7 @@ public sealed partial class WikipediaImportService
 
         progress.Step(2, "Lettura delle affermazioni Wikidata…");
         using var entityDocument = await GetJsonAsync(
-            $"{WikidataApi}?action=wbgetentities&ids={Uri.EscapeDataString(wikidataId)}&props=labels%7Cclaims%7Csitelinks&languages={LanguagesParam}&format=json",
+            $"{WikidataApi}?action=wbgetentities&ids={Uri.EscapeDataString(wikidataId)}&props=labels%7Caliases%7Cclaims%7Csitelinks&languages={LanguagesParam}&format=json",
             cancellationToken);
         // Un elemento unito a un altro viene restituito con il nuovo Q-id: si usa l'unica entità ricevuta.
         var entities = ApiProperty(entityDocument.RootElement, "entities");
@@ -147,14 +208,16 @@ public sealed partial class WikipediaImportService
         {
             wikidataId = resolvedId;
         }
-        var labels = ReadLabels(entity);
+        var labels = WithSitelinkTitles(ReadLabels(entity), entity.GetPropertyOrDefault("sitelinks"));
         var claims = entity.GetPropertyOrDefault("claims");
 
         progress.Step(3, "Lettura delle altre edizioni linguistiche…");
-        var leadDates = await ReadLanguageLeadDatesAsync(entity.GetPropertyOrDefault("sitelinks"), progress, cancellationToken);
+        var (leadDates, unreadEditions) = await ReadLanguageLeadDatesAsync(entity.GetPropertyOrDefault("sitelinks"), progress, cancellationToken);
 
-        var birthDates = BuildCrossLanguageDates(ReadDateEvidence(claims, "P569"), leadDates, birth: true);
-        var deathDates = BuildCrossLanguageDates(ReadDateEvidence(claims, "P570"), leadDates, birth: false);
+        var wikidataBirthDates = ReadDateEvidence(claims, "P569");
+        var wikidataDeathDates = ReadDateEvidence(claims, "P570");
+        var (birthDates, discardedBirthDates) = BuildCrossLanguageDates(wikidataBirthDates, leadDates, birth: true);
+        var (deathDates, discardedDeathDates) = BuildCrossLanguageDates(wikidataDeathDates, leadDates, birth: false);
         var birthPlaceStatements = ReadEntityStatements(claims, "P19");
         var deathPlaceStatements = ReadEntityStatements(claims, "P20");
         var burialPlaceStatements = ReadEntityStatements(claims, "P119");
@@ -164,11 +227,27 @@ public sealed partial class WikipediaImportService
         var birthPlaces = BuildPlaces(birthPlaceStatements, placeEntities);
         var deathPlaces = BuildPlaces(deathPlaceStatements, placeEntities);
         var burialPlaces = BuildPlaces(burialPlaceStatements, placeEntities);
+
+        // Luoghi senza comune su Wikidata (località antiche o scomparse): il comune attuale più vicino, dalle coordinate.
+        var nearbyMunicipalities = await FindNearbyMunicipalitiesAsync([.. birthPlaces, .. deathPlaces, .. burialPlaces], cancellationToken);
+        if (nearbyMunicipalities.Count > 0)
+        {
+            foreach (var (id, municipality) in await ReadPlaceHierarchyAsync(nearbyMunicipalities.Values, progress, cancellationToken))
+            {
+                placeEntities.TryAdd(id, municipality);
+            }
+
+            birthPlaces = BuildPlaces(birthPlaceStatements, placeEntities, nearbyMunicipalities);
+            deathPlaces = BuildPlaces(deathPlaceStatements, placeEntities, nearbyMunicipalities);
+            burialPlaces = BuildPlaces(burialPlaceStatements, placeEntities, nearbyMunicipalities);
+        }
         progress.Step(5, "Lettura delle suddivisioni e dei tipi di luogo…");
         await ReadInfoboxDivisionsAsync(birthPlaces.Concat(deathPlaces).Concat(burialPlaces), placeEntities, cancellationToken);
         await ReadHistoricalNamesAsync(birthPlaces.Concat(deathPlaces).Concat(burialPlaces), placeEntities, cancellationToken);
         progress.Sub(0.5, "tipi di luogo");
-        await AssignPlaceTypesAsync([.. birthPlaces, .. deathPlaces, .. burialPlaces], cancellationToken);
+        var typeLabels = await AssignPlaceTypesAsync([.. birthPlaces, .. deathPlaces, .. burialPlaces], cancellationToken);
+        progress.Sub(0.8, "luoghi antichi");
+        await AssignHistoricPlaceNamesAsync(birthPlaces, deathPlaces, burialPlaces, placeEntities, leadDates, typeLabels, cancellationToken);
         progress.Step(6, "Lettura dei nomi dei luoghi nelle altre lingue…");
         var leadPlaceNames = leadDates.Values.Any(l => l.BirthPlace.Length > 0 || l.DeathPlace.Length > 0)
             ? await ReadPlaceNamesAsync(
@@ -178,31 +257,55 @@ public sealed partial class WikipediaImportService
         var wikipediaLeads = BuildWikipediaLeads(
             leadDates,
             PlaceCandidates(birthPlaces, leadPlaceNames),
-            PlaceCandidates(deathPlaces, leadPlaceNames));
+            PlaceCandidates(deathPlaces, leadPlaceNames),
+            BuildWikidataLead(wikidataId, wikidataBirthDates, wikidataDeathDates, birthPlaces, deathPlaces, birthDates.FirstOrDefault(), deathDates.FirstOrDefault()));
         var familyIds = ReadEntityStatements(claims, "P53").Select(statement => statement.EntityId).Distinct(StringComparer.Ordinal).ToArray();
         var surnameIds = ReadEntityIds(claims, "P734").Distinct(StringComparer.Ordinal).ToArray();
+
+        // Onomastica romana: praenomen, nomen gentilicium, cognomina, agnomina e gens.
+        var romanPartIds = RomanNameProperties.ToDictionary(p => p, p => ReadRomanPartIds(claims, p), StringComparer.Ordinal);
+        var gensIds = ReadEntityIds(claims, "P5025").ToArray();
         progress.Step(7, "Lettura di famiglie e titoli…");
         var rawTitles = ReadTitleStatements(claims, "P39").Concat(ReadTitleStatements(claims, "P97")).ToList();
         var sexId = ReadEntityIds(claims, "P21").FirstOrDefault();
 
-        // Prima richiesta: famiglie, titoli e cause di fine con etichette e affermazioni insieme.
+        // Prima richiesta: famiglie, nomi romani, titoli e cause di fine con etichette e affermazioni insieme.
         var related = await ReadEntitiesAsync(
-            familyIds.Concat(surnameIds).Concat(rawTitles.SelectMany(t => new[] { t.EntityId, t.EndCauseId })),
+            familyIds.Concat(surnameIds).Concat(gensIds).Concat(romanPartIds.Values.SelectMany(ids => ids))
+                .Concat(rawTitles.SelectMany(t => new[] { t.EntityId, t.EndCauseId })),
             cancellationToken);
         familyIds = [.. familyIds.Where(id => !related.TryGetValue(id, out var family)
             || family.GetPropertyOrDefault("claims") is var familyClaims
             && !IsNotAFamily(ReadEntityIds(familyClaims, "P31"), ReadEntityIds(familyClaims, "P36").Any()))];
-        var familyParents = new Dictionary<string, string>(StringComparer.Ordinal);
-        foreach (var id in familyIds)
+        // Dinastia superiore: il primo P361 (poi P279) che non sia una pagina di servizio di Wikipedia; la «Dinastia flavia»
+        // indica come «parte di» la «list of Roman dynasties», che non è una dinastia.
+        var parentCandidates = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+        foreach (var id in familyIds.Concat(gensIds).Distinct(StringComparer.Ordinal))
         {
             if (related.TryGetValue(id, out var family))
             {
                 var familyClaims = family.GetPropertyOrDefault("claims");
-                var parent = ReadEntityIds(familyClaims, "P361").Concat(ReadEntityIds(familyClaims, "P279")).FirstOrDefault(p => p != id);
-                if (parent is not null)
+                var candidates = ReadEntityIds(familyClaims, "P361").Concat(ReadEntityIds(familyClaims, "P279"))
+                    .Where(p => p != id).Distinct(StringComparer.Ordinal).ToList();
+                if (candidates.Count > 0)
                 {
-                    familyParents[id] = parent;
+                    parentCandidates[id] = candidates;
                 }
+            }
+        }
+
+        foreach (var (id, parent) in await ReadEntitiesAsync(parentCandidates.Values.SelectMany(c => c).Where(p => !related.ContainsKey(p)), cancellationToken))
+        {
+            related[id] = parent;
+        }
+
+        var familyParents = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var (id, candidates) in parentCandidates)
+        {
+            var parent = candidates.FirstOrDefault(p => !related.TryGetValue(p, out var e) || !IsWikimediaPage(ReadEntityIds(e.GetPropertyOrDefault("claims"), "P31")));
+            if (parent is not null)
+            {
+                familyParents[id] = parent;
             }
         }
 
@@ -234,17 +337,20 @@ public sealed partial class WikipediaImportService
                 ? v
                 : extraLabels.GetValueOrDefault(id, id);
 
-        var familyLabels = familyIds.ToDictionary(id => id, LabelOf, StringComparer.Ordinal);
+        var familyLabels = familyIds.Concat(gensIds).Distinct(StringComparer.Ordinal).ToDictionary(id => id, LabelOf, StringComparer.Ordinal);
+        await UseItalianArticleTitlesAsync(familyLabels, related, cancellationToken);
         var parentLabels = familyParents.Values.Distinct(StringComparer.Ordinal).ToDictionary(id => id, LabelOf, StringComparer.Ordinal);
-        var dynasties = familyIds.Select(id =>
+        var dynasties = familyIds.Concat(gensIds).Distinct(StringComparer.Ordinal).Select(id =>
         {
             var parentId = familyParents.GetValueOrDefault(id, string.Empty);
             return new ImportedDynasty(
                 familyLabels.GetValueOrDefault(id, id),
                 id,
                 parentId.Length == 0 ? string.Empty : familyLabels.GetValueOrDefault(parentId, parentLabels.GetValueOrDefault(parentId, parentId)),
-                parentId);
+                parentId,
+                Gens: gensIds.Contains(id));
         }).ToList();
+        dynasties = MarkGensLine(dynasties);
 
         var titleLabels = rawTitles.SelectMany(t => new[] { t.EntityId, t.EndCauseId }).Where(IsEntityId).Distinct(StringComparer.Ordinal)
             .ToDictionary(id => id, LabelOf, StringComparer.Ordinal);
@@ -313,6 +419,37 @@ public sealed partial class WikipediaImportService
             mainTitleLabels,
             surnameLabels);
 
+        string RomanPart(string propertyId) => string.Join(' ', romanPartIds[propertyId]
+            .Select(id => related.TryGetValue(id, out var e) ? LatinLabel(e) : string.Empty)
+            .Where(v => v.Length > 0));
+        var femaleSex = sexId == "Q6581072";
+        var praenomen = RomanPart("P2358");
+        var nomen = femaleSex ? RomanNaming.FeminineNomen(RomanPart("P2359")) : RomanPart("P2359");
+        var cognomen = RomanPart("P2365");
+        var agnomen = RomanPart("P2366");
+        var latinName = ImportedLatinName(ReadMonolingualTextsWithLanguage(claims, "P1559"), RomanNaming.LatinName(praenomen, nomen, cognomen, agnomen, null));
+
+        // Le stesse parti in ogni lingua: «Gaio Giulio Cesare», «Gaius Julius Caesar»…
+        string LocalPart(string propertyId, string language) => string.Join(' ', romanPartIds[propertyId]
+            .Select(id => related.TryGetValue(id, out var e) ? GetString(e.GetPropertyOrDefault("labels").GetPropertyOrDefault(language), "value") : string.Empty)
+            .Where(v => v.Length > 0));
+        RomanParts LocalParts(string language)
+        {
+            var parts = LocalRomanParts(
+                PersonNameParser.Split(labels.GetValueOrDefault(language, string.Empty), nicknames).Name,
+                ReadAliases(entity, language),
+                new RomanParts(praenomen, RomanPart("P2359"), cognomen, agnomen),
+                new RomanParts(LocalPart("P2358", language), LocalPart("P2359", language), LocalPart("P2365", language), LocalPart("P2366", language)),
+                leadDates.GetValueOrDefault(language)?.Extract);
+            return femaleSex ? parts with { Gentilizio = RomanNaming.FeminineNomen(parts.Gentilizio) } : parts;
+        }
+        var italianParts = LocalParts("it");
+        localizedNames = AddRomanParts(localizedNames, Languages.Where(l => l.Code != "it").Select(l => (l.Code, l.Name, LocalParts(l.Code))));
+        // La gens e i suoi rami nel campo Gens, le dinastie nel campo Famiglia (vedi MarkGensLine).
+        var gensLine = dynasties.Where(d => d.Gens).Select(d => d.WikidataId).ToHashSet(StringComparer.Ordinal);
+        var gensNames = gensIds.Concat(keptFamilyIds.Where(gensLine.Contains)).Distinct(StringComparer.Ordinal).Select(id => familyLabels.GetValueOrDefault(id, id));
+        var familyNames = keptFamilyIds.Where(id => !gensLine.Contains(id)).Distinct(StringComparer.Ordinal).Select(id => familyLabels.GetValueOrDefault(id, id));
+
         progress.Step(8, "Composizione della scheda…");
         return new WikipediaImportResult
         {
@@ -336,8 +473,18 @@ public sealed partial class WikipediaImportService
             MainTitle = mainTitle?.Titolo ?? string.Empty,
             Titles = titles,
             LocalizedNames = localizedNames,
-            Family = string.Join("; ", keptFamilyIds.Select(id => familyLabels.GetValueOrDefault(id, id))),
-            Dynasties = [.. dynasties.Where(d => keptFamilyIds.Contains(d.WikidataId))],
+            Praenomen = praenomen,
+            Nomen = nomen,
+            Cognomen = cognomen,
+            Agnomen = agnomen,
+            NomeLatino = latinName,
+            Prenome = italianParts.Prenome,
+            Gentilizio = italianParts.Gentilizio,
+            CognomeRomano = italianParts.Cognome,
+            Agnome = italianParts.Agnome,
+            Family = string.Join("; ", familyNames),
+            Gens = string.Join("; ", gensNames),
+            Dynasties = [.. dynasties.Where(d => d.Gens || keptFamilyIds.Contains(d.WikidataId))],
             ArticleTitle = title,
             ArticleUrl = articleUrl,
             WikidataId = wikidataId,
@@ -345,11 +492,41 @@ public sealed partial class WikipediaImportService
             Extract = extract,
             BirthDates = birthDates,
             DeathDates = deathDates,
+            DiscardedBirthDates = discardedBirthDates,
+            DiscardedDeathDates = discardedDeathDates,
             BirthPlaces = birthPlaces,
             DeathPlaces = deathPlaces,
             BurialPlaces = burialPlaces,
             WikipediaLeads = wikipediaLeads,
+            UnreadEditions = unreadEditions,
         };
+    }
+
+    // Gens e dinastia sono separate (2026-11-12, da Traiano): la gens e i suoi rami (Ulpii Traiani, ramo della gens
+    // Ulpia) vanno nel campo Gens e sono registrati come gens; le altre famiglie (Dinastia Nerva-Antonina) nel campo
+    // Famiglia, come dinastie, con la dinastia superiore indicata da Wikidata. Una dinastia non si appende più al ramo
+    // della gens (regola del 2026-11-11, tolta): una dinastia di più gens (la Nerva-Antonina comprende Cocceii, Ulpii,
+    // Aelii…) sarebbe finita sotto la gens del primo personaggio importato.
+    internal static List<ImportedDynasty> MarkGensLine(List<ImportedDynasty> dynasties)
+    {
+        var parentOf = dynasties.Where(d => d.ParentWikidataId.Length > 0)
+            .GroupBy(d => d.WikidataId, StringComparer.Ordinal)
+            .ToDictionary(g => g.Key, g => g.First().ParentWikidataId, StringComparer.Ordinal);
+        bool InGensLine(ImportedDynasty dynasty)
+        {
+            var visited = new HashSet<string>(StringComparer.Ordinal);
+            for (var id = dynasty.WikidataId; id.Length > 0 && visited.Add(id); id = parentOf.GetValueOrDefault(id, string.Empty))
+            {
+                if (dynasties.Any(d => d.Gens && d.WikidataId == id))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        return [.. dynasties.Select(d => !d.Gens && d.WikidataId.Length > 0 && InGensLine(d) ? d with { Gens = true } : d)];
     }
 
     private static async Task<Dictionary<string, JsonElement>> ReadPlaceHierarchyAsync(IEnumerable<string> rootIds, ImportProgressReporter progress, CancellationToken cancellationToken)
@@ -391,7 +568,8 @@ public sealed partial class WikipediaImportService
 
     internal static List<HistoricalPlaceRecord> BuildPlaces(
         IEnumerable<EntityStatement> statements,
-        IReadOnlyDictionary<string, JsonElement> entities)
+        IReadOnlyDictionary<string, JsonElement> entities,
+        IReadOnlyDictionary<string, string>? nearbyMunicipalities = null)
     {
         var places = new List<HistoricalPlaceRecord>();
         var labels = entities.ToDictionary(pair => pair.Key, pair => ReadLabels(pair.Value), StringComparer.Ordinal);
@@ -399,7 +577,9 @@ public sealed partial class WikipediaImportService
 
         foreach (var statement in statements)
         {
-            if (!entities.TryGetValue(statement.EntityId, out var entity))
+            // Una pagina di servizio (Vespasiano: sepoltura «Inglaterra», una disambigua) non è un luogo.
+            if (!entities.TryGetValue(statement.EntityId, out var entity)
+                || IsWikimediaPage(ReadEntityIds(entity.GetPropertyOrDefault("claims"), "P31")))
             {
                 continue;
             }
@@ -430,6 +610,12 @@ public sealed partial class WikipediaImportService
                 }
 
                 var currentClaims = currentEntity.GetPropertyOrDefault("claims");
+                if (currentId == statement.EntityId && nearbyMunicipalities?.GetValueOrDefault(currentId) is { } municipalityId)
+                {
+                    AddDivision(place, municipalityId, currentId, PlaceDivision.NearbyMunicipalityRelation, labels, coordinates);
+                    pending.Enqueue(municipalityId);
+                }
+
                 foreach (var parentId in ReadEntityIds(currentClaims, "P131"))
                 {
                     AddDivision(place, parentId, currentId, "Unità amministrativa (P131)", labels, coordinates);
@@ -583,7 +769,9 @@ public sealed partial class WikipediaImportService
         {
             var value = statement.GetPropertyOrDefault("mainsnak").GetPropertyOrDefault("datavalue").GetPropertyOrDefault("value");
             var rawValue = GetString(value, "time");
-            if (rawValue.Length == 0 || !value.TryGetProperty("precision", out var precisionElement) || !precisionElement.TryGetInt32(out var precision))
+            // Una data deprecata è segnalata come errata su Wikidata (Tito: 40 e 41 accanto al 39): non è un'alternativa.
+            if (GetString(statement, "rank") == "deprecated"
+                || rawValue.Length == 0 || !value.TryGetProperty("precision", out var precisionElement) || !precisionElement.TryGetInt32(out var precision))
             {
                 continue;
             }
@@ -863,7 +1051,8 @@ public sealed partial class WikipediaImportService
         var result = new Dictionary<string, JsonElement>(StringComparer.Ordinal);
         foreach (var batch in entityIds.Where(IsEntityId).Distinct(StringComparer.Ordinal).Chunk(50))
         {
-            var url = $"{WikidataApi}?action=wbgetentities&ids={Uri.EscapeDataString(string.Join('|', batch))}&props=labels%7Cclaims&languages={LanguagesParam}%7Cmul&format=json";
+            // Il latino serve per le parti del nome romano (praenomen, nomen, cognomen).
+            var url = $"{WikidataApi}?action=wbgetentities&ids={Uri.EscapeDataString(string.Join('|', batch))}&props=labels%7Cclaims&languages={LanguagesParam}%7Cla%7Cmul&format=json";
             using var document = await GetJsonAsync(url, cancellationToken);
             foreach (var item in ApiProperty(document.RootElement, "entities").EnumerateObject())
             {
@@ -906,7 +1095,8 @@ public sealed partial class WikipediaImportService
 
     // Tipo proposto per ciascun luogo se diventerà un luogo specifico (frazione, monastero…):
     // prima i tipi noti, poi l'etichetta italiana del tipo Wikidata.
-    private static async Task AssignPlaceTypesAsync(List<HistoricalPlaceRecord> places, CancellationToken cancellationToken)
+    // Restituisce le etichette italiane lette per i tipi non riconosciuti (servono anche per i luoghi storici).
+    private static async Task<Dictionary<string, string>> AssignPlaceTypesAsync(List<HistoricalPlaceRecord> places, CancellationToken cancellationToken)
     {
         var unknownTypes = places
             .Where(p => SpecificPlaceTypes.Describe(p.TypeIds).Length == 0)
@@ -930,8 +1120,9 @@ public sealed partial class WikipediaImportService
         {
             place.TypeLabel = SpecificPlaceTypes.Describe(place.TypeIds, labels);
         }
-    }
 
+        return labels;
+    }
 
     // Tutte le etichette lette, compresa quella multilingue ("mul") usata spesso per i cognomi.
     /// <summary>Vero se l'entità è soltanto una famiglia generica (Q8436), non una dinastia o casata nobiliare.</summary>
@@ -958,12 +1149,217 @@ public sealed partial class WikipediaImportService
     public static bool IsNotAFamily(IEnumerable<string> classIds, bool hasCapital)
         => hasCapital || classIds.Any(NonFamilyClasses.Contains);
 
+    // Pagine di servizio di Wikipedia registrate come elementi Wikidata: elenchi, disambigue, categorie, template.
+    private static readonly HashSet<string> WikimediaPageClasses = new(StringComparer.Ordinal)
+    {
+        "Q13406463", // pagina elenco di Wikimedia
+        "Q4167410",  // pagina di disambiguazione
+        "Q4167836",  // categoria di Wikimedia
+        "Q11266439", // template di Wikimedia
+    };
+
+    internal static bool IsWikimediaPage(IEnumerable<string> classIds) => classIds.Any(WikimediaPageClasses.Contains);
+
     private static IEnumerable<string> ReadAllLabels(JsonElement entity)
     {
         var values = entity.GetPropertyOrDefault("labels");
         return values.ValueKind == JsonValueKind.Object
             ? values.EnumerateObject().Select(l => GetString(l.Value, "value")).Where(v => v.Length > 0).ToList()
             : [];
+    }
+
+    // Praenomen, nomen gentilicium, cognomen e agnomen.
+    private static readonly string[] RomanNameProperties = ["P2358", "P2359", "P2365", "P2366"];
+
+    // Elementi di una parte del nome romano, senza quelli deprecati o contestati (P5102 «natura dell'affermazione»
+    // = Q18912752 «contestato»): Vespasiano ha il cognomen «Sabinus» contestato, che non fa parte del suo nome.
+    internal static string[] ReadRomanPartIds(JsonElement claims, string propertyId)
+    {
+        if (claims.ValueKind != JsonValueKind.Object || !claims.TryGetProperty(propertyId, out var statements) || statements.ValueKind != JsonValueKind.Array)
+        {
+            return [];
+        }
+
+        static bool Disputed(JsonElement statement)
+            => statement.GetPropertyOrDefault("qualifiers").GetPropertyOrDefault("P5102") is { ValueKind: JsonValueKind.Array } natures
+                && natures.EnumerateArray().Any(n => GetString(n.GetPropertyOrDefault("datavalue").GetPropertyOrDefault("value"), "id") == "Q18912752");
+
+        return [.. statements.EnumerateArray()
+            .Where(s => GetString(s, "rank") != "deprecated" && !Disputed(s))
+            .Select(s => GetString(s.GetPropertyOrDefault("mainsnak").GetPropertyOrDefault("datavalue").GetPropertyOrDefault("value"), "id"))
+            .Where(IsEntityId)
+            .Distinct(StringComparer.Ordinal)];
+    }
+
+    // Forma latina del nome di un elemento (praenomen, nomen…): latino, poi etichetta multilingue, inglese, italiano.
+    private static string LatinLabel(JsonElement entity)
+    {
+        var values = entity.GetPropertyOrDefault("labels");
+        return new[] { "la", "mul", "en", "it" }
+            .Select(language => GetString(values.GetPropertyOrDefault(language), "value"))
+            .FirstOrDefault(label => label.Length > 0) ?? string.Empty;
+    }
+
+    // Parti del nome romano in una lingua: prenome, nome gentilizio, cognome, agnome.
+    internal sealed record RomanParts(string Prenome, string Gentilizio, string Cognome, string Agnome)
+    {
+        public bool IsEmpty => new[] { Prenome, Gentilizio, Cognome, Agnome }.All(string.IsNullOrWhiteSpace);
+    }
+
+    // Parti del nome romano in una lingua. Su Wikidata le etichette dei singoli elementi restano spesso in latino
+    // anche nelle altre lingue (in italiano «Gaius», «Iulius», «Caesar»): se il nome della persona in quella lingua
+    // ha tante parole quante le parti latine («Gaio Giulio Cesare»), le parti si leggono da lì, nello stesso ordine;
+    // altrimenti («Julius Caesar», «Augusto») restano le etichette degli elementi.
+    // Se il nome principale è breve («Tito») si provano gli alias Wikidata nella stessa lingua («Tito Flavio Vespasiano»):
+    // tra quelli con il numero giusto di parole vince chi somiglia di più alle parti latine o alle etichette
+    // (in inglese «Titus Flavius Vespasianus» e non «Titus Caesar Vespasianus»); un alias senza alcuna parola
+    // somigliante non vale. Il nome principale, se ha il numero giusto di parole, vale sempre e vince a parità.
+    internal static RomanParts LocalRomanParts(string localName, RomanParts latin, RomanParts labels)
+        => LocalRomanParts(localName, [], latin, labels);
+
+    // In mancanza di nome o alias adatti, il nome completo si cerca nell'introduzione di Wikipedia in quella lingua
+    // (Vespasiano: «Nato Tito Flavio Vespasiano (…)»): una sequenza di parole maiuscole in cui ogni parte somiglia
+    // a quella latina. Dal testo libero vale solo una corrispondenza completa.
+    internal static RomanParts LocalRomanParts(string localName, IEnumerable<string> aliases, RomanParts latin, RomanParts labels, string? introduction = null)
+    {
+        static string[] Words(string text) => text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        static string[] Parts(RomanParts p) => [p.Prenome, p.Gentilizio, p.Cognome, p.Agnome];
+        var counts = Parts(latin).Select(p => Words(p).Length).ToArray();
+        var total = counts.Sum();
+        if (total == 0)
+        {
+            return labels;
+        }
+
+        string[] Split(string name)
+        {
+            var words = Words(name);
+            var position = 0;
+            return [.. counts.Select(count =>
+            {
+                var part = string.Join(' ', words[position..(position + count)]);
+                position += count;
+                return part;
+            })];
+        }
+
+        var references = new[] { Parts(latin), Parts(labels) };
+        int Score(string[] parts) => parts
+            .Select((part, i) => references.Any(r => SimilarRomanPart(part, r[i])) ? 1 : 0)
+            .Sum();
+
+        var best = Words(localName ?? string.Empty).Length == total ? Split(localName!) : null;
+        var bestScore = best is null ? 0 : Score(best);
+        foreach (var alias in aliases.Where(a => Words(a ?? string.Empty).Length == total))
+        {
+            var parts = Split(alias);
+            var score = Score(parts);
+            if (score > bestScore)
+            {
+                (best, bestScore) = (parts, score);
+            }
+        }
+
+        // Le etichette già tradotte (in spagnolo «Gayo», «Julio», «César») valgono più del testo libero, che spesso
+        // cita il nome latino («en latín: Gaius Iulius Caesar»): l'introduzione serve solo se sono rimaste in latino.
+        var required = counts.Count(c => c > 0);
+        var labelsAreLatin = Parts(labels).Zip(Parts(latin)).All(p => p.First.Length == 0 || string.Equals(p.First, p.Second, StringComparison.OrdinalIgnoreCase));
+        if (bestScore < required && labelsAreLatin)
+        {
+            foreach (var candidate in IntroductionNames(introduction, total))
+            {
+                var parts = Split(candidate);
+                if (Score(parts) == required)
+                {
+                    (best, bestScore) = (parts, required);
+                    break;
+                }
+            }
+        }
+
+        return best is null ? labels : new RomanParts(best[0], best[1], best[2], best[3]);
+    }
+
+    // Sequenze di «words» parole consecutive con l'iniziale maiuscola nell'inizio dell'introduzione.
+    internal static IEnumerable<string> IntroductionNames(string? introduction, int words)
+    {
+        if (string.IsNullOrWhiteSpace(introduction) || words <= 0)
+        {
+            yield break;
+        }
+
+        var text = introduction.Length > 1500 ? introduction[..1500] : introduction;
+        foreach (Match run in Regex.Matches(text, @"\p{Lu}\p{L}+(?:[  ]+\p{Lu}\p{L}+)*", RegexOptions.CultureInvariant))
+        {
+            var runWords = run.Value.Split([' ', ' '], StringSplitOptions.RemoveEmptyEntries);
+            for (var i = 0; i + words <= runWords.Length; i++)
+            {
+                yield return string.Join(' ', runWords[i..(i + words)]);
+            }
+        }
+    }
+
+    // Due parti del nome si somigliano se iniziano con le stesse tre lettere, senza accenti, con J = I
+    // (Tito/Titus, Flavio/Flavius, Julius/Iulius) e con gli adattamenti italiani più comuni del latino:
+    // Gi- iniziale = I- (Giulio/Iulius), ae/oe = e (Cesare/Caesar), ct = tt (Ottaviano/Octavianus),
+    // ph = f, x = ss (Massimo/Maximus).
+    internal static bool SimilarRomanPart(string a, string b)
+    {
+        static string Fold(string text)
+        {
+            var builder = new StringBuilder();
+            foreach (var c in text.Trim().ToLowerInvariant().Normalize(NormalizationForm.FormD))
+            {
+                if (char.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+                {
+                    builder.Append(c == 'j' ? 'i' : c);
+                }
+            }
+
+            var folded = Regex.Replace(builder.ToString(), "^gi(?=[aeiou])", "i");
+            return folded.Replace("ae", "e").Replace("oe", "e").Replace("ct", "tt").Replace("ph", "f").Replace("x", "ss");
+        }
+
+        var (x, y) = (Fold(a), Fold(b));
+        return x.Length >= 3 && y.Length >= 3 && string.CompareOrdinal(x, 0, y, 0, 3) == 0;
+    }
+
+    // Alias Wikidata di un elemento in una lingua.
+    private static List<string> ReadAliases(JsonElement entity, string language)
+        => entity.GetPropertyOrDefault("aliases").GetPropertyOrDefault(language) is { ValueKind: JsonValueKind.Array } values
+            ? [.. values.EnumerateArray().Select(v => GetString(v, "value")).Where(v => v.Length > 0)]
+            : [];
+
+    // Aggiunge ai nomi delle altre lingue le parti del nome romano; una lingua senza altri valori viene creata.
+    internal static List<LocalizedPersonName> AddRomanParts(List<LocalizedPersonName> names, IEnumerable<(string Code, string Name, RomanParts Parts)> parts)
+    {
+        foreach (var (code, name, part) in parts.Where(p => !p.Parts.IsEmpty))
+        {
+            var entry = names.FirstOrDefault(n => n.Lingua == code);
+            if (entry is null)
+            {
+                entry = new LocalizedPersonName { Lingua = code, LinguaNome = name };
+                names.Add(entry);
+            }
+
+            entry.Prenome = part.Prenome;
+            entry.Gentilizio = part.Gentilizio;
+            entry.CognomeRomano = part.Cognome;
+            entry.Agnome = part.Agnome;
+        }
+
+        // Nell'ordine delle lingue d'importazione.
+        return [.. names.OrderBy(n => Array.FindIndex(Languages, l => l.Code == n.Lingua))];
+    }
+
+    // Nome in latino (P1559 con lingua «la»), tenuto solo se diverso da quello composto dalle parti.
+    internal static string ImportedLatinName(IEnumerable<(string Text, string Language)> nativeNames, string composed)
+    {
+        var latin = nativeNames.FirstOrDefault(n => n.Language == "la").Text?.Trim() ?? string.Empty;
+        static string Normalize(string text) => string.Join(' ', text.Split(' ', StringSplitOptions.RemoveEmptyEntries));
+        return latin.Length == 0 || string.Equals(Normalize(latin), Normalize(composed), StringComparison.OrdinalIgnoreCase)
+            ? string.Empty
+            : latin;
     }
 
     private static Dictionary<string, string> ReadLabels(JsonElement entity)
@@ -1029,7 +1425,10 @@ public sealed partial class WikipediaImportService
                     .SelectMany(d => d.Names.Select(n => n.Name).Append(d.Name).Concat(extraNames.GetValueOrDefault(d.WikidataId) ?? []))
                     .Where(n => n.Length > 0)
                     .Distinct()
-                    .ToList()))
+                    .ToList())
+            {
+                ParentIds = [.. ContainingDivisions(p).Select(d => d.WikidataId).Distinct(StringComparer.Ordinal)],
+            })
             .ToList();
 
     // Suddivisioni amministrative (P131) che contengono il luogo, esclusi i Paesi: troppo generici per il confronto.
@@ -1040,7 +1439,8 @@ public sealed partial class WikipediaImportService
     internal static List<WikipediaLeadRecord> BuildWikipediaLeads(
         IReadOnlyDictionary<string, LeadDate> leadDates,
         IReadOnlyList<LeadPlaceCandidate> birthCandidates,
-        IReadOnlyList<LeadPlaceCandidate> deathCandidates)
+        IReadOnlyList<LeadPlaceCandidate> deathCandidates,
+        WikipediaLeadRecord? wikidata = null)
     {
         var leads = new List<WikipediaLeadRecord>();
         foreach (var (code, name, _, _) in Languages)
@@ -1059,9 +1459,11 @@ public sealed partial class WikipediaImportService
                 BirthYear = lead.BirthYear,
                 BirthMonth = lead.BirthMonth,
                 BirthDay = lead.BirthDay,
+                BirthDayAlt = lead.BirthDayAlt,
                 DeathYear = lead.DeathYear,
                 DeathMonth = lead.DeathMonth,
                 DeathDay = lead.DeathDay,
+                DeathDayAlt = lead.DeathDayAlt,
                 BirthPlace = lead.BirthPlace,
                 BirthPlaceKey = WikipediaConsensus.PlaceKey(lead.BirthPlace, birthCandidates.Concat(deathCandidates)),
                 DeathPlace = lead.DeathPlace,
@@ -1069,19 +1471,93 @@ public sealed partial class WikipediaImportService
             });
         }
 
+        // Wikidata in fondo: si confronta con la maggioranza delle edizioni ma non la determina.
+        if (wikidata is not null && (wikidata.BirthYear is not null || wikidata.DeathYear is not null || wikidata.BirthPlaceKey.Length > 0 || wikidata.DeathPlaceKey.Length > 0))
+        {
+            leads.Add(wikidata);
+        }
+
+        // «Theatre of Pompey, Rome» e «Roma»: il luogo più preciso conta come quello che lo contiene.
+        var all = birthCandidates.Concat(deathCandidates).ToList();
+        var birthKeys = WikipediaConsensus.GeneralizeKeys([.. leads.Select(l => l.BirthPlaceKey)], all);
+        var deathKeys = WikipediaConsensus.GeneralizeKeys([.. leads.Select(l => l.DeathPlaceKey)], all);
+        for (var i = 0; i < leads.Count; i++)
+        {
+            leads[i].BirthPlaceKey = birthKeys[i];
+            leads[i].DeathPlaceKey = deathKeys[i];
+        }
+
         return leads;
     }
 
+    // Riga «Wikidata» del confronto tra le edizioni: la data uguale a quella scelta per la scheda, se Wikidata la indica
+    // (Traiano ha tre date di morte preferite: 7, 8 e 9 agosto), altrimenti la prima (le preferite prima); il primo luogo
+    // di nascita e morte.
+    internal static WikipediaLeadRecord BuildWikidataLead(
+        string wikidataId,
+        IReadOnlyList<HistoricalDateEvidence> births,
+        IReadOnlyList<HistoricalDateEvidence> deaths,
+        IReadOnlyList<HistoricalPlaceRecord> birthPlaces,
+        IReadOnlyList<HistoricalPlaceRecord> deathPlaces,
+        HistoricalDateEvidence? chosenBirth = null,
+        HistoricalDateEvidence? chosenDeath = null)
+    {
+        (int? Year, int? Month, int? Day) First(IReadOnlyList<HistoricalDateEvidence> dates, HistoricalDateEvidence? chosen)
+        {
+            var first = dates.OrderByDescending(d => chosen is not null && d.RawValue == chosen.RawValue && d.Precision == chosen.Precision)
+                .ThenByDescending(d => d.Rank == "preferred")
+                .FirstOrDefault(d => ParseWikidataYear(d.RawValue) is not null);
+            if (first is null)
+            {
+                return (null, null, null);
+            }
+
+            var (month, day) = WikidataMonthDay(first.RawValue, first.Precision);
+            return (ParseWikidataYear(first.RawValue), month, day);
+        }
+
+        var (birthYear, birthMonth, birthDay) = First(births, chosenBirth);
+        var (deathYear, deathMonth, deathDay) = First(deaths, chosenDeath);
+        var birthPlace = birthPlaces.FirstOrDefault();
+        var deathPlace = deathPlaces.FirstOrDefault();
+        return new WikipediaLeadRecord
+        {
+            Language = WikipediaLeadRecord.WikidataLanguage,
+            LanguageName = "Wikidata",
+            Title = wikidataId,
+            Url = wikidataId.Length > 0 ? $"https://www.wikidata.org/wiki/{Uri.EscapeDataString(wikidataId)}" : string.Empty,
+            BirthYear = birthYear,
+            BirthMonth = birthMonth,
+            BirthDay = birthDay,
+            DeathYear = deathYear,
+            DeathMonth = deathMonth,
+            DeathDay = deathDay,
+            BirthPlace = birthPlace?.CurrentName ?? string.Empty,
+            BirthPlaceKey = birthPlace?.WikidataId ?? string.Empty,
+            DeathPlace = deathPlace?.CurrentName ?? string.Empty,
+            DeathPlaceKey = deathPlace?.WikidataId ?? string.Empty,
+        };
+    }
+
+    // Edizioni lette contemporaneamente: con tutte insieme (due richieste ciascuna) Wikimedia risponde «troppe richieste».
+    private const int ParallelEditions = 2;
+
+    // Pausa prima di riprovare le edizioni non lette.
+    private static readonly TimeSpan EditionRetryPause = TimeSpan.FromSeconds(3);
+
     // Scarica l'introduzione di ogni edizione linguistica e ne estrae gli anni di nascita/morte.
-    private static async Task<Dictionary<string, LeadDate>> ReadLanguageLeadDatesAsync(JsonElement sitelinks, ImportProgressReporter progress, CancellationToken cancellationToken)
+    // Le edizioni non lette vengono riprovate una alla volta alla fine; quelle che non si leggono nemmeno così finiscono in Unread
+    // (nomi delle lingue), da segnalare all'utente invece di ignorarle in silenzio.
+    private static async Task<(Dictionary<string, LeadDate> Leads, List<string> Unread)> ReadLanguageLeadDatesAsync(JsonElement sitelinks, ImportProgressReporter progress, CancellationToken cancellationToken)
     {
         var result = new Dictionary<string, LeadDate>(StringComparer.Ordinal);
         if (sitelinks.ValueKind != JsonValueKind.Object)
         {
-            return result;
+            return (result, []);
         }
 
-        // Le edizioni sono indipendenti: si scaricano in parallelo.
+        // Le edizioni sono indipendenti: si scaricano in parallelo, poche alla volta.
+        using var gate = new SemaphoreSlim(ParallelEditions);
         var titles = new List<(string Code, string Title)>();
         foreach (var (code, _, _, sitelink) in Languages)
         {
@@ -1096,7 +1572,17 @@ public sealed partial class WikipediaImportService
         progress.Sub(0, $"0 di {titles.Count} edizioni lette");
         var tasks = titles.Select(async item =>
         {
-            var read = await ReadLeadDateAsync(item.Code, item.Title, cancellationToken);
+            (string Code, LeadDate? Lead) read;
+            await gate.WaitAsync(cancellationToken);
+            try
+            {
+                read = await ReadLeadDateAsync(item.Code, item.Title, cancellationToken);
+            }
+            finally
+            {
+                gate.Release();
+            }
+
             // Incremento e notifica insieme: le notifiche non possono arrivare fuori ordine.
             lock (progressLock)
             {
@@ -1107,16 +1593,39 @@ public sealed partial class WikipediaImportService
             return read;
         }).ToList();
 
+        var failed = new List<(string Code, string Title)>();
         foreach (var (code, lead) in await Task.WhenAll(tasks))
         {
             if (lead is not null)
             {
                 result[code] = lead;
             }
+            else
+            {
+                failed.Add(titles.First(t => t.Code == code));
+            }
         }
 
-        return result;
+        var unread = new List<string>();
+        foreach (var (code, title) in failed)
+        {
+            progress.Sub(1, $"nuovo tentativo: Wikipedia in {LanguageName(code)}");
+            await Task.Delay(EditionRetryPause, cancellationToken);
+            var (_, lead) = await ReadLeadDateAsync(code, title, cancellationToken);
+            if (lead is not null)
+            {
+                result[code] = lead;
+            }
+            else
+            {
+                unread.Add(LanguageName(code));
+            }
+        }
+
+        return (result, unread);
     }
+
+    private static string LanguageName(string code) => Languages.FirstOrDefault(l => l.Code == code).Name ?? code;
 
     private static async Task<(string Code, LeadDate? Lead)> ReadLeadDateAsync(string code, string title, CancellationToken cancellationToken)
     {
@@ -1125,13 +1634,14 @@ public sealed partial class WikipediaImportService
             var url = $"https://{code}.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=1&explaintext=1&redirects=1&titles={Uri.EscapeDataString(title)}&format=json&utf8=1";
             using var document = await GetJsonAsync(url, cancellationToken);
             var page = document.RootElement.GetProperty("query").GetProperty("pages").EnumerateObject().FirstOrDefault().Value;
-            var info = ExtractLead(GetString(page, "extract"));
+            var extract = GetString(page, "extract");
+            var info = ExtractLead(extract);
             // L'infobox serve per i periodi di regno e, quando l'introduzione li omette
             // («Charles V (24 February 1500 – 21 September 1558)»), per i luoghi di nascita e morte.
             var wikitext = await ReadInfoboxWikitextAsync(code, title, cancellationToken);
+            var (infoboxBirth, infoboxDeath) = ExtractInfoboxPlaces(wikitext);
             if (info.BirthPlace.Length == 0 || info.DeathPlace.Length == 0)
             {
-                var (infoboxBirth, infoboxDeath) = ExtractInfoboxPlaces(wikitext);
                 info = info with
                 {
                     BirthPlace = info.BirthPlace.Length > 0 ? info.BirthPlace : infoboxBirth,
@@ -1144,9 +1654,14 @@ public sealed partial class WikipediaImportService
             {
                 BirthMonth = info.BirthMonth,
                 BirthDay = info.BirthDay,
+                BirthDayAlt = info.BirthDayAlt,
                 DeathMonth = info.DeathMonth,
                 DeathDay = info.DeathDay,
+                DeathDayAlt = info.DeathDayAlt,
                 Reigns = InfoboxReignParser.Parse(wikitext),
+                Extract = extract,
+                InfoboxBirthPlace = infoboxBirth,
+                InfoboxDeathPlace = infoboxDeath,
             });
         }
         catch (Exception ex) when (IsOptionalFetchFailure(ex, cancellationToken))
@@ -1197,13 +1712,40 @@ public sealed partial class WikipediaImportService
         foreach (var name in names)
         {
             var match = Regex.Match(wikitext, $@"^\s*\|\s*{Regex.Escape(name)}\s*=(?<value>[^\n]*)", RegexOptions.Multiline | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-            if (match.Success && CleanWikitext(match.Groups["value"].Value) is { Length: >= 2 and <= 120 } place)
+            if (match.Success && CleanWikitext(UntilNextParam(match.Groups["value"].Value)) is { Length: >= 2 and <= 120 } place)
             {
                 return place;
             }
         }
 
         return string.Empty;
+    }
+
+    // Il valore finisce al primo «|» fuori da link e template: un parametro può seguirne un altro sulla stessa riga
+    // («|lieu de naissance=Falacrine Italie| date de décès = …», infobox francese di Vespasiano).
+    internal static string UntilNextParam(string value)
+    {
+        var depth = 0;
+        for (var i = 0; i < value.Length; i++)
+        {
+            var pair = i + 1 < value.Length ? value.Substring(i, 2) : string.Empty;
+            if (pair is "[[" or "{{")
+            {
+                depth++;
+                i++;
+            }
+            else if (pair is "]]" or "}}")
+            {
+                depth = Math.Max(0, depth - 1);
+                i++;
+            }
+            else if (value[i] == '|' && depth == 0)
+            {
+                return value[..i];
+            }
+        }
+
+        return value;
     }
 
     internal static string CleanWikitext(string value)
@@ -1253,8 +1795,10 @@ public sealed partial class WikipediaImportService
 
         public int? BirthMonth { get; init; }
         public int? BirthDay { get; init; }
+        public int? BirthDayAlt { get; init; }
         public int? DeathMonth { get; init; }
         public int? DeathDay { get; init; }
+        public int? DeathDayAlt { get; init; }
     }
 
     // Estrae gli anni di nascita/morte dalla prima parentesi dell'introduzione che contiene un anno
@@ -1280,19 +1824,40 @@ public sealed partial class WikipediaImportService
         var death = FrenchDeathSentence.Match(lead);
 
         // Una parentesi successiva alla frase «né le …» parla d'altro (es. «(menée … en octobre 1483)»).
-        foreach (Match match in Regex.Matches(lead, @"\(([^()]{0,240})\)"))
+        // Una parentesi con un solo anno (es. «na 42 v.Chr.» nel nome latino) cede il posto alla successiva con nascita e morte,
+        // purché nella stessa frase: «(Latijn: …; na 42 v.Chr. …) (Rome, 12 of 13 juli 100 v.Chr. – …)».
+        LeadInfo? single = null;
+        var singleEnd = 0;
+        foreach (var (index, end, content) in TopLevelParentheses(lead))
         {
-            if (birth.Success && match.Index > birth.Index)
+            if (birth.Success && index > birth.Index)
             {
                 break;
             }
 
-            var info = ParseLeadParts(Regex.Split(match.Groups[1].Value, @"\s*[–—;]\s*|\s+-\s+|(?<=\d)-(?=\S)"));
-            if (info.BirthYear is not null || info.DeathYear is not null)
+            if (single is not null && Regex.IsMatch(lead[singleEnd..index], @"[.!?]\s"))
+            {
+                break;
+            }
+
+            var info = ParseLeadParts(Regex.Split(content, @"\s*[–—;]\s*|\s+-\s+|(?<=\d)-(?=\S)|(?<=\.)-(?=\s?\d)"));
+            if (info.BirthYear is not null && info.DeathYear is not null)
             {
                 return info;
             }
+
+            if (single is null && (info.BirthYear is not null || info.DeathYear is not null))
+            {
+                single = info;
+                singleEnd = end;
+            }
         }
+
+        if (single is not null)
+        {
+            return single;
+        }
+
         var parts = new List<string>();
         if (birth.Success)
         {
@@ -1307,22 +1872,53 @@ public sealed partial class WikipediaImportService
         return birth.Success ? ParseLeadParts(parts) : LeadInfo.Empty;
     }
 
+    // Parentesi di primo livello con il loro contenuto; quelle annidate restano nel testo senza i segni di parentesi:
+    // «Idus van maart (15 maart) 44 v.Chr.» → «Idus van maart 15 maart 44 v.Chr.». Le parentesi lunghe (pronuncia,
+    // nome latino e greco prima delle date, come in «Gaio Giulio Cesare») sono ammesse fino a 700 caratteri.
+    internal static IEnumerable<(int Start, int End, string Content)> TopLevelParentheses(string text)
+    {
+        var depth = 0;
+        var start = -1;
+        for (var i = 0; i < text.Length; i++)
+        {
+            if (text[i] == '(')
+            {
+                if (depth++ == 0)
+                {
+                    start = i;
+                }
+            }
+            else if (text[i] == ')' && depth > 0 && --depth == 0)
+            {
+                var content = text[(start + 1)..i];
+                if (content.Length <= 700)
+                {
+                    yield return (start, i + 1, Regex.Replace(content, @"\s*[()]\s*", " ").Trim());
+                }
+            }
+        }
+    }
+
+    // Il punto di «av. J.-C.» non chiude la frase. Il nome di nascita può stare in mezzo:
+    // «né sous le nom de Marcus Ulpius Traianus le 18 septembre 53 à Italica».
     private static readonly Regex FrenchBirthSentence = new(
-        @"\bnée?\s+(?<seg>(?:le|en|vers|à)\b.{0,160}?)(?=\s+et\s+morte?\b|\s*,\s*(?:et\s+)?morte?\b|\s*,\s*(?:est|était|fut|a\s+été)\b|\s*[;.]\s|$)",
+        @"\bnée?\s+(?:sous\s+le\s+nom\s+(?:de\s+|d['’])[^,;()]{1,80}?\s+)?(?<seg>(?:le|en|vers|à)\b.{0,160}?)(?=\s+et\s+(?:\p{L}+\s+)?morte?\b|\s*,\s*(?:et\s+)?morte?\b|\s*,\s*(?:est|était|fut|a\s+été)\b|\s*;\s|(?<!\b(?:av|apr|env|J\.-C|J))\.\s|$)",
         RegexOptions.CultureInvariant | RegexOptions.Multiline);
 
+    // «mort le …», ma anche «mort assassiné le …».
     private static readonly Regex FrenchDeathSentence = new(
-        @"\bmorte?\s+(?<seg>(?:le|en|vers|à)\b.{0,160}?)(?=\s*,\s|\s*;|$)",
+        @"\bmorte?\s+(?:(?!(?:le|en|vers|à)\b)\p{L}+\s+){0,2}(?<seg>(?:le|en|vers|à)\b.{0,160}?)(?=\s*,\s|\s*;|$)",
         RegexOptions.CultureInvariant | RegexOptions.Multiline);
 
     // Luogo dopo la data, introdotto da una preposizione: «in Eisenach», «à Amboise», «en Roma», «te Delft».
     // Le virgole restano nel luogo: in «im Prinzenhof, Gent, Burgundische Niederlande» la città viene dopo l'edificio.
+    // Anche un luogo incerto: «53, vielleicht Italica, in Hispania Baetica oder in Rom» → «Italica, …».
     private static readonly Regex PlaceAfterDate = new(
-        @"(?:^|\s)(?:in|im|bei|à|a|en|te|at|near)\s+(?<place>\p{Lu}[^;()\[\]\d.]*)",
+        @"(?:^|\s)(?:in|im|bei|à|a|en|te|at|near|vielleicht|wahrscheinlich|vermutlich|wohl|probablement|probably|possibly|forse|probabilmente)\s+(?<place>\p{Lu}[^;()\[\]\d.]*)",
         RegexOptions.CultureInvariant);
 
     // «ebenda», «ibidem», «ivi»: la morte è avvenuta nello stesso luogo della nascita.
-    private static readonly Regex SamePlaceMarker = new(@"\b(ebenda|ibidem|ibid|ivi|ídem|aldaar|ibídem)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+    private static readonly Regex SamePlaceMarker = new(@"\b(ebenda|ibidem|ibid|ivi|ídem|aldaar|ibídem|même\s+(?:ville|lieu)|same\s+(?:city|place))\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
     private static LeadInfo ParseLeadParts(IEnumerable<string> rawParts)
     {
@@ -1336,12 +1932,27 @@ public sealed partial class WikipediaImportService
             return LeadInfo.Empty;
         }
 
+        // «(* 18. September 53, …; † 8. August 117 in Selinus)»: se la nascita non si legge, la parte con «†» resta la morte
+        // (prima diventava la nascita: Traiano risultava nato nel 117).
+        if (IsDeathPart(parts[0].Text))
+        {
+            var only = parts[0].Parsed;
+            var (onlyMonth, onlyDay) = ParseDayMonth(parts[0].Text[..only.Start]);
+            return new LeadInfo(null, Signed(only.Year!.Value, only.BeforeChrist), string.Empty, LeadPlace(parts[0].Text, only.End))
+            {
+                DeathMonth = onlyMonth,
+                DeathDay = onlyDay,
+                DeathDayAlt = AlternativeDay(parts[0].Text[..only.Start], onlyDay),
+            };
+        }
+
         var birth = parts[0].Parsed;
         var birthPlace = LeadPlace(parts[0].Text, birth.End);
         var (birthMonth, birthDay) = ParseDayMonth(parts[0].Text[..birth.Start]);
+        var birthDayAlt = AlternativeDay(parts[0].Text[..birth.Start], birthDay);
         if (parts.Count == 1)
         {
-            return new LeadInfo(Signed(birth.Year!.Value, birth.BeforeChrist), null, birthPlace, string.Empty) { BirthMonth = birthMonth, BirthDay = birthDay };
+            return new LeadInfo(Signed(birth.Year!.Value, birth.BeforeChrist), null, birthPlace, string.Empty) { BirthMonth = birthMonth, BirthDay = birthDay, BirthDayAlt = birthDayAlt };
         }
 
         var death = parts[1].Parsed;
@@ -1359,9 +1970,30 @@ public sealed partial class WikipediaImportService
         {
             BirthMonth = birthMonth,
             BirthDay = birthDay,
+            BirthDayAlt = birthDayAlt,
             DeathMonth = deathMonth,
             DeathDay = deathDay,
+            DeathDayAlt = AlternativeDay(parts[1].Text[..death.Start], deathDay),
         };
+    }
+
+    private static bool IsDeathPart(string part) => part.TrimStart(' ', ' ').StartsWith('†') || part.TrimStart(' ', ' ').StartsWith('✝');
+
+    // «8 ou 9 août», «12 of 13 juli», «7 o 8 agosto», «7 or 8 August», «7. oder 8. August»: l'altro giorno indicato,
+    // oltre a quello accanto al mese (letto da ParseDayMonth). null se il testo indica un solo giorno.
+    private static readonly Regex AlternativeDayPattern = new(
+        @"(?<!\d)(?<alt>\d{1,2})(?:\.|º|°|er)?\s+(?:o|ou|or|oder|of|y|e|u)\s+(?<day>\d{1,2})(?:\.|º|°|ª|er|st|nd|rd|th)?\s*(?:de\s+)?\p{L}+\.?\s*(?:de|del|of)?\s*$",
+        RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+
+    internal static int? AlternativeDay(string textBeforeYear, int? day)
+    {
+        var text = (textBeforeYear ?? string.Empty).TrimEnd(' ', ' ', '±', '~', '≈');
+        var match = AlternativeDayPattern.Match(text);
+        return day is int d && match.Success
+            && int.TryParse(match.Groups["day"].Value, out var parsed) && parsed == d
+            && int.TryParse(match.Groups["alt"].Value, out var alt) && alt is >= 1 and <= 31 && alt != d
+            ? alt
+            : null;
     }
 
     // Il luogo precede la data («Ajaccio, 15 agosto 1769») oppure la segue con una preposizione («1685 in Eisenach»).
@@ -1393,9 +2025,31 @@ public sealed partial class WikipediaImportService
         return string.Empty;
     }
 
+    // Anno di una o due cifre senza «a.C.»/«d.C.»: vale solo subito dopo un mese («30 dicembre 39», «December AD 39»).
+    // Può essere seguito da una virgola e da altro testo («18. September 53, vielleicht Italica»), non da un'altra cifra.
+    private static readonly Regex ShortYear = new(@"(?<!\d)(?<year>\d{1,2})(?![\d.:/]|,\d)", RegexOptions.CultureInvariant);
+
+    private static Match ShortYearAfterMonth(string part)
+    {
+        for (var match = ShortYear.Match(part); match.Success; match = match.NextMatch())
+        {
+            if (ParseDayMonth(part[..match.Index]).Month is not null)
+            {
+                return match;
+            }
+        }
+
+        return Match.Empty;
+    }
+
     private static (int? Year, bool BeforeChrist, bool AfterChrist, int Start, int End) ParseLeadPart(string part)
     {
         var yearMatch = LeadYear.Match(part);
+        if (!yearMatch.Success)
+        {
+            yearMatch = ShortYearAfterMonth(part);
+        }
+
         if (!yearMatch.Success || !int.TryParse(yearMatch.Groups["year"].Value, out var year) || year is <= 0 or > 2100)
         {
             return (null, false, false, 0, 0);
@@ -1455,7 +2109,10 @@ public sealed partial class WikipediaImportService
     // Mese e giorno nel testo che precede l'anno; null se non indicati.
     internal static (int? Month, int? Day) ParseDayMonth(string textBeforeYear)
     {
-        var text = textBeforeYear ?? string.Empty;
+        // «13 juli ± 100»: il segno di data approssimata tra mese e anno non conta.
+        var text = (textBeforeYear ?? string.Empty).TrimEnd(' ', ' ', '±', '~', '≈');
+        // «30 December AD 39»: anche «AD» tra mese e anno non conta.
+        text = Regex.Replace(text, @"\s+AD\s*$", string.Empty, RegexOptions.CultureInvariant);
         foreach (var regex in new[] { DayBeforeMonth, MonthBeforeDay })
         {
             var match = regex.Match(text);
@@ -1475,46 +2132,21 @@ public sealed partial class WikipediaImportService
 
     private static int Signed(int year, bool beforeChrist) => beforeChrist ? -year : year;
 
-    // Combina i valori di data di Wikidata con gli anni letti dalle varie Wikipedia, raggruppando per anno.
-    private static List<HistoricalDateEvidence> BuildCrossLanguageDates(
+    // Combina le date di Wikidata con quelle lette dalle varie Wikipedia. Ogni data candidata (il giorno, o il mese, o
+    // l'anno se nessuna fonte è più precisa) conta le sue fonti: ogni edizione di Wikipedia vale una fonte, ogni data
+    // Wikidata tante fonti quanti i suoi riferimenti (almeno una). Vince la data con più fonti (a parità quella letta da
+    // più edizioni, poi Wikidata); una data che solo Wikipedia indica deve essere letta da almeno due edizioni. Le altre
+    // date indicate da almeno due fonti restano come ipotesi («morto il 7 o l'8 agosto»: Traiano, 8, 9 e 7 agosto 117);
+    // quelle con una sola fonte sono scartate: non entrano nel campo, ma restano tra le fonti come date discordanti
+    // (Cesare: 102 a.C. da un solo riferimento Wikidata, contro il 100 a.C. di tutte le altre fonti). Un'edizione che
+    // indica due giorni («le 8 ou 9 août») vale per entrambi; le fonti meno precise (solo l'anno o solo il mese)
+    // sostengono le date compatibili e ne diventano fonti, ma non decidono tra un giorno e l'altro.
+    private static (List<HistoricalDateEvidence> Kept, List<HistoricalDateEvidence> Discarded) BuildCrossLanguageDates(
         List<HistoricalDateEvidence> wikidataEvidence,
         Dictionary<string, LeadDate> leadDates,
         bool birth)
     {
-        var groups = new Dictionary<int, HistoricalDateEvidence>();
-        var order = new List<int>();
-
-        void EnsureGroup(int year, string value, string precision, string rawValue, Dictionary<string, List<string>>? qualifiers, string rank, IEnumerable<SourceCitation> sources, string calendar = "")
-        {
-            if (!groups.TryGetValue(year, out var evidence))
-            {
-                evidence = new HistoricalDateEvidence { Value = value, RawValue = rawValue, Precision = precision, Rank = rank, Calendario = calendar };
-                if (qualifiers is not null)
-                {
-                    evidence.Qualifiers = qualifiers;
-                }
-
-                groups[year] = evidence;
-                order.Add(year);
-            }
-            else if (PrecisionRank(precision) > PrecisionRank(evidence.Precision))
-            {
-                // Preferisce il valore più preciso (es. la data completa di Wikidata) come rappresentante del gruppo.
-                evidence.Value = value;
-                evidence.RawValue = rawValue;
-                evidence.Precision = precision;
-                evidence.Calendario = calendar;
-            }
-
-            foreach (var source in sources)
-            {
-                if (!evidence.Sources.Any(s => s.Title == source.Title && s.Url == source.Url))
-                {
-                    evidence.Sources.Add(source);
-                }
-            }
-        }
-
+        var readings = new List<DateReading>();
         foreach (var e in wikidataEvidence)
         {
             if (ParseWikidataYear(e.RawValue) is not int year)
@@ -1522,34 +2154,186 @@ public sealed partial class WikipediaImportService
                 continue;
             }
 
-            EnsureGroup(year, e.Value, e.Precision.Length > 0 ? e.Precision : "anno", e.RawValue, e.Qualifiers, e.Rank, e.Sources, e.Calendario);
+            var (month, day) = WikidataMonthDay(e.RawValue, e.Precision);
+            readings.Add(new DateReading(year, month, day, null, e, null));
         }
 
         foreach (var (code, name, _, _) in Languages)
         {
-            if (!leadDates.TryGetValue(code, out var lead))
+            if (leadDates.TryGetValue(code, out var lead) && (birth ? lead.BirthYear : lead.DeathYear) is int year)
             {
-                continue;
+                var month = birth ? lead.BirthMonth : lead.DeathMonth;
+                var day = month is null ? null : birth ? lead.BirthDay : lead.DeathDay;
+                var alt = day is null ? null : birth ? lead.BirthDayAlt : lead.DeathDayAlt;
+                readings.Add(new DateReading(year, month, day, alt, null, new SourceCitation { Title = $"Wikipedia in {name}", Url = lead.Url }));
             }
-
-            var year = birth ? lead.BirthYear : lead.DeathYear;
-            if (year is not int y)
-            {
-                continue;
-            }
-
-            var citation = new SourceCitation { Title = $"Wikipedia in {name}", Url = lead.Url };
-            var sign = y < 0 ? "-" : "+";
-            var value = FormatYear(Math.Abs(y), y < 0);
-            EnsureGroup(y, value, "anno", $"{sign}{Math.Abs(y):0000}-00-00T00:00:00Z", null, string.Empty, [citation]);
         }
 
-        return order
-            .Select(year => groups[year])
-            .OrderByDescending(ev => ev.Rank == "preferred")
-            .ThenByDescending(ev => ev.Sources.Count)
-            .ToList();
+        var years = new List<(List<Candidate> Kept, List<Candidate> Discarded, int Score)>();
+        foreach (var year in readings.Select(r => r.Year).Distinct())
+        {
+            var inYear = readings.Where(r => r.Year == year).ToList();
+
+            // Date candidate: i giorni indicati (anche il secondo giorno di «8 ou 9»), poi i mesi senza giorni indicati.
+            var keys = inYear.Where(r => r.Month is not null && r.Day is not null).Select(r => (r.Month, r.Day))
+                .Concat(inYear.Where(r => r.Month is not null && r.AltDay is not null).Select(r => (r.Month, Day: r.AltDay)))
+                .Distinct()
+                .ToList();
+            keys.AddRange(inYear.Where(r => r.Month is not null && keys.All(k => k.Month != r.Month)).Select(r => (r.Month, Day: (int?)null)).Distinct());
+            var candidates = keys
+                .Select(k =>
+                {
+                    var exact = inYear.Where(r => r.Month == k.Month && (k.Day is null ? r.Day is null : r.Day == k.Day || r.AltDay == k.Day)).ToList();
+                    return new Candidate(year, k.Month, k.Day, exact, inYear.IndexOf(exact[0]));
+                })
+                .OrderByDescending(c => c.Score)
+                .ThenByDescending(c => c.Exact.Count)
+                .ThenByDescending(c => c.Exact.Any(r => r.Wikidata is not null))
+                .ThenBy(c => c.First)
+                .ToList();
+
+            var winner = candidates.FirstOrDefault(c => c.Exact.Any(r => r.Wikidata is not null) || c.Exact.Count >= 2);
+            List<Candidate> kept;
+            if (winner is not null)
+            {
+                kept = [winner, .. candidates.Where(c => c != winner && c.Score >= 2)];
+            }
+            else
+            {
+                // Nessun giorno (o mese) abbastanza confermato: l'anno, con il valore Wikidata più preciso se c'è.
+                var representative = inYear.Where(r => r.Wikidata is not null).Select(r => r.Wikidata!).OrderByDescending(e => PrecisionRank(e.Precision)).FirstOrDefault();
+                var (month, day) = representative is null ? (null, null) : WikidataMonthDay(representative.RawValue, representative.Precision);
+                var exact = inYear.Where(r => r.Month == month && r.Day == day).ToList();
+                kept = [new Candidate(year, month, day, exact, 0) { Representative = representative }];
+            }
+
+            var discarded = candidates.Where(c => !kept.Any(k => k.Month == c.Month && k.Day == c.Day)).ToList();
+            foreach (var candidate in kept)
+            {
+                candidate.Compatible = [.. inYear.Where(r => (r.Month is null || candidate.Month is null || r.Month == candidate.Month)
+                    && (r.Day is null || candidate.Day is null || r.Day == candidate.Day || r.AltDay == candidate.Day))];
+            }
+
+            years.Add((kept, discarded, SourceCount(kept[0].Compatible)));
+        }
+
+        // Tra un anno e l'altro vince quello con più fonti; un anno diverso resta solo se lo indicano almeno due fonti.
+        var ordered = years.OrderByDescending(y => y.Score).ThenByDescending(y => y.Kept[0].Compatible.Count).ToList();
+        var keptEvidence = new List<HistoricalDateEvidence>();
+        var discardedEvidence = new List<HistoricalDateEvidence>();
+        for (var i = 0; i < ordered.Count; i++)
+        {
+            var (kept, discarded, score) = ordered[i];
+            if (i > 0 && score < 2)
+            {
+                discarded = [.. kept, .. discarded];
+                kept = [];
+            }
+
+            var wikidataOfYear = readings.Where(r => r.Year == ordered[i].Kept[0].Year && r.Wikidata is not null).Select(r => r.Wikidata!).ToList();
+            keptEvidence.AddRange(kept.Select(c => ToEvidence(c, c.Compatible, wikidataOfYear)));
+            discardedEvidence.AddRange(discarded.Select(c =>
+            {
+                var evidence = ToEvidence(c, c.Exact, wikidataOfYear);
+                evidence.Scartata = true;
+                return evidence;
+            }));
+        }
+
+        return (keptEvidence, discardedEvidence);
     }
+
+    private sealed record DateReading(int Year, int? Month, int? Day, int? AltDay, HistoricalDateEvidence? Wikidata, SourceCitation? Wikipedia)
+    {
+        // Ogni edizione di Wikipedia è una fonte; una data Wikidata vale quanti sono i suoi riferimenti (almeno uno).
+        public int SourceCount => Wikidata is null ? 1 : Math.Max(1, Wikidata.Sources.Count);
+    }
+
+    // Data candidata con le letture che la indicano esattamente; Compatible: anche quelle meno precise che la sostengono.
+    private sealed record Candidate(int Year, int? Month, int? Day, List<DateReading> Exact, int First)
+    {
+        public int Score => SourceCount(Exact);
+
+        public List<DateReading> Compatible { get; set; } = Exact;
+
+        // Data Wikidata da usare quando nessun giorno è abbastanza confermato (la più precisa dell'anno).
+        public HistoricalDateEvidence? Representative { get; init; }
+    }
+
+    private static int SourceCount(IEnumerable<DateReading> readings) => readings.Sum(r => r.SourceCount);
+
+    // La data Wikidata che indica proprio questa data (la preferita, con più riferimenti), altrimenti una data costruita
+    // dalle edizioni. Le fonti sono quelle delle letture indicate.
+    private static HistoricalDateEvidence ToEvidence(Candidate candidate, IEnumerable<DateReading> sourceReadings, IReadOnlyList<HistoricalDateEvidence> wikidataOfYear)
+    {
+        var chosen = candidate.Representative ?? candidate.Exact
+            .Where(r => r.Wikidata is not null && r.Day == candidate.Day)
+            .Select(r => r.Wikidata!)
+            .OrderByDescending(e => e.Rank == "preferred")
+            .ThenByDescending(e => e.Sources.Count)
+            .FirstOrDefault();
+        var year = candidate.Year;
+        var sign = year < 0 ? "-" : "+";
+        var evidence = chosen is not null
+            ? CopyEvidence(chosen)
+            : candidate.Month is int month
+                ? new HistoricalDateEvidence
+                {
+                    Value = DateFormats.Format(year, month, candidate.Day),
+                    RawValue = $"{sign}{Math.Abs(year):0000}-{month:00}-{candidate.Day ?? 0:00}T00:00:00Z",
+                    Precision = candidate.Day is null ? "mese" : "giorno",
+                    Rank = wikidataOfYear.Select(e => e.Rank).FirstOrDefault() ?? string.Empty,
+                    Calendario = wikidataOfYear.Select(e => e.Calendario).FirstOrDefault(c => c.Length > 0) ?? string.Empty,
+                }
+                : new HistoricalDateEvidence
+                {
+                    Value = FormatYear(Math.Abs(year), year < 0),
+                    RawValue = $"{sign}{Math.Abs(year):0000}-00-00T00:00:00Z",
+                    Precision = "anno",
+                };
+        if (evidence.Precision.Length == 0)
+        {
+            evidence.Precision = "anno";
+        }
+
+        foreach (var reading in sourceReadings)
+        {
+            foreach (var source in reading.Wikidata?.Sources ?? new List<SourceCitation> { reading.Wikipedia! })
+            {
+                if (!evidence.Sources.Any(s => s.Title == source.Title && s.Url == source.Url && s.WikidataId == source.WikidataId))
+                {
+                    evidence.Sources.Add(source);
+                }
+            }
+        }
+
+        return evidence;
+    }
+
+    // Mese e giorno di una data Wikidata, secondo la precisione («giorno», «mese»); altrimenti nessuno dei due.
+    private static (int? Month, int? Day) WikidataMonthDay(string rawValue, string precision)
+    {
+        var match = Regex.Match(rawValue, @"^[+-]\d+-(?<m>\d{2})-(?<d>\d{2})");
+        if (!match.Success || precision is not ("giorno" or "mese"))
+        {
+            return (null, null);
+        }
+
+        var month = int.Parse(match.Groups["m"].Value, System.Globalization.CultureInfo.InvariantCulture);
+        var day = int.Parse(match.Groups["d"].Value, System.Globalization.CultureInfo.InvariantCulture);
+        return month is < 1 or > 12 ? (null, null) : (month, precision == "giorno" && day is >= 1 and <= 31 ? day : null);
+    }
+
+    // Copia senza fonti: le fonti si aggiungono poi, solo quelle compatibili con la data scelta.
+    private static HistoricalDateEvidence CopyEvidence(HistoricalDateEvidence source) => new()
+    {
+        Value = source.Value,
+        RawValue = source.RawValue,
+        Precision = source.Precision,
+        Rank = source.Rank,
+        Calendario = source.Calendario,
+        Qualifiers = source.Qualifiers,
+    };
 
     private static int PrecisionRank(string precision) => precision switch
     {
@@ -1595,7 +2379,7 @@ public sealed partial class WikipediaImportService
             ? languageLabels.GetValueOrDefault("it", languageLabels.GetValueOrDefault("en", id))
             : id;
 
-    // Data Wikidata in testo leggibile e riconoscibile da HistoricalYear: «15/03/44 a.C.», «anni 1450», «XV secolo».
+    // Data Wikidata nel formato delle date in uso («23/06/0079», «15/03/44 a.C.»), «anni 1450», «XV secolo».
     internal static string FormatDate(string rawValue, int precision)
     {
         var match = Regex.Match(rawValue, @"^(?<sign>[+-])(?<year>\d+)-(?<month>\d{2})-(?<day>\d{2})");
@@ -1606,21 +2390,22 @@ public sealed partial class WikipediaImportService
 
         var beforeChrist = match.Groups["sign"].Value == "-";
         var era = beforeChrist ? " a.C." : string.Empty;
+        var signed = beforeChrist ? -year : year;
+        var month = int.Parse(match.Groups["month"].Value, System.Globalization.CultureInfo.InvariantCulture);
+        var day = int.Parse(match.Groups["day"].Value, System.Globalization.CultureInfo.InvariantCulture);
         return precision switch
         {
-            11 => $"{match.Groups["day"].Value}/{match.Groups["month"].Value}/{FormatYear(year, beforeChrist)}",
-            10 => $"{match.Groups["month"].Value}/{FormatYear(year, beforeChrist)}",
+            11 => DateFormats.Format(signed, month, day),
+            10 => DateFormats.Format(signed, month),
             8 => $"anni {year / 10 * 10}{era}",
             7 => $"{RomanNumeral((year - 1) / 100 + 1)} secolo{era}",
             6 => $"{RomanNumeral((year - 1) / 1000 + 1)} millennio{era}",
-            _ => FormatYear(year, beforeChrist),
+            _ => DateFormats.FormatYear(signed),
         };
     }
 
-    // Senza zeri iniziali; gli anni d.C. a una o due cifre sono marcati per non confonderli con giorni o mesi.
-    internal static string FormatYear(int year, bool beforeChrist) => beforeChrist
-        ? $"{year} a.C."
-        : year < 100 ? $"{year} d.C." : year.ToString(System.Globalization.CultureInfo.InvariantCulture);
+    // Anno nel formato delle date: quattro cifre dopo Cristo («0079»), «44 a.C.» prima.
+    internal static string FormatYear(int year, bool beforeChrist) => DateFormats.FormatYear(beforeChrist ? -year : year);
 
     internal static string RomanNumeral(int value)
     {
@@ -1664,15 +2449,35 @@ public sealed partial class WikipediaImportService
      private static DateTime lastWikidataRequest = DateTime.MinValue;
      private static readonly TimeSpan WikidataInterval = TimeSpan.FromMilliseconds(250);
 
-     // Nuovi tentativi e segnalazione delle fasi (coda, richiesta, attesa) in HttpRetry.
-     private static Task<JsonDocument> GetJsonAsync(string url, CancellationToken cancellationToken)
+     // Solo per i test di import: risposte registrate su file al posto della rete (vedi ImportFixtures nei test).
+     // AsyncLocal: vale solo per l'import avviato dal test, non per gli altri test in parallelo.
+     internal interface IRecordedResponses
      {
-          static async Task<JsonDocument> Read(HttpResponseMessage response, CancellationToken token)
-                => JsonDocument.Parse(await response.Content.ReadAsStringAsync(token));
+          // Risposta registrata per l'URL, oppure null se va scaricata (e poi passata a Save).
+          string? Find(string url);
+          void Save(string url, string json);
+     }
 
-          return url.StartsWith(WikidataApi, StringComparison.Ordinal)
+     internal static readonly AsyncLocal<IRecordedResponses?> RecordedResponses = new();
+
+     // Nuovi tentativi e segnalazione delle fasi (coda, richiesta, attesa) in HttpRetry.
+     private static async Task<JsonDocument> GetJsonAsync(string url, CancellationToken cancellationToken)
+     {
+          var recorded = RecordedResponses.Value;
+          if (recorded?.Find(url) is { } saved)
+          {
+                return JsonDocument.Parse(saved);
+          }
+
+          static async Task<string> Read(HttpResponseMessage response, CancellationToken token)
+                => await response.Content.ReadAsStringAsync(token);
+
+          var json = await (url.StartsWith(WikidataApi, StringComparison.Ordinal)
                 ? HttpRetry.GetAsync(url, (report, token) => SendToWikidataAsync(url, report, token), Read, cancellationToken)
-                : HttpRetry.GetAsync(Client, url, Read, cancellationToken);
+                : HttpRetry.GetAsync(Client, url, Read, cancellationToken));
+          var document = JsonDocument.Parse(json);
+          recorded?.Save(url, json);
+          return document;
      }
 
      // Richieste a Wikidata una alla volta, distanziate di un breve intervallo.

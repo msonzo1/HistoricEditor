@@ -252,18 +252,7 @@ public sealed partial class WikipediaImportService
 
         var month = int.Parse(match.Groups["m"].Value, CultureInfo.InvariantCulture);
         var day = int.Parse(match.Groups["d"].Value, CultureInfo.InvariantCulture);
-        var text = new StringBuilder();
-        if (month is >= 1 and <= 12)
-        {
-            if (day is >= 1 and <= 31)
-            {
-                text.Append(CultureInfo.InvariantCulture, $"{day:00}/");
-            }
-
-            text.Append(CultureInfo.InvariantCulture, $"{month:00}/");
-        }
-
-        text.Append(FormatYear(year, beforeChrist: false));
+        var text = DateFormats.Format(year, month is >= 1 and <= 12 ? month : null, day is >= 1 and <= 31 ? day : null);
         var qualifier = status switch
         {
             "guess" => DataEvento.Circa,
@@ -271,6 +260,6 @@ public sealed partial class WikipediaImportService
             "after" => DataEvento.Dopo,
             _ => DataEvento.Esatta,
         };
-        return DataEvento.Format(qualifier, text.ToString(), null);
+        return DataEvento.Format(qualifier, text, null);
     }
 }

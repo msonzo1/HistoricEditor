@@ -97,4 +97,20 @@ public class WikipediaConsensusTests
         Assert.Equal(ConsensusLevel.Hidden, WikipediaConsensus.Evaluate([]).Level);
         Assert.Equal(ConsensusLevel.Hidden, WikipediaConsensus.Evaluate([Lead("it", 1452, 1519, "Q1", "Q2"), Lead("en", null, null)]).Level);
     }
+
+    [Fact]
+    public void PlaceInsideAnotherEditionsPlaceIsNotDifferent()
+    {
+        // Cesare: Wikidata indica Roma per la nascita e il Teatro di Pompeo (a Roma) per la morte.
+        var rome = new LeadPlaceCandidate("Q220", ["Roma", "Rome", "Rom"], []);
+        var theatre = new LeadPlaceCandidate("Q944814", ["Teatro di Pompeo", "Theatre of Pompey"], ["Roma", "Rome"]) { ParentIds = ["Q220"] };
+        LeadPlaceCandidate[] candidates = [theatre, rome];
+
+        Assert.Equal("Q944814", WikipediaConsensus.PlaceKey("Theatre of Pompey, Rome", candidates));
+        Assert.Equal("Q220", WikipediaConsensus.PlaceKey("Suburra, Rome", [new LeadPlaceCandidate("Q220", ["Rome"], [])]));
+        Assert.Equal(["Q220", "Q220", "Q220", ""], WikipediaConsensus.GeneralizeKeys(["Q220", "Q944814", "Q220", ""], candidates));
+
+        // Se nessun'altra edizione nomina il contenitore, il luogo preciso resta.
+        Assert.Equal(["Q944814", "Q944814"], WikipediaConsensus.GeneralizeKeys(["Q944814", "Q944814"], candidates));
+    }
 }

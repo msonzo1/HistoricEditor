@@ -1,0 +1,111 @@
+
+## Scheda
+Pagina: Vespasiano (https://it.wikipedia.org/wiki/Vespasiano)
+Wikidata: Q1419
+WikiTree: Flavian-1
+Nome visualizzato: Vespasiano
+Nome / Cognome / Suffisso / Soprannome: Vespasiano /  /  / Mulio
+Sesso: M
+Titolo principale: Imperatore romano
+Famiglia: Dinastia flavia
+Gens: gens Flavia; Flavii Sabini
+Nascita: 17/11/0009 [calendario: giuliano]
+Morte: 23/06/0079 [calendario: giuliano]
+Edizioni non lette: 
+
+## Nome romano
+Latino (praenomen / nomen / cognomen / agnomen): Titus / Flavius /  / Vespasianus
+Nome latino: 
+Italiano (prenome / gentilizio / cognome / agnome): Tito / Flavio /  / Vespasiano
+
+## Nomi nelle lingue
+it: Vespasiano | suffisso  | soprannome  | titolo imperatore romano | parti  /  /  / 
+en: Vespasian | suffisso  | soprannome  | titolo Roman emperor | parti Titus / Flavius /  / Vespasianus
+de: Vespasian | suffisso  | soprannome  | titolo römischer Kaiser | parti Titus / Flavius /  / Vespasianus
+fr: Vespasien | suffisso  | soprannome  | titolo empereur romain | parti Titus / Flavius /  / Vespasianus
+es: Vespasiano | suffisso  | soprannome  | titolo emperador romano | parti Tito / Flavio /  / Vespasiano
+nl: Vespasianus | suffisso  | soprannome  | titolo Romeinse keizer | parti Titus / Flavius /  / Vespasianus
+
+## Dinastie
+Q200565: Dinastia flavia ←
+Q121033352: Flavii Sabini (gens) ← gens Flavia Q12297672
+Q12297672: gens Flavia (gens) ←
+
+## Date di nascita
+17/11/0009: giorno | preferred | giuliano | +0009-11-17T00:00:00Z | qualificatori  | fonti Q5375741, Q26844121, Q24360833, Q136831703, Wikipedia in italiano, Wikipedia in tedesco, Wikipedia in francese, Wikipedia in spagnolo, Wikipedia in olandese
+
+## Date di morte
+23/06/0079: giorno | normal | giuliano | +0079-06-23T00:00:00Z | qualificatori  | fonti Wikipedia in italiano, Wikipedia in tedesco, Wikipedia in francese, Wikipedia in spagnolo, Wikipedia in olandese
+
+## Date scartate (una sola fonte)
+04/06/0079: giorno | normal | giuliano | +0079-06-04T00:00:00Z | qualificatori  | fonti Importato da Wikipedia in inglese
+24/06/0079: giorno | normal | giuliano | +0079-06-24T00:00:00Z | qualificatori  | fonti Wikipedia in spagnolo
+Date discordanti: Morte: 23/06/0079 (5 fonti); scartate perché indicate da una sola fonte: 04/06/0079 (Importato da Wikipedia in inglese), 24/06/0079 (Wikipedia in spagnolo).
+
+## Luoghi
+nascita: Q927670 Falacrine | Italia | tipo Villaggio | 42.59361111, 13.17055556
+    divisione: Unità amministrativa (comune più vicino, dalle coordinate) Cittareale Q224043
+    divisione: Unità amministrativa (P131) Lazio Q1282
+    divisione: Paese (P17) antica Roma Q1747689
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) provincia di Rieti Q16267
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Lazio Q1282
+    divisione: Paese (P17) Italia Q38
+    in archivio: Stato Italia > Regione Lazio > Provincia provincia di Rieti > Comune Cittareale > luogo storico Falacrine (latino: Vicus Phalacrinae) [da confermare]
+morte: Q383071 Aquae Cutiliae | Italia | tipo Sito archeologico | 42.380104, 13.008757
+    divisione: Unità amministrativa (P131) Castel Sant’Angelo Q223509
+    divisione: Paese (P17) antica Roma Q1747689
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) provincia di Rieti Q16267
+    divisione: Paese (P17) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Lazio Q1282
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    in archivio: Stato Italia > Regione Lazio > Provincia provincia di Rieti > Comune Castel Sant’Angelo > luogo storico Aquae Cutiliae > luogo specifico Terme di Cotilia (Sito archeologico, In rovina) [automatico]
+
+## Titoli
+Imperatore romano: n. 9 | 21/12/0069 () – 24/06/0079 () | Q842606 | prima Vitellio Q1417 | dopo Tito Q1421
+    fonte: Wikidata · carica ricoperta (P39): 21/12/0069 – 24/06/0079
+    fonte: Wikidata · titolo nobiliare (P97):  – 
+    fonte: Wikipedia it · infobox: 01/07/0069 – 23/06/0079
+    fonte: Wikipedia en · infobox: 01/07/0069 – 23/06/0079
+    fonte: Wikipedia es · infobox: 01/07/0069 – 23/06/0079
+Senatore romano: n.  |  () –  () | Q20056508 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39):  – 
+Pretore: n.  |  () –  () | Q172907 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39):  – 
+Edile della plebe: n.  | 0038 () –  () | Q1836189 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39): 0038 – 
+Console: n.  |  () –  () | Q40779 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39):  – 
+
+## Introduzioni di Wikipedia
+it: Vespasiano | nato 17/11/9 a Falacrine [Q927670] | morto 23/6/79 a Aquae Cutiliae [Q383071]
+en: Vespasian | nato // a Falacrinum, Italy [Q927670] | morto // a Aquae Cutiliae [Q383071]
+de: Vespasian | nato 17/11/9 a Falacrinae [Q927670] | morto 23/6/79 a Aquae Cutiliae [Q383071]
+fr: Vespasien | nato 17/11/9 a Falacrine Italie [Q927670] | morto 23/6/79 a Aquae Cutiliae [Q383071]
+es: Vespasiano | nato 17/11/9 a Falacrinae, Italia [Q927670] | morto 24/6/79 a Cotilia (Rieti), Italia [Q383071]
+nl: Vespasianus | nato 17/11/9 a Falacrinae [Q927670] | morto 23/6/79 a Aquae Cutiliae [Q383071]
+wikidata: Q1419 | nato 17/11/9 a Falacrine [Q927670] | morto 4/6/79 a Aquae Cutiliae [Q383071]
+Concordanza: Orange: Le edizioni di Wikipedia concordano su date e luoghi di nascita e morte. Wikidata è diverso dalla maggioranza: giorno di morte.
+    italiano: 17 novembre 9, Falacrine – 23 giugno 79, Aquae Cutiliae | Concorda con la maggioranza.
+    inglese: —, Falacrinum, Italy – —, Aquae Cutiliae | Concorda con la maggioranza.
+    tedesco: 17 novembre 9, Falacrinae – 23 giugno 79, Aquae Cutiliae | Concorda con la maggioranza.
+    francese: 17 novembre 9, Falacrine Italie – 23 giugno 79, Aquae Cutiliae | Concorda con la maggioranza.
+    spagnolo: 17 novembre 9, Falacrinae, Italia – 23 o 24 giugno 79, Cotilia (Rieti), Italia | Concorda con la maggioranza.
+    olandese: 17 novembre 9, Falacrinae – 23 giugno 79, Aquae Cutiliae | Concorda con la maggioranza.
+    Wikidata: 17 novembre 9, Falacrine – 4 giugno 79, Aquae Cutiliae | Diverso: giorno di morte.
+
+## Parenti e relazioni
+Padre: Q1033173
+Madre: Q448568
+Coniugi: Q241102
+Figli: Q1421, Q1423, Q260156
+Relazioni: 
+Eventi: 

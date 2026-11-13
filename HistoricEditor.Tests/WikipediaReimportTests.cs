@@ -29,6 +29,33 @@ public class WikipediaReimportTests
         Assert.Equal(string.Empty, WikipediaImportService.ReadItalianSitelinkTitle(document.RootElement, "Q1"));
     }
 
+    [Fact]
+    public void WithSitelinkTitles_FillsOnlyMissingLanguages()
+    {
+        using var document = JsonDocument.Parse("""
+            {"itwiki":{"title":"Gaio Giulio Cesare"},"nlwiki":{"title":"Julius Caesar"},"dewiki":{"title":"Titus (Kaiser)"},"lawiki":{"title":"Gaius Iulius Caesar"}}
+            """);
+        var labels = new Dictionary<string, string> { ["it"] = "Gaio Giulio Cesare (etichetta)" };
+
+        WikipediaImportService.WithSitelinkTitles(labels, document.RootElement);
+
+        Assert.Equal("Gaio Giulio Cesare (etichetta)", labels["it"]);
+        Assert.Equal("Julius Caesar", labels["nl"]);
+        Assert.Equal("Titus", labels["de"]);
+        Assert.False(labels.ContainsKey("la"));
+        Assert.False(labels.ContainsKey("en"));
+    }
+
+    [Theory]
+    [InlineData(new[] { "Q13406463" }, true)]
+    [InlineData(new[] { "Q164950", "Q4167410" }, true)]
+    [InlineData(new[] { "Q164950" }, false)]
+    [InlineData(new string[0], false)]
+    public void IsWikimediaPage_RecognizesListsAndDisambiguations(string[] classIds, bool expected)
+    {
+        Assert.Equal(expected, WikipediaImportService.IsWikimediaPage(classIds));
+    }
+
     [Theory]
     [InlineData("https://it.wikipedia.org/wiki/Carlo_V", true)]
     [InlineData("  http://example.org/fonte  ", true)]

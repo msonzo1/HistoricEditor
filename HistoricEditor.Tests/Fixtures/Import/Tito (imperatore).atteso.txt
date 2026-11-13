@@ -1,0 +1,125 @@
+
+## Scheda
+Pagina: Tito (imperatore) (https://it.wikipedia.org/wiki/Tito_%28imperatore%29)
+Wikidata: Q1421
+WikiTree: Augustus-93
+Nome visualizzato: Tito
+Nome / Cognome / Suffisso / Soprannome: Tito /  /  / 
+Sesso: M
+Titolo principale: Imperatore romano
+Famiglia: Dinastia flavia
+Gens: gens Flavia; Flavii Sabini
+Nascita: 30/12/0039 [calendario: giuliano]
+Morte: 13/09/0081 [calendario: giuliano]
+Edizioni non lette: 
+
+## Nome romano
+Latino (praenomen / nomen / cognomen / agnomen): Titus / Flavius / Vespasianus / 
+Nome latino: T. Flavius T.f.T.n. Vespasianus
+Italiano (prenome / gentilizio / cognome / agnome): Tito / Flavio / Vespasiano / 
+
+## Nomi nelle lingue
+it: Tito | suffisso  | soprannome  | titolo imperatore romano | parti  /  /  / 
+en: Titus | suffisso  | soprannome  | titolo Roman emperor | parti Titus / Flavius / Vespasianus / 
+de: Titus | suffisso  | soprannome  | titolo römischer Kaiser | parti Titus / Flavius / Vespasianus / 
+fr: Titus | suffisso  | soprannome  | titolo empereur romain | parti Titus / Flavius / Vespasianus / 
+es: Tito | suffisso  | soprannome  | titolo emperador romano | parti Titus / Flavius / Vespasianus / 
+nl: Titus | suffisso  | soprannome  | titolo Romeinse keizer | parti Titus /  / Vespasianus / 
+
+## Dinastie
+Q200565: Dinastia flavia ←
+Q121033352: Flavii Sabini (gens) ← gens Flavia Q12297672
+Q12297672: gens Flavia (gens) ←
+
+## Date di nascita
+30/12/0039: giorno | normal | giuliano | +0039-12-30T00:00:00Z | qualificatori  | fonti Q5375741, Q69525831, Q746368, Wikipedia in italiano, Wikipedia in inglese, Wikipedia in tedesco, Wikipedia in francese, Wikipedia in spagnolo, Wikipedia in olandese
+
+## Date di morte
+13/09/0081: giorno | normal | giuliano | +0081-09-13T00:00:00Z | qualificatori  | fonti Q26844255, Q24491710, Q45268667, Q5375741, Q746368, Wikipedia in italiano, Wikipedia in inglese, Wikipedia in tedesco, Wikipedia in francese, Wikipedia in spagnolo, Wikipedia in olandese
+
+## Date scartate (una sola fonte)
+Date discordanti: 
+
+## Luoghi
+nascita: Q220 Roma | Italia | tipo Città di confine | 41.893055555556, 12.482777777778
+    divisione: Unità amministrativa (P131) città metropolitana di Roma Capitale Q18288160
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Lazio Q1282
+    divisione: Paese (P17) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    nome storico: Colonia Lucia Annia Commodiana (la, 191 – 193)
+    in archivio: Stato Italia > Regione Lazio > Provincia città metropolitana di Roma Capitale > Comune Roma [automatico]
+morte: Q383071 Aquae Cutiliae | Italia | tipo Sito archeologico | 42.380104, 13.008757
+    divisione: Unità amministrativa (P131) Castel Sant’Angelo Q223509
+    divisione: Paese (P17) antica Roma Q1747689
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) provincia di Rieti Q16267
+    divisione: Paese (P17) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Lazio Q1282
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    in archivio: Stato Italia > Regione Lazio > Provincia provincia di Rieti > Comune Castel Sant’Angelo > luogo storico Aquae Cutiliae > luogo specifico Terme di Cotilia (Sito archeologico, In rovina) [automatico]
+sepoltura: Q770847 Mausoleo di Augusto | Italia | tipo Sito archeologico | 41.90611, 12.47639
+    divisione: Unità amministrativa (P131) Campo Marzio Q1031426
+    divisione: Unità amministrativa (P131) Municipio Roma I Q550592
+    divisione: Unità amministrativa (P131) Lazio Q1282
+    divisione: Unità amministrativa (P131) Roma Q220
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Roma Capitale Q3940419
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Roma Capitale Q3940419
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) città metropolitana di Roma Capitale Q18288160
+    divisione: Paese (P17) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) città metropolitana di Roma Capitale Q18288160
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Lazio Q1282
+    divisione: Paese (P17) Italia Q38
+    in archivio: Stato Italia > Regione Lazio > Provincia città metropolitana di Roma Capitale > Comune Roma > luogo specifico Mausoleo di Augusto [automatico]
+
+## Titoli
+Imperatore romano: n. 10 | 24/06/0079 () – 13/09/0081 () | Q842606 | prima Vespasiano Q1419 | dopo Domiziano Q1423
+    fonte: Wikidata · carica ricoperta (P39): 24/06/0079 – 13/09/0081
+    fonte: Wikipedia it · infobox: 24/06/0079 – 13/09/0081
+    fonte: Wikipedia en · infobox: 24/06/0079 – 13/09/0081
+    fonte: Wikipedia es · infobox: 24/06/0079 – 13/09/0081
+Senatore romano: n.  |  () –  () | Q20056508 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39):  – 
+Prefetto del pretorio: n.  |  () –  () | Q692343 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39):  – 
+Console: n.  |  () –  () | Q40779 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39):  – 
+Augusto: n.  |  () –  () | Q211804 | prima   | dopo  
+    fonte: Wikidata · titolo nobiliare (P97):  – 
+
+## Introduzioni di Wikipedia
+it: Tito (imperatore) | nato 30/12/39 a Roma [Q220] | morto 13/9/81 a Aquae Cutiliae [Q383071]
+en: Titus | nato 30/12/39 a Rome, Italy [Q220] | morto 13/9/81 a Naples, Italy [naples]
+de: Titus | nato 30/12/39 a Rom [Q220] | morto 13/9/81 a Aquae Cutiliae, Latium [Q383071]
+fr: Titus (empereur romain) | nato 30/12/39 a  [] | morto 13/9/81 a  []
+es: Tito | nato 30/12/39 a Roma, Italia [Q220] | morto 13/9/81 a Cotilia (Rieti), Italia [Q383071]
+nl: Titus (keizer) | nato 30/12/39 a Rome [Q220] | morto 13/9/81 a Aquae Cutiliae [Q383071]
+wikidata: Q1421 | nato 30/12/39 a Roma [Q220] | morto 13/9/81 a Aquae Cutiliae [Q383071]
+Concordanza: Orange: 1 edizione di Wikipedia ha date o luoghi diversi dalla maggioranza.
+    italiano: 30 dicembre 39, Roma – 13 settembre 81, Aquae Cutiliae | Concorda con la maggioranza.
+    inglese: 30 dicembre 39, Rome, Italy – 13 settembre 81, Naples, Italy | Diverso: luogo di morte.
+    tedesco: 30 dicembre 39, Rom – 13 settembre 81, Aquae Cutiliae, Latium | Concorda con la maggioranza.
+    francese: 30 dicembre 39, luogo non indicato – 13 settembre 81, luogo non indicato | Concorda con la maggioranza.
+    spagnolo: 30 dicembre 39, Roma, Italia – 13 settembre 81, Cotilia (Rieti), Italia | Concorda con la maggioranza.
+    olandese: 30 dicembre 39, Rome – 13 settembre 81, Aquae Cutiliae | Concorda con la maggioranza.
+    Wikidata: 30 dicembre 39, Roma – 13 settembre 81, Aquae Cutiliae | Concorda con la maggioranza.
+
+## Parenti e relazioni
+Padre: Q1419
+Madre: Q241102
+Coniugi: Q1528430, Q731059
+Figli: Q239314, Q107607657
+Relazioni: 
+Eventi: 

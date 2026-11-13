@@ -1,0 +1,130 @@
+
+## Scheda
+Pagina: Traiano (https://it.wikipedia.org/wiki/Traiano)
+Wikidata: Q1425
+WikiTree: Trajan-1
+Nome visualizzato: Traiano
+Nome / Cognome / Suffisso / Soprannome: Traiano /  /  / 
+Sesso: M
+Titolo principale: Imperatore romano
+Famiglia: Nerva–Antonine dynasty
+Gens: gens Ulpia; Ulpii Traiani
+Nascita: 18/09/0053 [calendario: giuliano]
+Morte: 08/08/0117; 09/08/0117; 07/08/0117 [calendario: giuliano]
+Edizioni non lette: 
+
+## Nome romano
+Latino (praenomen / nomen / cognomen / agnomen): Marcus / Ulpius / Traianus Nerva / 
+Nome latino: Imperator Caesar Nerva Traianus Augustus
+Italiano (prenome / gentilizio / cognome / agnome): Marco / Ulpio / Nerva Traiano / 
+
+## Nomi nelle lingue
+it: Traiano | suffisso  | soprannome  | titolo imperatore romano | parti  /  /  / 
+en: Trajan | suffisso  | soprannome  | titolo Roman emperor | parti Caesar / Nerva / Traianus Germanicus / 
+de: Trajan | suffisso  | soprannome  | titolo römischer Kaiser | parti Marcus / Ulpius / Traianus Nerva / 
+fr: Trajan | suffisso  | soprannome  | titolo empereur romain | parti Marcus / Ulpius / Traianus Nerva / 
+es: Trajano | suffisso  | soprannome  | titolo emperador romano | parti Marcus / Ulpius / Traianus Nerva / 
+nl: Trajanus | suffisso  | soprannome  | titolo Romeinse keizer | parti Marcus /  / Nerva / 
+
+## Dinastie
+Q111987263: Ulpii Traiani (gens) ← gens Ulpia Q4273993
+Q3202662: Nerva–Antonine dynasty ←
+Q4273993: gens Ulpia (gens) ←
+
+## Date di nascita
+18/09/0053: giorno | preferred | giuliano | +0053-09-18T00:00:00Z | qualificatori  | fonti Q45268500, Q27062196, Q2664168, Q114716001, Q41705771, Q746368, Q54817642, Q24754113, Q18785969, Q65921422, Q84087675, Q731361, Q24494772, Q1139550, Q1165538, Wikipedia in italiano, Wikipedia in inglese, Wikipedia in tedesco, Wikipedia in francese, Wikipedia in spagnolo, Wikipedia in olandese
+
+## Date di morte
+08/08/0117: giorno | preferred | giuliano | +0117-08-08T00:00:00Z | qualificatori  | fonti Q41705771, Q45268500, Q24494772, Q24754113, Q18785969, Q65921422, Q84087675, Q5375741, Q1165538, Q731361, Q1139550, Wikipedia in italiano, Wikipedia in tedesco, Wikipedia in francese, Wikipedia in olandese
+09/08/0117: giorno | preferred | giuliano | +0117-08-09T00:00:00Z | qualificatori  | fonti Q2664168, Q746368, Q54817642, Q45268500, Q24494772, Q24754113, Q18785969, Q65921422, Q84087675, Q5375741, Q1165538, Q731361, Q1139550, Wikipedia in inglese, Wikipedia in francese
+07/08/0117: giorno | preferred | giuliano | +0117-08-07T00:00:00Z | qualificatori  | fonti Q27062196, Q114716001, Q45268500, Q24494772, Q24754113, Q18785969, Q65921422, Q84087675, Q5375741, Q1165538, Q731361, Q1139550
+
+## Date scartate (una sola fonte)
+15/09/0053: giorno | normal | giuliano | +0053-09-15T00:00:00Z | qualificatori  | fonti Q5375741
+11/08/0117: giorno | preferred | giuliano | +0117-08-11T00:00:00Z | qualificatori  | fonti Wikipedia in spagnolo
+Date discordanti: Nascita: 18/09/0053 (21 fonti); scartata perché indicata da una sola fonte: 15/09/0053 (Fonte Wikidata Q5375741). | Morte: 08/08/0117 (15 fonti) o 09/08/0117 (15 fonti) o 07/08/0117 (12 fonti); scartata perché indicata da una sola fonte: 11/08/0117 (Wikipedia in spagnolo).
+
+## Luoghi
+nascita: Q658893 Italica | Spagna | tipo Sito archeologico | 37.44119, -6.0445003
+    divisione: Unità amministrativa (P131) Santiponce Q568278
+    divisione: Unità amministrativa (P131) Hispania Ulterior Q747040
+    divisione: Unità amministrativa (P131) Betica Q219415
+    divisione: Paese (P17) Spagna Q29
+    divisione: Paese (P17) antica Roma Q1747689
+    divisione: Unità amministrativa (P131) provincia di Siviglia Q95088
+    divisione: Unità amministrativa (P131) Seville metropolitan area Q3849062
+    divisione: Paese (P17) Spagna Q29
+    divisione: Paese (P17) antica Roma Q1747689
+    divisione: Unità amministrativa (P131) Spagna romana Q186513
+    divisione: Paese (P17) antica Roma Q1747689
+    divisione: Paese (P17) Spagna Q29
+    divisione: Unità amministrativa (P131) Andalusia Q5783
+    divisione: Paese (P17) Spagna Q29
+    divisione: Unità amministrativa (P131) provincia di Siviglia Q95088
+    divisione: Paese (P17) Spagna Q29
+    divisione: Paese (P17) antica Roma Q1747689
+    divisione: Unità amministrativa (P131) Spagna Q29
+    divisione: Paese (P17) Spagna Q29
+    in archivio: Stato Spagna > Comunità autonoma Andalusia > Provincia provincia di Siviglia > Comune Santiponce > luogo storico Italica > luogo specifico Sito archeologico di Italica (Sito archeologico, In rovina) [automatico]
+morte: Q1424724 Selinunte | Turchia | tipo Sito archeologico | 36.26111111, 32.28472222
+    divisione: Unità amministrativa (P131) Gazipaşa Q844779
+    divisione: Unità amministrativa (P131) provincia di Adalia Q40249
+    divisione: Paese (P17) Turchia Q43
+    divisione: Unità amministrativa (P131) provincia di Adalia Q40249
+    divisione: Paese (P17) Turchia Q43
+    divisione: Unità amministrativa (P131) Turchia Q43
+    divisione: Paese (P17) Turchia Q43
+    divisione: Paese (P17) Turchia Q43
+    in archivio: Stato Turchia > Provincia provincia di Adalia > Comune Gazipaşa > luogo storico Selinunte > luogo specifico Sito archeologico di Selinunte (Sito archeologico, In rovina) [automatico]
+sepoltura: Q192784 Colonna Traiana | Italia | tipo Sito archeologico | 41.895833333333, 12.484166666667
+    divisione: Unità amministrativa (P131) Roma Q220
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) città metropolitana di Roma Capitale Q18288160
+    divisione: Paese (P17) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Lazio Q1282
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    in archivio: Stato Italia > Regione Lazio > Provincia città metropolitana di Roma Capitale > Comune Roma > luogo specifico Colonna Traiana [automatico]
+
+## Titoli
+Imperatore romano: n. 13 | 28/01/0098 () – 07/08/0117 () | Q842606 | prima Nerva Q1424 | dopo Adriano Q1427
+    fonte: Wikidata · carica ricoperta (P39): 28/01/0098 – 07/08/0117
+    fonte: Wikipedia it · infobox: 27/01/0098 – 08/08/0117
+    fonte: Wikipedia en · infobox: 28/01/0989 – 08/0117
+Senatore romano: n.  |  () –  () | Q20056508 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39):  – 
+Governatore provinciale romano: n.  |  () –  () | Q1190123 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39):  – 
+Pretore: n.  |  () –  () | Q172907 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39):  – 
+Console: n.  |  () –  () | Q40779 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39):  – 
+Augusto: n.  |  () –  () | Q211804 | prima   | dopo  
+    fonte: Wikidata · titolo nobiliare (P97):  – 
+
+## Introduzioni di Wikipedia
+it: Traiano | nato 18/9/53 a Italica [Q658893] | morto 8/8/117 a Selinunte in Cilicia [Q1424724]
+en: Trajan | nato 18/9/53 a Italica, Hispania Baetica, Roman Empire (present-day Spain) [Q658893] | morto 9/8/117 a Selinus, Cilicia, Roman Empire (present-day Turkey) [Q1424724]
+de: Trajan | nato 18/9/53 a Italica, in Hispania Baetica oder in Rom [Q658893] | morto 8/8/117 a Selinus, Kilikien [Q1424724]
+fr: Trajan | nato 18/9/53 a Italica, en Bétique [Q658893] | morto 9/8/117 a Selinus [Q1424724]
+es: Trajano | nato 18/9/53 a Itálica [Q658893] | morto 11/8/117 a Selinunte [Q1424724]
+nl: Trajanus | nato 18/9/53 a Itálica [Q658893] | morto 8/8/117 a Selinus Cilicië [Q1424724]
+wikidata: Q1425 | nato 18/9/53 a Italica [Q658893] | morto 8/8/117 a Selinunte [Q1424724]
+Concordanza: Orange: 2 edizioni di Wikipedia hanno date o luoghi diversi dalla maggioranza.
+    italiano: 18 settembre 53, Italica – 8 agosto 117, Selinunte in Cilicia | Concorda con la maggioranza.
+    inglese: 18 settembre 53, Italica, Hispania Baetica, Roman Empire (present-day Spain) – 9 agosto 117, Selinus, Cilicia, Roman Empire (present-day Turkey) | Diverso: giorno di morte.
+    tedesco: 18 settembre 53, Italica, in Hispania Baetica oder in Rom – 8 agosto 117, Selinus, Kilikien | Concorda con la maggioranza.
+    francese: 18 settembre 53, Italica, en Bétique – 8 o 9 agosto 117, Selinus | Concorda con la maggioranza.
+    spagnolo: 18 settembre 53, Itálica – 11 agosto 117, Selinunte | Diverso: giorno di morte.
+    olandese: 18 settembre 53, Itálica – 8 agosto 117, Selinus Cilicië | Concorda con la maggioranza.
+    Wikidata: 18 settembre 53, Italica – 8 agosto 117, Selinunte | Concorda con la maggioranza.
+
+## Parenti e relazioni
+Padre: Q714856, Q1424
+Madre: Q3132611
+Coniugi: Q239448
+Figli: Q1427
+Relazioni: 
+Eventi: 

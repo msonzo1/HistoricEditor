@@ -1,0 +1,135 @@
+
+## Scheda
+Pagina: Gaio Giulio Cesare (https://it.wikipedia.org/wiki/Gaio_Giulio_Cesare)
+Wikidata: Q1048
+WikiTree: 
+Nome visualizzato: Gaio Giulio Cesare
+Nome / Cognome / Suffisso / Soprannome: Gaio Giulio Cesare /  /  / 
+Sesso: M
+Titolo principale: Dittatore romano
+Famiglia: 
+Gens: gens Giulia; Julii Caesares
+Nascita: 13/07/100 a.C.; 12/07/100 a.C. [calendario: giuliano]
+Morte: 15/03/44 a.C. [calendario: giuliano]
+Edizioni non lette: 
+
+## Nome romano
+Latino (praenomen / nomen / cognomen / agnomen): Gaius / Iūlius / Caesar / 
+Nome latino: GAIVS IVLIVS CAESAR
+Italiano (prenome / gentilizio / cognome / agnome): Gaio / Giulio / Cesare / 
+
+## Nomi nelle lingue
+it: Gaio Giulio Cesare | suffisso  | soprannome  | titolo dittatore romano | parti  /  /  / 
+en: Julius Caesar | suffisso  | soprannome  | titolo Roman dictator | parti Gaius / Julius / Caesar / 
+de: Gaius Iulius Caesar | suffisso  | soprannome  | titolo römischer Diktator | parti Gaius / Iulius / Caesar / 
+fr: Jules César | suffisso  | soprannome  | titolo dictateur | parti Caius / Julius / Caesar / 
+es: Julio César | suffisso  | soprannome  | titolo dictador romano | parti Gayo / Julio / César / 
+nl: Julius Caesar | suffisso  | soprannome  | titolo dictator | parti Gaius / Julius / Caesar / 
+
+## Dinastie
+Q3268376: Julii Caesares (gens) ← gens Giulia Q510193
+Q510193: gens Giulia (gens) ←
+
+## Date di nascita
+13/07/100 a.C.: giorno | normal | giuliano | -0100-07-13T00:00:00Z | qualificatori  | fonti Riferimento Wikidata, Q50358336, Q206033, Q24963317, Q57255702, Q237227, Q193563, Q2664168, Q746368, Q100166489, Wikipedia in italiano, Wikipedia in inglese, Wikipedia in tedesco, Wikipedia in francese, Wikipedia in spagnolo, Wikipedia in olandese
+12/07/100 a.C.: giorno | preferred | giuliano | -0100-07-12T00:00:00Z | qualificatori  | fonti Riferimento Wikidata, Q50358336, Q206033, Q100166489, Wikipedia in inglese, Wikipedia in spagnolo, Wikipedia in olandese
+
+## Date di morte
+15/03/44 a.C.: giorno | preferred | giuliano | -0044-03-15T00:00:00Z | qualificatori  | fonti Q16245176, Q24963317, Q193563, Q26934146, Q237227, Q746368, Q100166489, Wikipedia in italiano, Wikipedia in inglese, Wikipedia in tedesco, Wikipedia in francese, Wikipedia in spagnolo, Wikipedia in olandese
+
+## Date scartate (una sola fonte)
+102 a.C.: anno | normal | giuliano | -0102-00-00T00:00:00Z | qualificatori  | fonti Q1420342
+Date discordanti: Nascita: 13/07/100 a.C. (16 fonti) o 12/07/100 a.C. (7 fonti); scartata perché indicata da una sola fonte: 102 a.C. (Fonte Wikidata Q1420342).
+
+## Luoghi
+nascita: Q220 Roma | Italia | tipo Città di confine | 41.893055555556, 12.482777777778
+    divisione: Unità amministrativa (P131) città metropolitana di Roma Capitale Q18288160
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Lazio Q1282
+    divisione: Paese (P17) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    nome storico: Colonia Lucia Annia Commodiana (la, 191 – 193)
+    in archivio: Stato Italia > Regione Lazio > Provincia città metropolitana di Roma Capitale > Comune Roma [automatico]
+morte: Q944814 Teatro di Pompeo | Italia | tipo Teatro romano | 41.89527778, 12.47361111
+    divisione: Unità amministrativa (P131) Roma Q220
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) città metropolitana di Roma Capitale Q18288160
+    divisione: Paese (P17) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Lazio Q1282
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    in archivio: Stato Italia > Regione Lazio > Provincia città metropolitana di Roma Capitale > Comune Roma > luogo storico Teatro di Pompeo [automatico]
+sepoltura: Q1133288 Tempio del Divo Giulio | Italia | tipo Sito archeologico | 41.89203611, 12.48609167
+    divisione: Unità amministrativa (P131) Roma Q220
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) città metropolitana di Roma Capitale Q18288160
+    divisione: Paese (P17) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Lazio Q1282
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    in archivio: Stato Italia > Regione Lazio > Provincia città metropolitana di Roma Capitale > Comune Roma > luogo specifico Tempio del Divo Giulio (In rovina) [automatico]
+
+## Titoli
+Dittatore romano: n.  | 01/10/49 a.C. () – 15/03/44 a.C. () | Q236885 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39): 01/10/49 a.C. – 15/03/44 a.C.
+Questore: n.  | 69 a.C. () – 69 a.C. () | Q189430 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39): 69 a.C. – 69 a.C.
+Edile curule: n.  | 65 a.C. () – 65 a.C. () | Q5413489 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39): 65 a.C. – 65 a.C.
+Senatore romano: n.  |  () – 44 a.C. () | Q20056508 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39):  – 44 a.C.
+Console: n. 1 | 59 a.C. () – 59 a.C. () | Q40779 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39): 59 a.C. – 59 a.C.
+Console: n. 2 | 48 a.C. () – 48 a.C. () | Q40779 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39) n. 2: 48 a.C. – 48 a.C.
+Console: n. 3 | 46 a.C. () – 46 a.C. () | Q40779 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39) n. 3: 46 a.C. – 46 a.C.
+Console: n. 4 | 45 a.C. () – 45 a.C. () | Q40779 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39) n. 4: 45 a.C. – 45 a.C.
+Console: n. 5 | 44 a.C. () – 44 a.C. () | Q40779 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39) n. 5: 44 a.C. – 44 a.C.
+Flamine diale: n.  | 84 a.C. () – 81 a.C. () | Q1426927 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39): 84 a.C. – 81 a.C.
+Pontefice: n.  | 73 a.C. () – 63 a.C. () | Q952844 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39): 73 a.C. – 63 a.C.
+Pontefice massimo: n.  | 63 a.C. () – 44 a.C. () | Q212943 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39): 63 a.C. – 44 a.C.
+Governatore provinciale romano: n. 2 | 58 a.C. () – 49 a.C. () | Q1190123 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39): 58 a.C. – 49 a.C.
+Governatore provinciale romano: n. 1 | 61 a.C. () – 60 a.C. () | Q1190123 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39) n. 2: 61 a.C. – 60 a.C.
+Pretore: n.  | 62 a.C. () – 62 a.C. () | Q172907 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39): 62 a.C. – 62 a.C.
+Magistrato monetario: n.  | 49 a.C. () – 44 a.C. () | Q1861571 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39): 49 a.C. – 44 a.C.
+
+## Introduzioni di Wikipedia
+it: Gaio Giulio Cesare | nato 13/7/-100 a Roma [Q220] | morto 15/3/-44 a Roma [Q220]
+en: Julius Caesar | nato 13/7/-100 a Suburra, Rome [Q220] | morto 15/3/-44 a Theatre of Pompey, Rome [Q220]
+de: Gaius Iulius Caesar | nato 13/7/-100 a Rom [Q220] | morto 15/3/-44 a Rom [Q220]
+fr: Jules César | nato 13/7/-100 a Rome [Q220] | morto 15/3/-44 a Rome [Q220]
+es: Julio César | nato 13/7/-100 a Roma, República romana [Q220] | morto 15/3/-44 a Roma, República romana [Q220]
+nl: Julius Caesar | nato 13/7/-100 a Rome [Q220] | morto 15/3/-44 a Rome [Q220]
+wikidata: Q1048 | nato 13/7/-100 a Roma [Q220] | morto 15/3/-44 a Teatro di Pompeo [Q220]
+Concordanza: Green: Le edizioni di Wikipedia concordano su date e luoghi di nascita e morte.
+    italiano: 13 luglio 100 a.C., Roma – 15 marzo 44 a.C., Roma | Concorda con la maggioranza.
+    inglese: 12 o 13 luglio 100 a.C., Suburra, Rome – 15 marzo 44 a.C., Theatre of Pompey, Rome | Concorda con la maggioranza.
+    tedesco: 13 luglio 100 a.C., Rom – 15 marzo 44 a.C., Rom | Concorda con la maggioranza.
+    francese: 13 luglio 100 a.C., Rome – 15 marzo 44 a.C., Rome | Concorda con la maggioranza.
+    spagnolo: 12 o 13 luglio 100 a.C., Roma, República romana – 15 marzo 44 a.C., Roma, República romana | Concorda con la maggioranza.
+    olandese: 12 o 13 luglio 100 a.C., Rome – 15 marzo 44 a.C., Rome | Concorda con la maggioranza.
+    Wikidata: 13 luglio 100 a.C., Roma – 15 marzo 44 a.C., Teatro di Pompeo | Concorda con la maggioranza.
+
+## Parenti e relazioni
+Padre: Q314710
+Madre: Q232725
+Coniugi: Q235423, Q234825, Q235627
+Figli: Q235087, Q39589, Q1405
+Relazioni: 
+Eventi: Q17768966, Q106648268, Q1238338, Q202161

@@ -22,11 +22,21 @@ public static class ImportedPersonCreator
             Surname = import.Surname.Trim(),
             Suffix = import.Suffix.Trim(),
             Family = import.Family.Trim(),
+            Gens = import.Gens.Trim(),
             Sesso = import.Sesso,
             Nickname = import.Nickname.Trim(),
             MainTitle = import.MainTitle.Trim(),
             Titles = [.. import.Titles.Where(t => !t.IsEmpty()).Select(t => t.Clone())],
             LocalizedNames = LocalizedPersonName.Normalize(import.LocalizedNames),
+            Praenomen = import.Praenomen.Trim(),
+            Nomen = import.Nomen.Trim(),
+            Cognomen = import.Cognomen.Trim(),
+            Agnomen = import.Agnomen.Trim(),
+            NomeLatino = import.NomeLatino.Trim(),
+            Prenome = import.Prenome.Trim(),
+            Gentilizio = import.Gentilizio.Trim(),
+            CognomeRomano = import.CognomeRomano.Trim(),
+            Agnome = import.Agnome.Trim(),
             Birth = birth,
             Death = death,
             BirthCalendario = ImportedCalendar(import.BirthDates),
@@ -38,8 +48,8 @@ public static class ImportedPersonCreator
             WikipediaExtract = import.Extract,
             WikidataId = import.WikidataId,
             WikiTreeId = import.WikiTreeId,
-            BirthDateEvidence = DateEvidenceBuilder.Build(birth, string.Empty, import.BirthDates, citation),
-            DeathDateEvidence = DateEvidenceBuilder.Build(death, string.Empty, import.DeathDates, citation),
+            BirthDateEvidence = DateEvidenceBuilder.Build(birth, string.Empty, import.AllBirthEvidence, citation),
+            DeathDateEvidence = DateEvidenceBuilder.Build(death, string.Empty, import.AllDeathEvidence, citation),
             BirthPlaces = [.. import.BirthPlaces],
             DeathPlaces = [.. import.DeathPlaces],
             BurialPlaces = [.. import.BurialPlaces],
@@ -47,12 +57,13 @@ public static class ImportedPersonCreator
         };
     }
 
+    // Ipotesi separate da «;», nel formato delle date in uso (le date salvate con un formato precedente si riscrivono).
     internal static string FormatDates(IEnumerable<HistoricalDateEvidence> evidence) =>
-        string.Join("; ", evidence.Select(item => item.Value).Where(value => value.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase));
+        string.Join("; ", evidence.Where(item => !item.Scartata).Select(item => DateFormats.Normalize(item.Value)).Where(value => value.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase));
 
     // Le date Wikidata al giorno o al mese registrate nel calendario giuliano fanno proporre quel calendario.
     internal static string ImportedCalendar(IEnumerable<HistoricalDateEvidence> evidence)
-        => evidence.Any(e => e.Calendario == HistoricalCalendar.Giuliano && e.Precision is "giorno" or "mese")
+        => evidence.Any(e => !e.Scartata && e.Calendario == HistoricalCalendar.Giuliano && e.Precision is "giorno" or "mese")
             ? HistoricalCalendar.Giuliano
             : HistoricalCalendar.NonIndicato;
 
@@ -70,7 +81,7 @@ public static class ImportedPersonCreator
         person.BurialPlace = PlaceText(store, person.BurialLuogoId, person.BurialLuogoSpecificoId);
 
         store.Add(person);
-        RegisterDynasties(store, person.Family, import);
+        RegisterDynasties(store, person.Family, import, gens: person.Gens);
         LinkRelatives(store, person.Id, import);
         return (person, unresolved);
     }
@@ -102,23 +113,31 @@ public static class ImportedPersonCreator
     private static string PlaceText(PeopleStore store, int? luogoId, int? specificoId)
         => luogoId is null && specificoId is null ? string.Empty : store.DescribeRole(luogoId, specificoId).DisplayText;
 
-    // Ogni famiglia scritta diventa una dinastia; quelle importate si collegano alla dinastia di cui sono ramo.
-    // Restituisce false se la registrazione non è riuscita (la scheda resta comunque salvata).
-    public static bool RegisterDynasties(PeopleStore store, string family, WikipediaImportResult? import)
+    // Ogni famiglia scritta diventa una dinastia (o una gens, secondo writtenType), ogni nome del campo Gens una gens;
+    // quelle importate si collegano alla dinastia di cui sono ramo. Le importate vanno per prime: così il loro tipo
+    // (gens da P5025) non dipende da quello dei nomi scritti. Restituisce false se la registrazione non è riuscita
+    // (la scheda resta salvata).
+    public static bool RegisterDynasties(PeopleStore store, string family, WikipediaImportResult? import, string writtenType = TipiDinastia.Dinastia, string gens = "")
     {
         try
         {
-            foreach (var name in PeopleGrouping.FamilyNames(family))
-            {
-                store.EnsureDynasty(name, string.Empty, null);
-            }
-
             foreach (var dynasty in import?.Dynasties.Where(d => d.Nome.Trim().Length > 0) ?? [])
             {
+                var type = dynasty.Gens ? TipiDinastia.Gens : TipiDinastia.Dinastia;
                 int? parentId = dynasty.ParentNome.Trim().Length > 0
-                    ? store.EnsureDynasty(dynasty.ParentNome, dynasty.ParentWikidataId, null)
+                    ? store.EnsureDynasty(dynasty.ParentNome, dynasty.ParentWikidataId, null, type)
                     : null;
-                store.EnsureDynasty(dynasty.Nome, dynasty.WikidataId, parentId);
+                store.EnsureDynasty(dynasty.Nome, dynasty.WikidataId, parentId, type);
+            }
+
+            foreach (var name in PeopleGrouping.FamilyNames(family))
+            {
+                store.EnsureDynasty(name, string.Empty, null, writtenType);
+            }
+
+            foreach (var name in PeopleGrouping.FamilyNames(gens))
+            {
+                store.EnsureDynasty(name, string.Empty, null, TipiDinastia.Gens);
             }
 
             return true;

@@ -109,15 +109,7 @@ internal static partial class InfoboxReignParser
     }
 
     internal static string Format(TitleDate date)
-    {
-        var year = WikipediaImportService.FormatYear(Math.Abs(date.Year), date.Year < 0);
-        return date switch
-        {
-            { Month: { } m, Day: { } d } => $"{d:00}/{m:00}/{year}",
-            { Month: { } m } => $"{m:00}/{year}",
-            _ => year,
-        };
-    }
+        => DateFormats.Format(date.Year, date.Month, date.Day);
 
     // Template che contengono la data vengono sostituiti dal loro testo, gli altri (note, età…) eliminati.
     private static string CleanValue(string value)

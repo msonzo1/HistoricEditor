@@ -1,0 +1,1 @@
+{"url":"https://www.wikidata.org/w/api.php?action=wbgetentities\u0026ids=Q111987263%7CQ3202662\u0026props=sitelinks\u0026sitefilter=itwiki\u0026format=json","response":{"entities":{"Q111987263":{"type":"item","id":"Q111987263","sitelinks":{}},"Q3202662":{"type":"item","id":"Q3202662","sitelinks":{}}},"success":1}}

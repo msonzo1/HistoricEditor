@@ -10,6 +10,23 @@ public class DateEvidenceBuilderTests
         Sources = [new SourceCitation { Title = "Wikipedia in italiano", Url = "https://it.wikipedia.org/wiki/Leonardo" }],
     };
 
+    // Le date scartate all'import (una sola fonte) restano tra le fonti come discordanti; scritte nel campo tornano normali.
+    [Fact]
+    public void DiscardedDates_AreKept_UntilWrittenInTheField()
+    {
+        var discarded = new HistoricalDateEvidence { Value = "102 a.C.", Scartata = true, Sources = [new SourceCitation { Title = "Fonte Wikidata Q1420342" }] };
+        var kept = new HistoricalDateEvidence { Value = "13/07/100 a.C." };
+
+        var evidence = DateEvidenceBuilder.Build("13/07/100 a.C.", string.Empty, [kept, discarded], null);
+        Assert.Equal([("13/07/100 a.C.", false), ("102 a.C.", true)], evidence.Select(e => (e.Value, e.Scartata)));
+        Assert.Equal("13/07/100 a.C.", ImportedPersonCreator.FormatDates(evidence));
+        Assert.Contains("scartata", DateDiscrepancy.Describe("Nascita", evidence));
+
+        var written = DateEvidenceBuilder.Build("13/07/100 a.C.; 102 a.C.", string.Empty, [kept, discarded], null);
+        Assert.All(written, e => Assert.False(e.Scartata));
+        Assert.False(DateDiscrepancy.Discarded(written).Count > 0);
+    }
+
     [Fact]
     public void UserSourcesAreNotPairedByPosition()
     {

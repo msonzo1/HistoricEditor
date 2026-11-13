@@ -17,10 +17,16 @@ public static class DateEvidenceBuilder
         IEnumerable<HistoricalDateEvidence>? importedEvidence,
         SourceCitation? inputCitation)
     {
-        var values = SplitUserValues(dateText);
+        // Le date si confrontano nel formato in uso: una data importata come «17/11/9 d.C.» è la stessa di «17/11/0009».
+        var values = SplitUserValues(DateFormats.Normalize(dateText));
         var evidence = importedEvidence?
-            .Where(item => values.Contains(item.Value, StringComparer.OrdinalIgnoreCase))
-            .Select(Clone)
+            .Where(item => values.Contains(DateFormats.Normalize(item.Value), StringComparer.OrdinalIgnoreCase))
+            .Select(item =>
+            {
+                var copy = Clone(item);
+                copy.Value = DateFormats.Normalize(copy.Value);
+                return copy;
+            })
             .ToList() ?? [];
         var knownUrls = evidence.SelectMany(e => e.Sources).Select(s => s.Url).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var extraSources = SplitUserValues(sourceText).Where(url => !knownUrls.Contains(url)).ToList();
@@ -55,6 +61,22 @@ public static class DateEvidenceBuilder
             evidence[0].Sources.AddRange(ExtraCitations());
         }
 
+        // Le date scartate all'import (una sola fonte) restano tra le fonti come discordanti, finché non si scrivono
+        // nel campo: in quel caso tornano date come le altre.
+        foreach (var item in evidence.Where(e => e.Scartata))
+        {
+            item.Scartata = false;
+        }
+
+        evidence.AddRange((importedEvidence ?? [])
+            .Where(item => item.Scartata && !values.Contains(DateFormats.Normalize(item.Value), StringComparer.OrdinalIgnoreCase))
+            .Select(item =>
+            {
+                var copy = Clone(item);
+                copy.Value = DateFormats.Normalize(copy.Value);
+                return copy;
+            })
+            .DistinctBy(item => item.Value, StringComparer.OrdinalIgnoreCase));
         return evidence;
     }
 
@@ -67,6 +89,7 @@ public static class DateEvidenceBuilder
         Calendario = source.Calendario,
         Qualifiers = source.Qualifiers.ToDictionary(pair => pair.Key, pair => pair.Value.ToList(), StringComparer.Ordinal),
         Sources = source.Sources.Select(Clone).ToList(),
+        Scartata = source.Scartata,
     };
 
     private static SourceCitation Clone(SourceCitation source) => new()

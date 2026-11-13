@@ -53,7 +53,7 @@ public class ImportedPersonCreatorTests
         });
 
         Assert.Equal("Carlo V", person.DisplayName);
-        Assert.Equal("24 febbraio 1500", person.Birth);
+        Assert.Equal("24/02/1500", person.Birth); // riscritta nel formato delle date in uso
         Assert.Equal(HistoricalCalendar.Giuliano, person.BirthCalendario);
         Assert.Equal(HistoricalCalendar.NonIndicato, person.DeathCalendario);
         Assert.Equal("Q32500", person.WikidataId);

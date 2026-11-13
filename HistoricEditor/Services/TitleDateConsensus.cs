@@ -137,7 +137,7 @@ public static partial class TitleDateConsensus
 
     private static string Show(string text) => string.IsNullOrWhiteSpace(text) ? "—" : text.Trim();
 
-    // «25/12/800», «12/800», «800», «44 a.C.», «50 d.C.».
-    [GeneratedRegex(@"^(?:(?:(?<day>\d{1,2})/)?(?<month>\d{1,2})/)?(?<year>\d{1,4})(?:\s*(?<bc>a\.\s*C\.)|\s*d\.\s*C\.)?$", RegexOptions.IgnoreCase)]
+    // «25/12/800», «12/800», «800», «44 a.C.», «50 d.C.»; anche con «.» o «-» al posto di «/» («25.12.0800»).
+    [GeneratedRegex(@"^(?:(?:(?<day>\d{1,2})(?<s>[/.\-]))?(?<month>\d{1,2})(?(s)\k<s>|[/.\-]))?(?<year>\d{1,4})(?:\s*(?<bc>a\.\s*C\.)|\s*d\.\s*C\.)?$", RegexOptions.IgnoreCase)]
     private static partial Regex DatePattern();
 }

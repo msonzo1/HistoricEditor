@@ -1,0 +1,1 @@
+{"url":"https://it.wikipedia.org/w/api.php?action=query\u0026prop=pageprops\u0026ppprop=wikibase_item\u0026redirects=1\u0026format=json\u0026formatversion=2\u0026titles=Imperatore%20romano","response":{"batchcomplete":true,"query":{"pages":[{"pageid":57446,"ns":0,"title":"Imperatore romano","pageprops":{"wikibase_item":"Q842606"}}]}}}
