@@ -31,6 +31,7 @@ public partial class EventsWindow : Window
     private int? placeId;
     private int? specificPlaceId;
     private bool loading;
+    private string currentStyle = HistoricalCalendar.StileComune;
 
     // Vero se è stata creata almeno una nuova scheda dal selettore dei partecipanti.
     public bool PeopleChanged { get; private set; }
@@ -45,7 +46,6 @@ public partial class EventsWindow : Window
         Closed += (_, _) => wikiCancellation?.Cancel();
         QualifierBox.ItemsSource = DataEvento.Qualificatori;
         CalendarBox.ItemsSource = HistoricalCalendar.Calendari;
-        StyleBox.ItemsSource = HistoricalCalendar.Stili;
         ParticipantList.ItemsSource = participants;
         LoadPeople();
         if (focusPersonId is int id && people.TryGetValue(id, out var person))
@@ -127,7 +127,7 @@ public partial class EventsWindow : Window
         Date1Box.Text = evento?.Data1 ?? string.Empty;
         Date2Box.Text = evento?.Data2 ?? string.Empty;
         CalendarBox.SelectedItem = HistoricalCalendar.CalendarInfo(evento?.Calendario);
-        StyleBox.SelectedItem = HistoricalCalendar.StyleInfo(evento?.Stile);
+        currentStyle = evento?.Stile ?? HistoricalCalendar.StileComune;
         DescriptionBox.Text = evento?.Descrizione ?? string.Empty;
         WikidataBox.Text = evento?.WikidataId ?? string.Empty;
         SetPlace(evento?.LuogoId, evento?.LuogoSpecificoId);
@@ -191,7 +191,7 @@ public partial class EventsWindow : Window
         var info = QualifierBox.SelectedItem as DataQualificatoreInfo ?? DataEvento.Qualificatori[0];
         var visibility = info.Intervallo ? Visibility.Visible : Visibility.Collapsed;
         Date2Label.Visibility = visibility;
-        Date2Box.Visibility = visibility;
+        Date2Panel.Visibility = visibility;
         Date2Label.Content = info.Separatore;
         Date1Label.Content = info.Codice switch
         {
@@ -230,19 +230,45 @@ public partial class EventsWindow : Window
         }
 
         DatePreview.Text = string.Join(Environment.NewLine, lines);
-        var styleInfo = HistoricalCalendar.StyleInfo(style);
-        StyleBox.ToolTip = styleInfo.Descrizione;
-        System.Windows.Automation.AutomationProperties.SetHelpText(StyleBox, styleInfo.Descrizione);
     }
 
     private string SelectedCalendar => (CalendarBox.SelectedItem as CalendarOption)?.Codice ?? HistoricalCalendar.NonIndicato;
 
-    private string SelectedStyle => (StyleBox.SelectedItem as YearStyleOption)?.Codice ?? HistoricalCalendar.StileComune;
+    // Lo stile non si sceglie più nel modulo: le nuove date usano l'anno comune (1° gennaio);
+    // gli eventi salvati in passato con un altro stile lo conservano finché la data non passa dal convertitore.
+    private string SelectedStyle => currentStyle;
 
     private void OpenConverter_Click(object sender, RoutedEventArgs e)
     {
         var calendar = SelectedCalendar;
-        new CalendarConverterWindow(Date1Box.Text, calendar.Length > 0 ? calendar : HistoricalCalendar.Giuliano, SelectedStyle) { Owner = this }.Show();
+        var converter = new CalendarConverterWindow(Date1Box.Text, calendar.Length > 0 ? calendar : HistoricalCalendar.Giuliano, currentStyle, pickDate: true) { Owner = this };
+        if (converter.ShowDialog() == true)
+        {
+            var oldStyle = currentStyle;
+            var interval = (QualifierBox.SelectedItem as DataQualificatoreInfo)?.Intervallo == true;
+            var message = string.Empty;
+
+            // La seconda data era scritta nello stesso stile della prima: va portata anch'essa all'anno moderno.
+            if (interval && oldStyle.Length > 0 && !string.IsNullOrWhiteSpace(Date2Box.Text))
+            {
+                if (HistoricalCalendar.ToModernText(Date2Box.Text, oldStyle) is string second)
+                {
+                    message = second == Date2Box.Text.Trim() ? string.Empty : $"Anche la seconda data è stata portata all’anno moderno: {second}.";
+                    Date2Box.Text = second;
+                }
+                else
+                {
+                    message = $"Controlla la seconda data: era scritta in {HistoricalCalendar.Suffix(null, oldStyle)} e non è stato possibile convertirla da sola.";
+                }
+            }
+
+            currentStyle = HistoricalCalendar.StileComune;
+            Date1Box.Text = converter.ResultDate;
+            CalendarBox.SelectedItem = HistoricalCalendar.CalendarInfo(converter.ResultCalendar);
+            UpdateDateFields();
+            EditorMessage.Text = message;
+            Date1Box.Focus();
+        }
     }
 
     private void ParticipantList_SelectionChanged(object sender, SelectionChangedEventArgs e)

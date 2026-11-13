@@ -4,9 +4,12 @@ namespace HistoricEditor;
 
 public partial class CalendarConverterWindow : Window
 {
-    public CalendarConverterWindow(string? date = null, string? calendar = null, string? style = null)
+    // Con pickDate il convertitore mostra «Usa questa data» e restituisce la data con l'anno moderno.
+    public CalendarConverterWindow(string? date = null, string? calendar = null, string? style = null, bool pickDate = false)
     {
         InitializeComponent();
+        UseButton.Visibility = pickDate ? Visibility.Visible : Visibility.Collapsed;
+        CloseButton.Content = pickDate ? "Annulla" : "Chiudi";
         CalendarBox.ItemsSource = HistoricalCalendar.Calendari.Where(c => c.Codice.Length > 0).ToList();
         StyleBox.ItemsSource = HistoricalCalendar.Stili;
         CountryBox.ItemsSource = HistoricalCalendar.Adozioni;
@@ -21,6 +24,11 @@ public partial class CalendarConverterWindow : Window
             DateBox.SelectAll();
         };
     }
+
+    // Data con l'anno moderno (inizio il 1° gennaio), nel calendario scelto.
+    public string ResultDate { get; private set; } = string.Empty;
+
+    public string ResultCalendar { get; private set; } = HistoricalCalendar.NonIndicato;
 
     private void Input_Changed(object sender, RoutedEventArgs e)
     {
@@ -37,6 +45,8 @@ public partial class CalendarConverterWindow : Window
         StyleDescription.Text = HistoricalCalendar.StyleInfo(style).Descrizione;
         ResultGrid.ItemsSource = null;
         CopyButton.IsEnabled = false;
+        UseButton.IsEnabled = false;
+        ResultDate = string.Empty;
 
         if (string.IsNullOrWhiteSpace(DateBox.Text))
         {
@@ -58,6 +68,13 @@ public partial class CalendarConverterWindow : Window
 
         ResultGrid.ItemsSource = HistoricalCalendar.ConvertAll(written, calendar, style);
         CopyButton.IsEnabled = true;
+        if (HistoricalCalendar.StyleShift(written, style) is not null)
+        {
+            ResultDate = DateFormats.Format(HistoricalCalendar.ToModern(written, style));
+            ResultCalendar = calendar;
+            UseButton.IsEnabled = true;
+        }
+
         MessageText.Text = string.Join(" ", Notes(written, calendar, style));
     }
 
@@ -106,6 +123,14 @@ public partial class CalendarConverterWindow : Window
             {
                 MessageText.Text = "Impossibile copiare negli appunti: riprova.";
             }
+        }
+    }
+
+    private void Use_Click(object sender, RoutedEventArgs e)
+    {
+        if (ResultDate.Length > 0)
+        {
+            DialogResult = true;
         }
     }
 

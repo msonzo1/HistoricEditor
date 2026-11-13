@@ -327,7 +327,7 @@ public partial class EventsWindow
             Date1Box.Text = import.Data1;
             Date2Box.Text = import.Data2;
             CalendarBox.SelectedItem = HistoricalCalendar.CalendarInfo(import.Calendario);
-            StyleBox.SelectedItem = HistoricalCalendar.StyleInfo(HistoricalCalendar.StileComune);
+            currentStyle = HistoricalCalendar.StileComune;
         }
 
         if (import.Descrizione.Length > 0)

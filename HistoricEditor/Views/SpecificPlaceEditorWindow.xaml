@@ -1,6 +1,7 @@
 <Window x:Class="HistoricEditor.SpecificPlaceEditorWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:HistoricEditor"
         Title="Luogo specifico"
         Height="680" Width="540"
         WindowStartupLocation="CenterOwner"
@@ -42,7 +43,10 @@
                     </StackPanel>
                     <StackPanel Grid.Column="2">
                         <Label Content="Data di distruzione" Target="{Binding ElementName=DataDistruzioneBox}" />
-                        <TextBox x:Name="DataDistruzioneBox" Padding="8,6" AutomationProperties.Name="Data di distruzione" />
+                        <DockPanel>
+                            <local:DatePickerButton DockPanel.Dock="Right" Target="{Binding ElementName=DataDistruzioneBox}" AutomationProperties.Name="Scegli la data di distruzione dal calendario" />
+                            <TextBox x:Name="DataDistruzioneBox" Padding="8,6" AutomationProperties.Name="Data di distruzione" />
+                        </DockPanel>
                     </StackPanel>
                 </Grid>
 

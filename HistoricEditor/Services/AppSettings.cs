@@ -25,6 +25,12 @@ public sealed class AppSettings
     // Dopo l'import di un personaggio, importa anche i suoi eventi da Wikidata (operazione lunga: disattivata in modo predefinito).
     public bool ImportPersonEvents { get; set; }
 
+    // Nell'elenco delle persone mostra il nome latino dei personaggi romani sotto quello italiano.
+    public bool ShowLatinNames { get; set; }
+
+    // Formato delle date scritte dall'app e riconosciute nei campi (DateFormats): GG/MM/AAAA, GG.MM.AAAA o GG-MM-AAAA.
+    public string DateFormat { get; set; } = DateFormats.Slash;
+
     public PersonOpenMode PersonOpenMode
         => Enum.TryParse<PersonOpenMode>(OpenMode, ignoreCase: true, out var mode) && Enum.IsDefined(mode) ? mode : PersonOpenMode.Edit;
 }

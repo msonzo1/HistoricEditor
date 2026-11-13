@@ -121,16 +121,22 @@
                     <Label Grid.Row="0" Grid.Column="0" Content="_Quando" Target="{Binding ElementName=QualifierBox}" />
                     <ComboBox Grid.Row="1" Grid.Column="0" x:Name="QualifierBox" DisplayMemberPath="Etichetta" SelectionChanged="Field_Changed" AutomationProperties.Name="Tipo di data" />
                     <Label Grid.Row="0" Grid.Column="2" x:Name="Date1Label" Content="_Data" Target="{Binding ElementName=Date1Box}" />
-                    <TextBox Grid.Row="1" Grid.Column="2" x:Name="Date1Box" Padding="8,6" TextChanged="Field_Changed" AutomationProperties.Name="Data dell’evento" ToolTip="Testo libero: es. 24 febbraio 1525, 1525, XV secolo, 44 a.C." />
-                    <Label Grid.Row="1" Grid.Column="3" x:Name="Date2Label" Content="a" Target="{Binding ElementName=Date2Box}" VerticalAlignment="Center" Margin="6,0" />
-                    <TextBox Grid.Row="1" Grid.Column="4" x:Name="Date2Box" Padding="8,6" TextChanged="Field_Changed" AutomationProperties.Name="Seconda data" />
-                    <Label Grid.Row="2" Grid.Column="0" Content="Calendario" Target="{Binding ElementName=CalendarBox}" Margin="0,6,0,0" />
-                    <ComboBox Grid.Row="3" Grid.Column="0" x:Name="CalendarBox" SelectionChanged="Field_Changed" AutomationProperties.Name="Calendario delle date" ToolTip="Calendario in cui sono scritte le date: giuliano (prima della riforma del 1582, e dopo in molti paesi) o gregoriano" />
-                    <Label Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="3" Content="Stile dell’anno" Target="{Binding ElementName=StyleBox}" Margin="0,6,0,0" />
-                    <DockPanel Grid.Row="3" Grid.Column="2" Grid.ColumnSpan="3">
-                        <Button DockPanel.Dock="Right" Content="Convertitore…" Click="OpenConverter_Click" Padding="12,6" Margin="6,0,0,0" ToolTip="Apre il convertitore con la data dell’evento" AutomationProperties.Name="Apri il convertitore di date con la data dell’evento" />
-                        <ComboBox x:Name="StyleBox" SelectionChanged="Field_Changed" AutomationProperties.Name="Stile di inizio dell’anno" />
+                    <DockPanel Grid.Row="1" Grid.Column="2">
+                        <local:DatePickerButton DockPanel.Dock="Right" Target="{Binding ElementName=Date1Box}" AutomationProperties.Name="Scegli la data dell’evento dal calendario" />
+                        <TextBox x:Name="Date1Box" Padding="8,6" TextChanged="Field_Changed" AutomationProperties.Name="Data dell’evento" ToolTip="Testo libero: es. 24 febbraio 1525, 1525, XV secolo, 44 a.C." />
                     </DockPanel>
+                    <Label Grid.Row="1" Grid.Column="3" x:Name="Date2Label" Content="a" Target="{Binding ElementName=Date2Box}" VerticalAlignment="Center" Margin="6,0" />
+                    <DockPanel Grid.Row="1" Grid.Column="4" x:Name="Date2Panel">
+                        <local:DatePickerButton DockPanel.Dock="Right" Target="{Binding ElementName=Date2Box}" AutomationProperties.Name="Scegli la seconda data dal calendario" />
+                        <TextBox x:Name="Date2Box" Padding="8,6" TextChanged="Field_Changed" AutomationProperties.Name="Seconda data" />
+                    </DockPanel>
+                    <StackPanel Grid.Row="2" Grid.Column="0" Orientation="Horizontal" Margin="0,6,0,0">
+                        <Label Content="Calendario" Target="{Binding ElementName=CalendarBox}" />
+                        <ContentControl Style="{StaticResource InfoIcon}" ToolTip="{x:Static local:InfoTexts.CalendariEStili}" AutomationProperties.Name="Informazioni sui calendari" />
+                    </StackPanel>
+                    <ComboBox Grid.Row="3" Grid.Column="0" x:Name="CalendarBox" SelectionChanged="Field_Changed" AutomationProperties.Name="Calendario delle date" ToolTip="Calendario in cui sono scritte le date: giuliano (prima della riforma del 1582, e dopo in molti paesi) o gregoriano" />
+                    <Button Grid.Row="3" Grid.Column="2" Content="Convertitore…" Click="OpenConverter_Click" Padding="12,6" HorizontalAlignment="Left"
+                            ToolTip="Per le date prese da un documento originale: calcola l’anno moderno e lo riporta nella prima data" AutomationProperties.Name="Apri il convertitore di date con la data dell’evento" />
                 </Grid>
                 <TextBlock Grid.Row="2" Grid.ColumnSpan="3" x:Name="DatePreview" Foreground="{DynamicResource QuietBrush}" FontSize="11" Margin="0,0,0,10" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
 

@@ -85,6 +85,15 @@ public sealed class HistoricalCalendarTests
         => Assert.Equal(expected, HistoricalCalendar.StyleShift(new CalendarDate(1500, month, day), style));
 
     [Fact]
+    public void ToModernText_ConvertsSecondDateOfOldEvents()
+    {
+        Assert.Equal("20/03/1526", HistoricalCalendar.ToModernText("20 marzo 1525", HistoricalCalendar.StileFiorentino));
+        Assert.Equal("10/04/1525", HistoricalCalendar.ToModernText("10 aprile 1525", HistoricalCalendar.StileFiorentino));
+        Assert.Null(HistoricalCalendar.ToModernText("marzo 1525", HistoricalCalendar.StileFiorentino));
+        Assert.Null(HistoricalCalendar.ToModernText("XV secolo", HistoricalCalendar.StileFiorentino));
+    }
+
+    [Fact]
     public void StyleShift_IsNullWhenAmbiguous()
     {
         Assert.Null(HistoricalCalendar.StyleShift(new CalendarDate(1500), HistoricalCalendar.StileFiorentino));
@@ -232,5 +241,77 @@ public sealed class HistoricalCalendarTests
             Assert.Contains("non riconosciuta", window.MessageText.Text);
             window.Close();
         });
+    }
+
+    [Fact]
+    public void ConverterWindow_PickDate_ReturnsModernYear()
+    {
+        WpfTestThread.Run(() =>
+        {
+            var window = new CalendarConverterWindow("24 febbraio 1525", J, HistoricalCalendar.StileFiorentino, pickDate: true);
+            Assert.Equal(System.Windows.Visibility.Visible, window.UseButton.Visibility);
+            Assert.True(window.UseButton.IsEnabled);
+            Assert.Equal("24/02/1526", window.ResultDate);
+            Assert.Equal(J, window.ResultCalendar);
+
+            // Senza giorno lo stile fiorentino non basta a stabilire l'anno: la data non si può usare.
+            window.DateBox.Text = "marzo 1525";
+            window.UpdateResults();
+            Assert.False(window.UseButton.IsEnabled);
+            window.Close();
+        });
+    }
+
+    [Fact]
+    public void ConverterWindow_DefaultsToCommonStyle()
+    {
+        WpfTestThread.Run(() =>
+        {
+            var window = new CalendarConverterWindow("24 febbraio 1525");
+            Assert.Equal(HistoricalCalendar.StileComune, ((YearStyleOption)window.StyleBox.SelectedItem).Codice);
+            Assert.Equal(System.Windows.Visibility.Collapsed, window.UseButton.Visibility);
+            window.Close();
+        });
+    }
+
+    [Fact]
+    public void InfoTexts_ExplainCalendarsAndEveryStyle()
+    {
+        Assert.Contains("Giuliano", InfoTexts.Calendari);
+        Assert.Contains("Gregoriano", InfoTexts.Calendari);
+        Assert.All(HistoricalCalendar.Stili, s => Assert.Contains(s.Etichetta, InfoTexts.StiliAnno));
+        Assert.StartsWith(InfoTexts.Calendari, InfoTexts.CalendariEStili);
+        Assert.Contains("Convertitore…", InfoTexts.CalendariEStili);
+    }
+
+    [Fact]
+    public void ConverterWindow_InfoIconsShowExplanationsOnHover()
+    {
+        WpfTestThread.Run(() =>
+        {
+            var window = new CalendarConverterWindow("24 febbraio 1525");
+            var icons = FindAll<System.Windows.Controls.ContentControl>(window)
+                .Where(c => c.ToolTip is string tip && (tip == InfoTexts.Calendari || tip == InfoTexts.StiliAnno))
+                .ToList();
+            Assert.Equal(2, icons.Count);
+            Assert.All(icons, i => Assert.True(i.Focusable));
+            window.Close();
+        });
+    }
+
+    private static IEnumerable<T> FindAll<T>(System.Windows.DependencyObject root) where T : System.Windows.DependencyObject
+    {
+        foreach (var child in System.Windows.LogicalTreeHelper.GetChildren(root).OfType<System.Windows.DependencyObject>())
+        {
+            if (child is T match)
+            {
+                yield return match;
+            }
+
+            foreach (var nested in FindAll<T>(child))
+            {
+                yield return nested;
+            }
+        }
     }
 }

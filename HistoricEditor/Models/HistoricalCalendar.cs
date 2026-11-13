@@ -84,7 +84,7 @@ public static partial class HistoricalCalendar
         new("Grecia", 1923, 3, 1, "Al 15 febbraio 1923 seguì il 1° marzo."),
     ];
 
-    private static readonly string[] MonthNames =
+    internal static readonly string[] MonthNames =
         ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"];
 
     private static readonly string[] DayNames = ["domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato"];
@@ -228,6 +228,17 @@ public static partial class HistoricalCalendar
     public static CalendarDate FromModern(CalendarDate date, string? style)
         => StyleShift(date, style) is int shift ? date with { Year = AddYears(date.Year, -shift) } : date;
 
+    // Testo di una data scritta in uno stile → stessa data con l'anno moderno; null se non si riconosce o se l'anno resta incerto.
+    public static string? ToModernText(string? text, string? style)
+    {
+        if (!TryParse(text, out var date) || StyleShift(date, style) is null)
+        {
+            return null;
+        }
+
+        return DateFormats.Format(ToModern(date, style));
+    }
+
     // Anno moderno per ordinare: tiene conto dello stile; se la data non si riconosce usa HistoricalYear.
     public static int? ModernYear(string? text, string? style)
     {
@@ -241,7 +252,8 @@ public static partial class HistoricalCalendar
 
     public static string Format(CalendarDate date)
     {
-        var year = date.Year < 0 ? $"{-date.Year} a.C." : date.Year < 100 ? $"{date.Year} d.C." : date.Year.ToString(CultureInfo.InvariantCulture);
+        // Testo descrittivo («23 giugno 79»): «a.C.» solo prima di Cristo, come nelle date dei campi.
+        var year = date.Year < 0 ? $"{-date.Year} a.C." : date.Year.ToString(CultureInfo.InvariantCulture);
         return date switch
         {
             { Month: int m, Day: int d } => $"{(d == 1 ? "1°" : d.ToString(CultureInfo.InvariantCulture))} {MonthNames[m - 1]} {year}",
@@ -371,7 +383,9 @@ public static partial class HistoricalCalendar
 
     private const string Era = @"(?:\s*(?<bc>a\.?\s*C\.?)(?!\p{L})|\s*d\.?\s*C\.?(?!\p{L}))?";
 
-    [GeneratedRegex(@"(?<!\d)(?:(?<d>\d{1,2})[/.])?(?<m>\d{1,2})[/.](?<y>\d{1,4})(?!\d)" + Era, RegexOptions.IgnoreCase)]
+    // Stesso separatore tra giorno, mese e anno («23/06/0079», «23.06.0079», «23-06-0079»); mese e anno con «-» solo
+    // con l'anno a quattro cifre («06-0079»), per non leggere come data un intervallo come «10-15».
+    [GeneratedRegex(@"(?<!\d)(?:(?<d>\d{1,2})(?<s>[/.\-]))?(?<m>\d{1,2})(?(s)\k<s>|(?:[/.]|-(?=\d{4}(?!\d))))(?<y>\d{1,4})(?!\d)" + Era, RegexOptions.IgnoreCase)]
     private static partial Regex NumericDatePattern();
 
     [GeneratedRegex(@"(?:(?<!\d)(?<d>\d{1,2})\s*[°º]?\s+)?\b(?<mn>genn(?:aio)?|gen|febb(?:raio)?|feb|marzo|mar|aprile|apr|maggio|mag|giugno|giu|luglio|lug|agosto|ago|settembre|sett?|ottobre|ott|novembre|nov|dicembre|dic)\.?\s+(?<y>\d{1,4})(?!\d)" + Era, RegexOptions.IgnoreCase)]

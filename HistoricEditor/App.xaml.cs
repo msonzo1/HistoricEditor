@@ -19,6 +19,7 @@ public partial class App : Application
         };
         AppDomain.CurrentDomain.UnhandledException += (_, args) => LogError(args.ExceptionObject as Exception);
         ThemeManager.Initialize();
+        DateFormats.Current = SettingsStore.Load().DateFormat;
         base.OnStartup(e);
 
         // L'archivio si apre prima della finestra: se non è utilizzabile l'app si chiude con un messaggio,

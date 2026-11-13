@@ -151,6 +151,41 @@
         </Setter>
     </Style>
 
+    <!--
+        «i» accanto all'etichetta di un campo: passandoci sopra (o portandoci il focus con Tab) la spiegazione compare
+        nel suggerimento, senza clic. Il testo va nel ToolTip; i lettori di schermo lo leggono come testo di aiuto.
+    -->
+    <Style x:Key="InfoIcon" TargetType="ContentControl">
+        <Setter Property="FocusVisualStyle" Value="{StaticResource KeyboardFocusVisual}" />
+        <Setter Property="Focusable" Value="True" />
+        <Setter Property="IsTabStop" Value="True" />
+        <Setter Property="Cursor" Value="Help" />
+        <Setter Property="Margin" Value="6,0,0,0" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="AutomationProperties.Name" Value="Informazioni" />
+        <Setter Property="ToolTipService.InitialShowDelay" Value="150" />
+        <Setter Property="ToolTipService.ShowDuration" Value="60000" />
+        <Setter Property="ToolTipService.ShowsToolTipOnKeyboardFocus" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContentControl">
+                    <Border x:Name="Root" Width="15" Height="15" CornerRadius="7.5" BorderThickness="1" BorderBrush="{DynamicResource SignalBrush}" Background="Transparent">
+                        <TextBlock Text="i" FontFamily="Georgia" FontStyle="Italic" FontWeight="Bold" FontSize="10"
+                                   Foreground="{DynamicResource SignalBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,1" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Root" Property="Background" Value="{DynamicResource AppSurfaceAlt}" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Root" Property="Background" Value="{DynamicResource AppSurfaceAlt}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- ================= ComboBox (moderno) ================= -->
 
     <Style x:Key="ComboToggle" TargetType="ToggleButton">
@@ -465,13 +500,19 @@
         <Setter Property="Padding" Value="8,5" />
         <Setter Property="FontSize" Value="12" />
         <Setter Property="HasDropShadow" Value="True" />
+        <!-- I suggerimenti lunghi (es. le «i») vanno a capo invece di allargarsi su tutto lo schermo. -->
+        <Setter Property="MaxWidth" Value="440" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ToolTip">
                     <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}" Padding="{TemplateBinding Padding}"
                             CornerRadius="6" SnapsToDevicePixels="True">
-                        <ContentPresenter />
+                        <ContentPresenter>
+                            <ContentPresenter.Resources>
+                                <Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap" /></Style>
+                            </ContentPresenter.Resources>
+                        </ContentPresenter>
                     </Border>
                 </ControlTemplate>
             </Setter.Value>
@@ -763,6 +804,7 @@
 				</Setter>
 		  </Style>
 		  <Style x:Key="ViewToggle" TargetType="RadioButton" BasedOn="{StaticResource ToolButton}" />
+		  <Style x:Key="OptionToggle" TargetType="ToggleButton" BasedOn="{StaticResource ToolButton}" />
 
 
     <!-- Schede di lettura (opere, eventi, dinastie) e sezioni della finestra principale. -->
