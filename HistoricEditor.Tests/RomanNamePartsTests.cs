@@ -144,4 +144,24 @@ public class RomanNamePartsTests
             Directory.Delete(dir, recursive: true);
         }
     }
+
+    // Nomi nel tempo dall'introduzione: solo coppie italiano/latino dello stesso nome; senza altri nomi oltre a quello
+    // iniziale non si importa nulla (resta il nome di Wikidata).
+    [Fact]
+    public void RomanNamesOverTime_ReadsOnlyNamePairs()
+    {
+        var known = new Dictionary<string, string> { ["Iulius"] = TipiParteNome.Nomen, ["Caesar"] = TipiParteNome.Cognomen };
+        Assert.Empty(WikipediaImportService.RomanNamesOverTime(
+            "Gaio Giulio Cesare (in latino: Gaius Iulius Caesar; Roma, 13 luglio 100 a.C. – Roma, 15 marzo 44 a.C.) è stato un militare. Nato a Roma (Italia) da famiglia patrizia…",
+            known, -100, null, ruler: false));
+
+        var names = WikipediaImportService.RomanNamesOverTime(
+            "Imperatore Cesare Augusto (in latino Imperator Caesar Augustus; Roma, 23 settembre 63 a.C. – Nola, 19 agosto 14) è stato il primo imperatore. Nato Gaio Ottavio Turino (Gaius Octavius Thurinus), divenne Gaio Giulio Cesare Ottaviano (Gaius Iulius Caesar Octavianus) con l'adozione.",
+            known, -63, -27, ruler: true);
+        Assert.Equal(["Gaio Ottavio Turino", "Gaio Giulio Cesare Ottaviano", "Imperatore Cesare Augusto"], names.Select(n => n.DisplayName));
+        Assert.Equal(("63 a.C.", "27 a.C."), (names[0].Dal, names[2].Dal));
+        // Dopo il nomen Iulius «Caesar» è un cognomen, altrove un titolo.
+        Assert.Equal(TipiParteNome.Cognomen, names[1].Parti[2].Tipo);
+        Assert.Equal([TipiParteNome.Titolo, TipiParteNome.Titolo, TipiParteNome.Titolo], names[2].Parti.Select(p => p.Tipo));
+    }
 }

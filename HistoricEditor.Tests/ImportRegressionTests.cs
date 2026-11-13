@@ -149,6 +149,13 @@ public class ImportRegressionTests
         Assert.Equal(("Titus", "Flavius", "Vespasianus"), RomanParts(r, "de"));
         Assert.Equal(("Tito", "Flavio", "Vespasiano"), RomanParts(r, "es"));
 
+        // Nomi nel tempo dall'introduzione italiana (2026-11-14): nato Tito Flavio Vespasiano, da imperatore Cesare Vespasiano
+        // Augusto, che è il principale; Caesar e Augustus sono titoli.
+        Assert.Equal(["Tito Flavio Vespasiano", "Cesare Vespasiano Augusto"], r.NomiNelTempo.Select(n => n.DisplayName));
+        Assert.Equal(("9", "Nome alla nascita"), (r.NomiNelTempo[0].Dal, r.NomiNelTempo[0].Motivo));
+        Assert.Equal(("69", "Assunzione del potere", true), (r.NomiNelTempo[1].Dal, r.NomiNelTempo[1].Motivo, r.NomiNelTempo[1].Principale));
+        Assert.Equal([TipiParteNome.Titolo, TipiParteNome.Cognomen, TipiParteNome.Titolo], r.NomiNelTempo[1].Parti.Select(p => p.Tipo));
+
         // Date: 17 novembre 9 – 23 giugno 79 nelle introduzioni (anni a una e due cifre).
         Assert.Equal("17/11/0009", person.Birth);
         var italian = r.WikipediaLeads.Single(l => l.Language == "it");
@@ -265,6 +272,19 @@ public class ImportRegressionTests
         // Aurelia: conta la gens di nascita.
         Assert.Equal("gens Annia", r.Gens);
         Assert.DoesNotContain(r.Dynasties, d => d.WikidataId == "Q906810");
+
+        // Nomi nel tempo dall'introduzione italiana (2026-11-14): nato Marco Annio Catilio Severo, poi Marco Annio Vero, poi
+        // Marco Aurelio Cesare figlio dell'Augusto (filiazione «Augusti filius»), da imperatore Cesare Marco Aurelio Antonino
+        // Augusto. Il «Marcus Aelius Aurelius Verus» del 138 non è nell'introduzione.
+        Assert.Equal(["Marco Annio Catilio Severo", "Marco Annio Vero", "Marco Aurelio Cesare", "Cesare Marco Aurelio Antonino Augusto"], r.NomiNelTempo.Select(n => n.DisplayName));
+        Assert.Equal([TipiParteNome.Praenomen, TipiParteNome.Nomen, TipiParteNome.Nomen, TipiParteNome.Cognomen], r.NomiNelTempo[0].Parti.Select(p => p.Tipo));
+        Assert.Equal(("Augusti filius", TipiParteNome.Titolo), (r.NomiNelTempo[2].Filiazione, r.NomiNelTempo[2].Parti[2].Tipo));
+        Assert.Equal(("121", "161"), (r.NomiNelTempo[0].Dal, r.NomiNelTempo[3].Dal));
+
+        // Nella scheda le parti della persona sono il riassunto del nome principale.
+        Assert.Equal(("Marcus", "Aurelius", "Antoninus"), (person.Praenomen, person.Nomen, person.Cognomen));
+        Assert.Equal("Caesar Marcus Aurelius Antoninus Augustus", person.NomeLatino);
+        Assert.Equal(4, person.NomiNelTempo.Count);
 
         ImportFixtures.AssertMatchesSnapshot(page, r);
     }

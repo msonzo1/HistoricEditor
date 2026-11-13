@@ -16,7 +16,7 @@ public static class ImportedPersonCreator
         var citation = import.ArticleUrl.Trim().Length == 0 ? null : new SourceCitation { Title = "Fonte inserita", Url = import.ArticleUrl.Trim() };
         var birth = FormatDates(import.BirthDates);
         var death = FormatDates(import.DeathDates);
-        return new HistoricalPerson
+        var person = new HistoricalPerson
         {
             Name = import.Name.Trim(),
             Surname = import.Surname.Trim(),
@@ -55,6 +55,14 @@ public static class ImportedPersonCreator
             BurialPlaces = [.. import.BurialPlaces],
             WikipediaLeads = [.. import.WikipediaLeads.Select(l => l.Clone())],
         };
+
+        // Con i nomi nel tempo dall'introduzione, le parti della persona sono il riassunto del nome principale.
+        if (import.NomiNelTempo.Count > 0)
+        {
+            RomanNaming.SetNames(person, import.NomiNelTempo.Select(n => n.Clone()));
+        }
+
+        return person;
     }
 
     // Ipotesi separate da «;», nel formato delle date in uso (le date salvate con un formato precedente si riscrivono).

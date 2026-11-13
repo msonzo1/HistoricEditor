@@ -34,6 +34,10 @@ internal static class ImportSnapshot
         Line("Latino (praenomen / nomen / cognomen / agnomen)", $"{r.Praenomen} / {r.Nomen} / {r.Cognomen} / {r.Agnomen}");
         Line("Nome latino", r.NomeLatino);
         Line("Italiano (prenome / gentilizio / cognome / agnome)", $"{r.Prenome} / {r.Gentilizio} / {r.CognomeRomano} / {r.Agnome}");
+        foreach (var n in r.NomiNelTempo)
+        {
+            Line(n.Principale ? "Nome nel tempo ★" : "Nome nel tempo", $"{n.DisplayName} | {n.LatinName} | filiazione {n.Filiazione} | dal {n.Dal} | {n.Motivo} | {string.Join(" ", n.Parti.Select(p => $"{p.Tipo}:{p.Latino}"))}");
+        }
 
         Section("Nomi nelle lingue");
         foreach (var n in r.LocalizedNames)

@@ -166,6 +166,10 @@ public sealed class WikipediaImportResult
     public string Gentilizio { get; init; } = string.Empty;
     public string CognomeRomano { get; init; } = string.Empty;
     public string Agnome { get; init; } = string.Empty;
+
+    // Nomi nel tempo dall'introduzione italiana (nascita, cambi di nome e, principale, il nome iniziale della voce);
+    // vuoto se l'introduzione non ne indica: allora il nome è quello delle parti qui sopra.
+    public List<RomanNameRecord> NomiNelTempo { get; init; } = [];
     public string Family { get; init; } = string.Empty;
 
     // Gens e suoi rami («gens Ulpia; Ulpii Traiani»), separati dalle dinastie del campo Family.

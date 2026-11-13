@@ -138,6 +138,12 @@ public partial class PersonEditorWindow
     // quelli della scheda. Una parte che Wikidata non indica non cancella quella scritta a mano (aggiornamento di una scheda).
     private void PrefillRomanName(WikipediaImportResult import)
     {
+        if (import.NomiNelTempo.Count > 0)
+        {
+            MergeImportedRomanNames(import.NomiNelTempo);
+            return;
+        }
+
         var principal = PrincipalName;
         var created = principal is null;
         principal = principal?.Clone() ?? new RomanNameRecord { Principale = true };
@@ -172,6 +178,43 @@ public partial class PersonEditorWindow
             ReplaceRomanName(PrincipalName!, principal);
         }
 
+        UpdateNamingMode();
+    }
+
+    // Nomi nel tempo dall'introduzione di Wikipedia: si aggiungono quelli che mancano (confronto sul nome latino) e il
+    // principale diventa quello importato; i nomi scritti a mano restano. Un solo nome senza periodo né motivo (quello
+    // ricavato dalle parti di Wikidata a un import precedente) viene sostituito.
+    private void MergeImportedRomanNames(IReadOnlyList<RomanNameRecord> imported)
+    {
+        if (romanNames.Count == 0 || (romanNames.Count == 1 && romanNames[0].Period.Length == 0 && romanNames[0].Motivo.Trim().Length == 0))
+        {
+            SetRomanNames(imported);
+            UpdateNamingMode();
+            return;
+        }
+
+        RomanNameRecord? Same(RomanNameRecord name)
+            => romanNames.FirstOrDefault(n => string.Equals(n.LatinName, name.LatinName, StringComparison.OrdinalIgnoreCase));
+
+        foreach (var name in imported)
+        {
+            var existing = Same(name);
+            if (existing is null)
+            {
+                romanNames.Add(name.Clone());
+            }
+            else if (name.Principale)
+            {
+                ReplaceRomanName(existing, name.Clone());
+            }
+        }
+
+        if (imported.FirstOrDefault(n => n.Principale) is { } principal && Same(principal) is { } target)
+        {
+            SetPrincipal(target);
+        }
+
+        UpdateRomanNameButtons();
         UpdateNamingMode();
     }
 

@@ -57,6 +57,8 @@
 - [x] Marco Aurelio: nome romano attuale (scartate le parti con causa della fine), parti italiane adattate con le regole dell'italiano (Marco Elio Aurelio Antonino), gens di nascita ricavata dal nomen (gens Annia, non la gens Aurelia adottiva); test di non regressione (2026-11-13).
 - [x] Scheda romana: nomi nel tempo completi (parti italiane e latine, filiazione, tribù, periodo, motivo) con nome principale ★, modificabili solo nel modulo del nome; dinastia e gens in sola lettura, modificabili nel modulo «Dinastia e gens…»; scheda di lettura con l'elenco dei nomi (2026-11-13).
 - [x] Modulo del nome a tabella: righe ordinate (Praenomen, Nomen, Cognomen, Agnomen, Titolo) con latino e italiano, «+ Aggiungi parte», ↑ ↓, forma epigrafica con i titoli (2026-11-14).
+- [x] Import dei nomi nel tempo dall'introduzione italiana (nato…, divenne…, il nome di…, nome iniziale come principale): Vespasiano e Marco Aurelio nei test di non regressione (2026-11-14).
+- [ ] Provare l'app: import o «Aggiorna da Wikipedia» di Vespasiano e Marco Aurelio (nomi nel tempo, titoli, filiazione «Augusti filius»).
 - [ ] Decidere come gestire le parti del nome nelle altre lingue (non come colonne della tabella; oggi tabellina «In altre lingue» del nome principale).
 - [ ] Provare l'app: scheda romana con più nomi (nuovo, modifica, elimina, principale), modulo «Dinastia e gens», parti nelle altre lingue nel modulo del nome principale, scheda di lettura.
 - [ ] Provare l'app: «Aggiorna da Wikipedia» su Marco Aurelio (nome italiano, campo Gens con gens Annia); la gens Aurelia già registrata resta in archivio e va tolta a mano se non serve.

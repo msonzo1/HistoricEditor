@@ -266,13 +266,15 @@ public sealed partial class WikipediaImportService
         var romanPartIds = ReadRomanNameParts(claims);
         var (gensIds, adoptiveGensIds) = ReadGensIds(claims);
         var endedNomenIds = ReadEndedRomanPartIds(claims, "P2359");
+        // Tutte le parti abbandonate, per riconoscere il tipo delle parole dei nomi precedenti (vedi RomanNamesOverTime).
+        var endedPartIds = RomanNameProperties.ToDictionary(p => p, p => ReadEndedRomanPartIds(claims, p), StringComparer.Ordinal);
         progress.Step(7, "Lettura di famiglie e titoli…");
         var rawTitles = ReadTitleStatements(claims, "P39").Concat(ReadTitleStatements(claims, "P97")).ToList();
         var sexId = ReadEntityIds(claims, "P21").FirstOrDefault();
 
         // Prima richiesta: famiglie, nomi romani, titoli e cause di fine con etichette e affermazioni insieme.
         var related = await ReadEntitiesAsync(
-            familyIds.Concat(surnameIds).Concat(gensIds).Concat(romanPartIds.Values.SelectMany(ids => ids)).Concat(endedNomenIds)
+            familyIds.Concat(surnameIds).Concat(gensIds).Concat(romanPartIds.Values.SelectMany(ids => ids)).Concat(endedPartIds.Values.SelectMany(ids => ids))
                 .Concat(rawTitles.SelectMany(t => new[] { t.EntityId, t.EndCauseId })),
             cancellationToken);
         // Senza gens di nascita su Wikidata (Marco Aurelio ha «valore sconosciuto») la si ricava dal nomen portato alla
@@ -460,6 +462,29 @@ public sealed partial class WikipediaImportService
             return femaleSex ? parts with { Gentilizio = RomanNaming.FeminineNomen(parts.Gentilizio) } : parts;
         }
         var italianParts = ItalianRomanParts(LocalParts("it"), new RomanParts(praenomen, nomen, cognomen, agnomen));
+        // Nomi nel tempo dall'introduzione italiana; il tipo delle parole viene dalle parti di Wikidata (attuali e abbandonate).
+        var knownRomanTypes = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var (property, tipo) in new[] { ("P2358", TipiParteNome.Praenomen), ("P2359", TipiParteNome.Nomen), ("P2365", TipiParteNome.Cognomen), ("P2366", TipiParteNome.Agnomen) })
+        {
+            foreach (var id in romanPartIds[property].Concat(endedPartIds[property]))
+            {
+                if (related.TryGetValue(id, out var part) && LatinLabel(part) is { Length: > 0 } label)
+                {
+                    foreach (var word in label.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+                    {
+                        knownRomanTypes.TryAdd(word, tipo);
+                    }
+                }
+            }
+        }
+
+        var mainTitleStart = mainTitle is null ? null : HistoricalYear.Parse(mainTitle.Inizio);
+        var romanNamesOverTime = RomanNamesOverTime(
+            leadDates.GetValueOrDefault("it")?.Extract,
+            knownRomanTypes,
+            HistoricalYear.Parse(birthDates.FirstOrDefault()?.Value),
+            mainTitleStart,
+            mainTitle is not null && Regex.IsMatch(mainTitle.Titolo, @"^(Imperator[ei]|Imperatrice|Re|Regina|Faraone)\b"));
         localizedNames = AddRomanParts(localizedNames, Languages.Where(l => l.Code != "it").Select(l => (l.Code, l.Name, LocalParts(l.Code))));
         // La gens e i suoi rami nel campo Gens, le dinastie nel campo Famiglia (vedi MarkGensLine).
         var gensLine = dynasties.Where(d => d.Gens).Select(d => d.WikidataId).ToHashSet(StringComparer.Ordinal);
@@ -498,6 +523,7 @@ public sealed partial class WikipediaImportService
             Gentilizio = italianParts.Gentilizio,
             CognomeRomano = italianParts.Cognome,
             Agnome = italianParts.Agnome,
+            NomiNelTempo = romanNamesOverTime,
             Family = string.Join("; ", familyNames),
             Gens = string.Join("; ", gensNames),
             Dynasties = [.. dynasties.Where(d => d.Gens || keptFamilyIds.Contains(d.WikidataId))],
