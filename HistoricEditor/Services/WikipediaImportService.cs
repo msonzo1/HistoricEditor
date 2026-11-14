@@ -493,8 +493,12 @@ public sealed partial class WikipediaImportService
         localizedNames = AddRomanParts(localizedNames, Languages.Where(l => l.Code != "it").Select(l => (l.Code, l.Name, LocalParts(l.Code))));
         // La gens e i suoi rami nel campo Gens, le dinastie nel campo Famiglia (vedi MarkGensLine).
         var gensLine = dynasties.Where(d => d.Gens).Select(d => d.WikidataId).ToHashSet(StringComparer.Ordinal);
-        var gensNames = gensIds.Concat(keptFamilyIds.Where(gensLine.Contains)).Distinct(StringComparer.Ordinal).Select(id => familyLabels.GetValueOrDefault(id, id));
-        var adoptiveGensNames = adoptiveGensIds.Select(id => familyLabels.GetValueOrDefault(id, id));
+        // I rami presi per adozione (Julii Caesares per Augusto) vanno con la gens d'adozione, non con quella di nascita.
+        var adoptiveFamilyIds = ReadAdoptiveFamilyIds(claims);
+        var branchIds = keptFamilyIds.Where(gensLine.Contains).ToList();
+        var adoptiveBranchIds = branchIds.Where(id => IsAdoptiveBranch(id, adoptiveFamilyIds, familyParents, gensIds, adoptiveGensIds)).ToHashSet(StringComparer.Ordinal);
+        var gensNames = gensIds.Concat(branchIds.Where(id => !adoptiveBranchIds.Contains(id))).Distinct(StringComparer.Ordinal).Select(id => familyLabels.GetValueOrDefault(id, id));
+        var adoptiveGensNames = adoptiveGensIds.Concat(adoptiveBranchIds).Distinct(StringComparer.Ordinal).Select(id => familyLabels.GetValueOrDefault(id, id));
         var familyNames = keptFamilyIds.Where(id => !gensLine.Contains(id)).Distinct(StringComparer.Ordinal).Select(id => familyLabels.GetValueOrDefault(id, id));
 
         progress.Step(8, "Composizione della scheda…");
@@ -1300,12 +1304,61 @@ public sealed partial class WikipediaImportService
                 continue;
             }
 
-            var adopted = statement.GetPropertyOrDefault("qualifiers").GetPropertyOrDefault("P828") is { ValueKind: JsonValueKind.Array } causes
-                && causes.EnumerateArray().Any(c => AdoptionCauses.Contains(GetString(c.GetPropertyOrDefault("datavalue").GetPropertyOrDefault("value"), "id")));
-            (adopted ? adoptive : birth).Add(id);
+            (IsAdoption(statement) ? adoptive : birth).Add(id);
         }
 
         return ([.. birth.Distinct(StringComparer.Ordinal)], [.. adoptive.Distinct(StringComparer.Ordinal)]);
+    }
+
+    private static bool IsAdoption(JsonElement statement)
+        => statement.GetPropertyOrDefault("qualifiers").GetPropertyOrDefault("P828") is { ValueKind: JsonValueKind.Array } causes
+            && causes.EnumerateArray().Any(c => AdoptionCauses.Contains(GetString(c.GetPropertyOrDefault("datavalue").GetPropertyOrDefault("value"), "id")));
+
+    // Famiglie (P53) con causa «adozione»: Augusto ha «Julii Caesares» per adozione accanto a «Octavii Rufi», ramo della
+    // gens di nascita.
+    internal static HashSet<string> ReadAdoptiveFamilyIds(JsonElement claims)
+    {
+        var ids = new HashSet<string>(StringComparer.Ordinal);
+        if (claims.ValueKind == JsonValueKind.Object && claims.TryGetProperty("P53", out var statements) && statements.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var statement in statements.EnumerateArray().Where(s => GetString(s, "rank") != "deprecated" && IsAdoption(s)))
+            {
+                var id = GetString(statement.GetPropertyOrDefault("mainsnak").GetPropertyOrDefault("datavalue").GetPropertyOrDefault("value"), "id");
+                if (IsEntityId(id))
+                {
+                    ids.Add(id);
+                }
+            }
+        }
+
+        return ids;
+    }
+
+    // Un ramo di gens (famiglia P53 nella linea di una gens) va nella gens d'adozione se Wikidata lo indica preso per
+    // adozione, o se risale solo a una gens d'adozione; altrimenti nella gens di nascita.
+    internal static bool IsAdoptiveBranch(string id, IReadOnlySet<string> adoptiveFamilyIds, IReadOnlyDictionary<string, string> parents,
+        IReadOnlyCollection<string> birthGensIds, IReadOnlyCollection<string> adoptiveGensIds)
+    {
+        if (adoptiveFamilyIds.Contains(id))
+        {
+            return true;
+        }
+
+        var visited = new HashSet<string>(StringComparer.Ordinal);
+        for (var current = id; current.Length > 0 && visited.Add(current); current = parents.GetValueOrDefault(current, string.Empty))
+        {
+            if (birthGensIds.Contains(current))
+            {
+                return false;
+            }
+
+            if (adoptiveGensIds.Contains(current))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     // Gens indicate dagli elementi del nomen (P1535 «usato da»): «Annius» → gens Annia.

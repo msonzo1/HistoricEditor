@@ -304,6 +304,26 @@ public class ImportRegressionTests
         ImportFixtures.AssertMatchesSnapshot(page, r);
     }
 
+    [Fact]
+    public async Task Augusto()
+    {
+        const string page = "Augusto";
+        var r = await ImportFixtures.ImportAsync(page);
+        var person = ImportedPersonCreator.BuildPerson(r);
+
+        Assert.Equal("Q1405", r.WikidataId);
+
+        // Nato nella gens Octavia (ramo Octavii Rufi), adottato per testamento da Cesare nella gens Iulia: su Wikidata il
+        // ramo «Julii Caesares» ha la causa «adozione» e va con la gens d'adozione, non con quella di nascita (2026-11-14).
+        Assert.DoesNotContain("Caesares", r.Gens);
+        Assert.Contains("Ottavia", r.Gens);
+        Assert.Contains("Caesares", r.GensAdozione);
+        Assert.Contains("Giulia", r.GensAdozione);
+        Assert.Equal((r.Gens, r.GensAdozione), (person.Gens, person.GensAdozione));
+
+        ImportFixtures.AssertMatchesSnapshot(page, r);
+    }
+
     private static (string, string, string) RomanParts(WikipediaImportResult r, string language)
         => r.LocalizedNames.Single(n => n.Lingua == language) is var n ? (n.Prenome, n.Gentilizio, n.CognomeRomano) : default;
 

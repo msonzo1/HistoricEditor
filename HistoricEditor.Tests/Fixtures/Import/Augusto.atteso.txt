@@ -1,0 +1,136 @@
+
+## Scheda
+Pagina: Augusto (https://it.wikipedia.org/wiki/Augusto)
+Wikidata: Q1405
+WikiTree: 
+Nome visualizzato: Augusto
+Nome / Cognome / Suffisso / Soprannome: Augusto /  /  / Thurinus
+Sesso: M
+Titolo principale: Imperatore romano
+Famiglia: dinastia Giulio-Claudia
+Gens: gens Ottavia; Octavii Rufi
+Gens d'adozione: gens Giulia; Julii Caesares
+Nascita: 23/09/63 a.C. [calendario: giuliano]
+Morte: 19/08/0014 [calendario: giuliano]
+Edizioni non lette: 
+
+## Nome romano
+Latino (praenomen / nomen / cognomen / agnomen): Gaius / Iūlius / Caepias Caesar / Octavianus
+Nome latino: Imperator Caesar Divi filius Augustus
+Italiano (prenome / gentilizio / cognome / agnome): Gaio / Giulio / Cesare Ottaviano / Augusto
+Nome nel tempo: Gaio Ottavio | Gaius Octavius | filiazione  | dal 63 a.C. | Nome alla nascita | Praenomen:Gaius Nomen:Octavius
+Nome nel tempo: Gaio Giulio Cesare Ottaviano | Gaius Iulius Caesar Octavianus | filiazione  | dal  | Adozione | Praenomen:Gaius Nomen:Iulius Cognomen:Caesar Agnomen:Octavianus
+Nome nel tempo ★: Imperatore Cesare Augusto | Imperator Caesar Augustus | filiazione Divi filius | dal 27 a.C. | Assunzione del potere | Titolo:Imperator Titolo:Caesar Titolo:Augustus
+
+## Nomi nelle lingue
+it: Augusto | suffisso  | soprannome  | titolo imperatore romano | parti  /  /  / 
+en: Augustus | suffisso  | soprannome  | titolo Roman emperor | parti Gaius / Julius / Caesar Octavianus / Augustus
+de: Augustus | suffisso  | soprannome  | titolo römischer Kaiser | parti Gaius / Iulius / Caepias Caesar / Octavianus
+fr: Auguste | suffisso  | soprannome  | titolo empereur romain | parti Caius / Julius / Caepias Caesar / Octavianus
+es: Augusto | suffisso  | soprannome  | titolo emperador romano | parti Gaius / Iulius / Caepias Caesar / Octavianus
+nl: Augustus | suffisso  | soprannome  | titolo Romeinse keizer | parti Gaius /  / Caesar / 
+
+## Dinastie
+Q192841: dinastia Giulio-Claudia ←
+Q3268376: Julii Caesares (gens) ← gens Giulia Q510193
+Q105335230: Octavii Rufi (gens) ← gens Ottavia Q1759265
+Q1759265: gens Ottavia (gens) ←
+Q510193: gens Giulia (gens) ←
+
+## Date di nascita
+23/09/63 a.C.: giorno | preferred | giuliano | -0063-09-23T00:00:00Z | qualificatori  | fonti Q45262034, Q110768614, Q746368, Riferimento Wikidata, Q186717, Q100166489, Wikipedia in italiano, Wikipedia in inglese, Wikipedia in tedesco, Wikipedia in francese, Wikipedia in spagnolo, Wikipedia in olandese
+
+## Date di morte
+19/08/0014: giorno | preferred | giuliano | +0014-08-19T00:00:00Z | qualificatori  | fonti Q45262034, Riferimento Wikidata, Q746368, Q100166489, Wikipedia in italiano, Wikipedia in inglese, Wikipedia in tedesco, Wikipedia in francese, Wikipedia in olandese
+
+## Date scartate (una sola fonte)
+Date discordanti: 
+
+## Luoghi
+nascita: Q220 Roma | Italia | tipo Città di confine | 41.893055555556, 12.482777777778
+    divisione: Unità amministrativa (P131) città metropolitana di Roma Capitale Q18288160
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Lazio Q1282
+    divisione: Paese (P17) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    nome storico: Colonia Lucia Annia Commodiana (la, 191 – 193)
+    in archivio: Stato Italia > Regione Lazio > Provincia città metropolitana di Roma Capitale > Comune Roma [automatico]
+morte: Q72288 Nola | Italia | tipo Comune italiano | 40.933333333333, 14.533333333333
+    divisione: Unità amministrativa (P131) città metropolitana di Napoli Q18241891
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Campania Q1438
+    divisione: Paese (P17) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    in archivio: Stato Italia > Regione Campania > Provincia città metropolitana di Napoli > Comune Nola [automatico]
+sepoltura: Q770847 Mausoleo di Augusto | Italia | tipo Sito archeologico | 41.90611, 12.47639
+    divisione: Unità amministrativa (P131) Campo Marzio Q1031426
+    divisione: Unità amministrativa (P131) Municipio Roma I Q550592
+    divisione: Unità amministrativa (P131) Lazio Q1282
+    divisione: Unità amministrativa (P131) Roma Q220
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Roma Capitale Q3940419
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Roma Capitale Q3940419
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) città metropolitana di Roma Capitale Q18288160
+    divisione: Paese (P17) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) città metropolitana di Roma Capitale Q18288160
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Lazio Q1282
+    divisione: Paese (P17) Italia Q38
+    in archivio: Stato Italia > Regione Lazio > Provincia città metropolitana di Roma Capitale > Comune Roma > luogo specifico Mausoleo di Augusto [automatico]
+
+## Titoli
+Imperatore romano: n. 1 | 16/01/27 a.C. () – 19/08/0014 () | Q842606 | prima   | dopo Tiberio Q1407
+    fonte: Wikidata · carica ricoperta (P39): 01/27 a.C. – 19/08/0014
+    fonte: Wikipedia it · infobox: 16/01/27 a.C. – 19/08/0014
+    fonte: Wikipedia en · infobox: 16/01/27 a.C. – 
+    fonte: Wikipedia es · infobox: 16/01/27 a.C. – 19/08/0014
+Pontefice massimo: n.  | 13 a.C. () –  () | Q212943 | prima Marco Emilio Lepido Q105452 | dopo  
+    fonte: Wikidata · carica ricoperta (P39): 13 a.C. – 
+Censore: n.  |  () –  () | Q189851 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39):  – 
+Tribuno: n.  |  () –  () | Q190401 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39):  – 
+Senatore romano: n.  |  () –  () | Q20056508 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39):  – 
+Console: n.  | 33 a.C. () – 33 a.C. () | Q40779 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39): 33 a.C. – 33 a.C.
+Triumvir rei publicae constituendae: n.  | 43 a.C. () – 33 a.C. () | Q80604738 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39): 43 a.C. – 33 a.C.
+Magistrato monetario: n.  | 43 a.C. () – 36 a.C. () | Q1861571 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39): 43 a.C. – 36 a.C.
+Augusto: n.  |  () –  () | Q211804 | prima   | dopo  
+    fonte: Wikidata · titolo nobiliare (P97):  – 
+
+## Introduzioni di Wikipedia
+it: Augusto | nato 23/9/-63 a Roma [Q220] | morto 19/8/14 a Nola [Q72288]
+en: Augustus | nato 23/9/-63 a Rome [Q220] | morto 19/8/14 a Nola, Roman Italy [Q72288]
+de: Augustus | nato 23/9/-63 a Rom [Q220] | morto 19/8/14 a Nola bei Neapel [Q72288]
+fr: Auguste | nato 23/9/-63 a Rome [Q220] | morto 19/8/14 a Nola [Q72288]
+es: Augusto | nato 23/9/-63 a Roma [Q220] | morto // a Nola, Italia, Imperio romano [Q72288]
+nl: Augustus (keizer) | nato 23/9/-63 a Rome [Q220] | morto 19/8/14 a Nola [Q72288]
+wikidata: Q1405 | nato 23/9/-63 a Roma [Q220] | morto 19/8/14 a Nola [Q72288]
+Concordanza: Green: Le edizioni di Wikipedia concordano su date e luoghi di nascita e morte.
+    italiano: 23 settembre 63 a.C., Roma – 19 agosto 14, Nola | Concorda con la maggioranza.
+    inglese: 23 settembre 63 a.C., Rome – 19 agosto 14, Nola, Roman Italy | Concorda con la maggioranza.
+    tedesco: 23 settembre 63 a.C., Rom – 19 agosto 14, Nola bei Neapel | Concorda con la maggioranza.
+    francese: 23 settembre 63 a.C., Rome – 19 agosto 14, Nola | Concorda con la maggioranza.
+    spagnolo: 23 settembre 63 a.C., Roma – —, Nola, Italia, Imperio romano | Concorda con la maggioranza.
+    olandese: 23 settembre 63 a.C., Rome – 19 agosto 14, Nola | Concorda con la maggioranza.
+    Wikidata: 23 settembre 63 a.C., Roma – 19 agosto 14, Nola | Concorda con la maggioranza.
+
+## Parenti e relazioni
+Padre: Q363084, Q1048
+Madre: Q231696
+Coniugi: Q237618, Q233444, Q469701
+Figli: Q2259, Q298162, Q313735, Q1407, Q325906
+Relazioni: 
+Eventi: Q138008589
