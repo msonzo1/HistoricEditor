@@ -134,9 +134,9 @@ public static class ImportedPersonCreator
             {
                 var type = dynasty.Gens ? TipiDinastia.Gens : TipiDinastia.Dinastia;
                 int? parentId = dynasty.ParentNome.Trim().Length > 0
-                    ? store.EnsureDynasty(dynasty.ParentNome, dynasty.ParentWikidataId, null, type)
+                    ? store.EnsureDynasty(dynasty.ParentNome, dynasty.ParentWikidataId, null, type, dynasty.ParentNomeLatino)
                     : null;
-                store.EnsureDynasty(dynasty.Nome, dynasty.WikidataId, parentId, type);
+                store.EnsureDynasty(dynasty.Nome, dynasty.WikidataId, parentId, type, dynasty.NomeLatino);
             }
 
             foreach (var name in PeopleGrouping.FamilyNames(family))

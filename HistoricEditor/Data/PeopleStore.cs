@@ -410,6 +410,7 @@ public sealed partial class PeopleStore : IDisposable
         }
 
         entity.Nome = nome;
+        entity.NomeLatino = (data.NomeLatino ?? string.Empty).Trim();
         entity.ParentId = data.ParentId;
         entity.WikidataId = (data.WikidataId ?? string.Empty).Trim();
         entity.Note = data.Note ?? string.Empty;
@@ -440,15 +441,17 @@ public sealed partial class PeopleStore : IDisposable
 
     // Trova (per Wikidata o per nome) o crea la dinastia; collega il ramo superiore solo se non già indicato.
     // Il tipo vale per le dinastie nuove; una esistente diventa gens solo se lo indica Wikidata (wikidataId non vuoto).
-    public int EnsureDynasty(string nome, string wikidataId, int? parentId, string tipo = TipiDinastia.Dinastia)
+    // Il nome latino si scrive solo se manca (uno scritto a mano resta).
+    public int EnsureDynasty(string nome, string wikidataId, int? parentId, string tipo = TipiDinastia.Dinastia, string nomeLatino = "")
     {
         nome = (nome ?? string.Empty).Trim();
         wikidataId = (wikidataId ?? string.Empty).Trim();
+        nomeLatino = (nomeLatino ?? string.Empty).Trim();
         var entity = (wikidataId.Length > 0 ? context.Dinastie.FirstOrDefault(d => d.WikidataId == wikidataId) : null)
             ?? context.Dinastie.FirstOrDefault(d => d.Nome == nome);
         if (entity is null)
         {
-            entity = new Dinastia { Nome = nome, WikidataId = wikidataId, ParentId = parentId, Tipo = tipo };
+            entity = new Dinastia { Nome = nome, NomeLatino = nomeLatino, WikidataId = wikidataId, ParentId = parentId, Tipo = tipo };
             context.Dinastie.Add(entity);
             LinkPeopleByName(entity);
             SaveOrRevert();
@@ -459,6 +462,12 @@ public sealed partial class PeopleStore : IDisposable
         if (entity.WikidataId.Length == 0 && wikidataId.Length > 0)
         {
             entity.WikidataId = wikidataId;
+            changed = true;
+        }
+
+        if (entity.NomeLatino.Trim().Length == 0 && nomeLatino.Length > 0)
+        {
+            entity.NomeLatino = nomeLatino;
             changed = true;
         }
 

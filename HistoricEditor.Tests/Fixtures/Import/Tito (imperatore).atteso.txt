@@ -31,9 +31,9 @@ es: Tito | suffisso  | soprannome  | titolo emperador romano | parti Titus / Fla
 nl: Titus | suffisso  | soprannome  | titolo Romeinse keizer | parti Titus /  / Vespasianus / 
 
 ## Dinastie
-Q200565: Dinastia flavia ←
-Q121033352: Flavii Sabini (gens) ← gens Flavia Q12297672
-Q12297672: gens Flavia (gens) ←
+Q200565: Dinastia flavia [la: ] ←  [la: ]
+Q121033352: Flavii Sabini (gens) [la: Flavii Sabini] ← gens Flavia [la: gens Flavia] Q12297672
+Q12297672: gens Flavia (gens) [la: gens Flavia] ←  [la: ]
 
 ## Date di nascita
 30/12/0039: giorno | normal | giuliano | +0039-12-30T00:00:00Z | qualificatori  | fonti Q5375741, Q69525831, Q746368, Wikipedia in italiano, Wikipedia in inglese, Wikipedia in tedesco, Wikipedia in francese, Wikipedia in spagnolo, Wikipedia in olandese

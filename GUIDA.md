@@ -37,6 +37,20 @@ Il personaggio ha due gens, ciascuna con i suoi rami, e nella scheda stanno in d
 
 Nell'elenco delle Persone il personaggio compare sotto la gens di nascita.
 
+### Il nome latino delle gens
+
+Ogni gens e ogni ramo ha, oltre al nome italiano, il **nome latino**, che si scrive nell'archivio delle dinastie:
+
+| Nome italiano | Nome latino |
+|---|---|
+| gens Giulia | gens Iulia |
+| gens Ottavia | gens Octavia |
+| Iulii Caesares | Iulii Caesares |
+
+Per le gens il nome latino è atteso. Se manca, la scheda e l'archivio lo segnalano, ma si salvano lo stesso. Per le altre dinastie è facoltativo: per esempio la dinastia Giulio-Claudia è la Domus Iulio-Claudia. Quando è noto, compare accanto al nome italiano: «gens Giulia (gens Iulia)».
+
+Con più gens nel campo (la gens e i suoi rami), il pulsante «Gens… ▾» apre un menu da cui si sceglie quale modificare nell'archivio.
+
 ### I nomi nel tempo
 
 Un personaggio può aver portato nomi diversi nelle varie fasi della vita. Ogni nome ha un periodo e un motivo:
@@ -60,4 +74,10 @@ I dati di Wikidata sui nomi romani sono spesso confusi o incoerenti. L'import li
 - **«Agnomen» che sono nomina d'origine.** Wikidata mette «Octavianus» fra gli agnomina, con la nota «adoptive suffix nomina». L'import lo tratta come nomen d'origine.
 - **Gens e rami presi per adozione.** Una gens o una famiglia con la causa «adozione» va nella gens d'adozione. Per Augusto, gli Iulii Caesares non sono la gens di nascita.
 - **Gens di nascita sconosciuta.** Se Wikidata non la indica (per Marco Aurelio è «valore sconosciuto»), l'import la ricava dal nomen di nascita: Annius dà la gens Annia. In mancanza di questo la ricava dal nomen d'origine: Octavianus dà la gens Ottavia.
+- **Nomi latini delle gens.** Le etichette latine sono incoerenti. La gens Giulia è «Iulii», la gens Ottavia «gens Octavia», in inglese «Julia gens»; il ramo dei Cesari è «Julii Caesares»; la Dinastia flavia ha addirittura «Gens Flavia». L'import le uniforma:
+  - una gens diventa «gens Iulia»;
+  - un ramo resta al plurale, «Iulii Caesares», e la J diventa sempre I;
+  - per le altre dinastie si usa solo un'etichetta latina che non sia una «gens …».
+
+  Un ramo senza nome italiano prende quello latino.
 - **Nomi nel tempo.** Wikidata non li distingue. L'import li legge dalla voce italiana di Wikipedia: il campo «nome completo» dell'infobox e l'introduzione.

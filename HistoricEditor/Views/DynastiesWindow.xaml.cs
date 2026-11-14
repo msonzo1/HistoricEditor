@@ -139,6 +139,7 @@ public partial class DynastiesWindow : Window
     {
         currentId = dynasty?.Id ?? 0;
         NameBox.Text = dynasty?.Nome ?? string.Empty;
+        LatinNameBox.Text = dynasty?.NomeLatino ?? string.Empty;
         WikidataBox.Text = dynasty?.WikidataId ?? string.Empty;
         NoteBox.Text = dynasty?.Note ?? string.Empty;
         TypeBox.SelectedIndex = dynasty?.IsGens == true ? 1 : 0;
@@ -164,12 +165,25 @@ public partial class DynastiesWindow : Window
         NameBox.Focus();
     }
 
+    // Una gens senza nome latino si segnala, ma si salva lo stesso (2026-11-14).
+    private void LatinOrType_Changed(object sender, RoutedEventArgs e)
+    {
+        if (LatinNameHint is null || LatinNameBox is null || TypeBox is null)
+        {
+            return;
+        }
+
+        var gens = (TypeBox.SelectedItem as ComboBoxItem)?.Tag as string == TipiDinastia.Gens;
+        LatinNameHint.Visibility = gens && LatinNameBox.Text.Trim().Length == 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
     private void Save_Click(object sender, RoutedEventArgs e)
     {
         var data = new Dinastia
         {
             Id = currentId,
             Nome = NameBox.Text,
+            NomeLatino = LatinNameBox.Text,
             ParentId = (ParentBox.SelectedItem as DynastyItem)?.Dinastia?.Id,
             WikidataId = WikidataBox.Text,
             Note = NoteBox.Text,

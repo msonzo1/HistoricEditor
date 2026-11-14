@@ -31,9 +31,9 @@ es: Trajano | suffisso  | soprannome  | titolo emperador romano | parti Marcus /
 nl: Trajanus | suffisso  | soprannome  | titolo Romeinse keizer | parti Marcus /  / Nerva / 
 
 ## Dinastie
-Q111987263: Ulpii Traiani (gens) ← gens Ulpia Q4273993
-Q3202662: Nerva–Antonine dynasty ←
-Q4273993: gens Ulpia (gens) ←
+Q111987263: Ulpii Traiani (gens) [la: Ulpii Traiani] ← gens Ulpia [la: gens Ulpia] Q4273993
+Q3202662: Nerva–Antonine dynasty [la: ] ←  [la: ]
+Q4273993: gens Ulpia (gens) [la: gens Ulpia] ←  [la: ]
 
 ## Date di nascita
 18/09/0053: giorno | preferred | giuliano | +0053-09-18T00:00:00Z | qualificatori  | fonti Q45268500, Q27062196, Q2664168, Q114716001, Q41705771, Q746368, Q54817642, Q24754113, Q18785969, Q65921422, Q84087675, Q731361, Q24494772, Q1139550, Q1165538, Wikipedia in italiano, Wikipedia in inglese, Wikipedia in tedesco, Wikipedia in francese, Wikipedia in spagnolo, Wikipedia in olandese

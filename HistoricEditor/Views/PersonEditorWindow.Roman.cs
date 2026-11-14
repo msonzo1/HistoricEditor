@@ -94,17 +94,19 @@ public partial class PersonEditorWindow
     // di avviso; la riga della gens d'adozione compare solo se è indicata.
     private void UpdateRomanFamily()
     {
-        static void Show(TextBlock value, TextBlock note, (string Path, string Note) summary)
+        // Una gens senza nome latino si segnala sotto, con il colore di avviso (2026-11-14).
+        static void Show(TextBlock value, TextBlock note, (string Path, string Note) summary, string missingLatin = "")
         {
             value.Text = summary.Path.Length > 0 ? summary.Path : "Non indicata";
             value.Opacity = summary.Path.Length > 0 ? 1 : 0.6;
             value.SetResourceReference(TextBlock.ForegroundProperty, "InkBrush");
-            note.Text = summary.Note;
-            note.Visibility = summary.Note.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+            note.Text = string.Join("\n", new[] { summary.Note, missingLatin }.Where(s => s.Length > 0));
+            note.SetResourceReference(TextBlock.ForegroundProperty, missingLatin.Length > 0 ? "DangerBrush" : "QuietBrush");
+            note.Visibility = note.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
         }
 
         Show(RomanDynastyText, RomanDynastyPath, DynastyDescriptions.Summarize(dynasties, FamilyInput.Text, gens: false));
-        Show(RomanGensText, RomanGensPath, DynastyDescriptions.Summarize(dynasties, gensText, gens: true));
+        Show(RomanGensText, RomanGensPath, DynastyDescriptions.Summarize(dynasties, gensText, gens: true), DynastyDescriptions.MissingLatin(dynasties, gensText));
         if (gensText.Trim().Length == 0)
         {
             RomanGensText.Opacity = 1;
@@ -112,7 +114,7 @@ public partial class PersonEditorWindow
             RomanGensText.Text = "Non indicata: quasi sempre nota, da completare con «Dinastia e gens…»";
         }
 
-        Show(RomanAdoptiveGensText, RomanAdoptiveGensPath, DynastyDescriptions.Summarize(dynasties, adoptiveGensText, gens: true));
+        Show(RomanAdoptiveGensText, RomanAdoptiveGensPath, DynastyDescriptions.Summarize(dynasties, adoptiveGensText, gens: true), DynastyDescriptions.MissingLatin(dynasties, adoptiveGensText));
         var adoptive = adoptiveGensText.Trim().Length > 0 ? Visibility.Visible : Visibility.Collapsed;
         RomanAdoptiveGensLabel.Visibility = adoptive;
         RomanAdoptiveGensPanel.Visibility = adoptive;

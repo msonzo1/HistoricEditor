@@ -321,6 +321,13 @@ public class ImportRegressionTests
         Assert.Contains("Giulia", r.GensAdozione);
         Assert.Equal((r.Gens, r.GensAdozione), (person.Gens, person.GensAdozione));
 
+        // Nomi latini delle gens e dei rami (2026-11-14), dalle etichette incoerenti di Wikidata: «Iulii» → «gens Iulia»,
+        // «Julii Caesares» → «Iulii Caesares», che è anche il nome italiano (manca l'etichetta italiana).
+        Assert.Equal("gens Giulia; Iulii Caesares", r.GensAdozione);
+        Assert.Equal(("gens Iulia", "Iulii Caesares", "gens Octavia"),
+            (r.Dynasties.Single(d => d.WikidataId == "Q510193").NomeLatino, r.Dynasties.Single(d => d.WikidataId == "Q3268376").NomeLatino, r.Dynasties.Single(d => d.WikidataId == "Q1759265").NomeLatino));
+        Assert.Equal("Domus Iulio-Claudia", r.Dynasties.Single(d => d.WikidataId == "Q192841").NomeLatino);
+
         // Octavianus è su Wikidata un agnomen «adoptive suffix nomina»: è il nomen d'origine (aggettivo dal nomen di
         // nascita Octavius), non un agnomen (2026-11-14).
         Assert.Equal(string.Empty, r.Agnomen);

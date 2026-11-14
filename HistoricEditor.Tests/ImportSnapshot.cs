@@ -49,7 +49,7 @@ internal static class ImportSnapshot
         Section("Dinastie");
         foreach (var d in r.Dynasties)
         {
-            Line(d.WikidataId, $"{d.Nome}{(d.Gens ? " (gens)" : string.Empty)} ← {d.ParentNome} {d.ParentWikidataId}".TrimEnd());
+            Line(d.WikidataId, $"{d.Nome}{(d.Gens ? " (gens)" : string.Empty)} [la: {d.NomeLatino}] ← {d.ParentNome} [la: {d.ParentNomeLatino}] {d.ParentWikidataId}".TrimEnd());
         }
 
         Section("Date di nascita");

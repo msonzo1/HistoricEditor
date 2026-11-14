@@ -54,6 +54,9 @@ public partial class DynastyGensWindow : Window
             ? "Non indicata: è quasi sempre nota (la scheda si salva comunque)."
             : DynastyDescriptions.Hint(dynasties, GensInput.Text, gens: true);
         AdoptiveGensPathText.Text = DynastyDescriptions.Hint(dynasties, AdoptiveGensInput.Text, gens: true);
+        DynastyButton.Content = DynastyMenu.ButtonText("Dinastia…", DynastyInput.Text);
+        GensButton.Content = DynastyMenu.ButtonText("Gens…", GensInput.Text);
+        AdoptiveGensButton.Content = DynastyMenu.ButtonText("Gens…", AdoptiveGensInput.Text);
     }
 
     private void Input_TextChanged(object sender, TextChangedEventArgs e)
@@ -64,17 +67,21 @@ public partial class DynastyGensWindow : Window
         }
     }
 
-    private void EditDynasty_Click(object sender, RoutedEventArgs e) => EditDynasties(DynastyInput);
+    private void EditDynasty_Click(object sender, RoutedEventArgs e) => EditDynasties(DynastyInput, DynastyButton);
 
-    private void EditGens_Click(object sender, RoutedEventArgs e) => EditDynasties(GensInput);
+    private void EditGens_Click(object sender, RoutedEventArgs e) => EditDynasties(GensInput, GensButton);
 
-    private void EditAdoptiveGens_Click(object sender, RoutedEventArgs e) => EditDynasties(AdoptiveGensInput);
+    private void EditAdoptiveGens_Click(object sender, RoutedEventArgs e) => EditDynasties(AdoptiveGensInput, AdoptiveGensButton);
 
-    // Apre l'archivio delle dinastie sulla prima indicata; se viene rinominata, il campo segue il nuovo nome.
-    private void EditDynasties(ComboBox input)
+    // Apre l'archivio delle dinastie su quella scelta (con più nomi nel campo, da un menu); se una viene rinominata, il
+    // campo segue il nuovo nome.
+    private void EditDynasties(ComboBox input, Button button)
+        => DynastyMenu.Choose(button, dynasties, input.Text, name => OpenArchive(input, name));
+
+    private void OpenArchive(ComboBox input, string? name)
     {
         var names = PeopleGrouping.FamilyNames(input.Text);
-        var window = new DynastiesWindow(store, names.FirstOrDefault()) { Owner = this };
+        var window = new DynastiesWindow(store, name) { Owner = this };
         window.ShowDialog();
         if (names.Count > 0)
         {

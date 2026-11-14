@@ -38,7 +38,7 @@ public partial class PersonViewWindow : Window
         HeaderLatin.Text = PersonSheet.LatinSubtitle(person);
         HeaderLatin.Visibility = HeaderLatin.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
 
-        MainList.ItemsSource = PersonSheet.MainFields(person);
+        MainList.ItemsSource = PersonSheet.MainFields(person, LoadDynasties());
         DynastyPathText.Text = LoadDynastyPath();
         DynastyPathText.Visibility = DynastyPathText.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
 
@@ -67,11 +67,23 @@ public partial class PersonViewWindow : Window
         NoSourcesText.Visibility = sources.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
+    private IReadOnlyList<Dinastia> LoadDynasties()
+    {
+        try
+        {
+            return store.GetDynasties();
+        }
+        catch (Exception ex) when (ex is DbUpdateException or InvalidOperationException)
+        {
+            return [];
+        }
+    }
+
     private string LoadDynastyPath()
     {
         try
         {
-            return PersonSheet.DynastyPath(person.Family, store.GetDynasties());
+            return PersonSheet.DynastyPath(person.Family, LoadDynasties());
         }
         catch (Exception ex) when (ex is DbUpdateException or InvalidOperationException)
         {

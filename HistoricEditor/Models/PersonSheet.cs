@@ -26,7 +26,8 @@ public static class PersonSheet
     };
 
     // Per i personaggi romani: nome italiano, nome latino, forma epigrafica, parti del nome e «Gens» al posto di «Famiglia».
-    public static IReadOnlyList<SheetField> MainFields(HistoricalPerson person)
+    // Gens e dinastie con il nome latino di quelle registrate («gens Giulia (gens Iulia)»).
+    public static IReadOnlyList<SheetField> MainFields(HistoricalPerson person, IReadOnlyList<Dinastia>? dynasties = null)
     {
         if (!RomanNaming.IsRoman(person))
         {
@@ -36,9 +37,9 @@ public static class PersonSheet
                 ("Suffisso", person.Suffix),
                 ("Soprannome", person.Nickname),
                 ("Titolo principale", person.MainTitle),
-                ("Famiglia", person.Family),
-                ("Gens", person.Gens),
-                ("Gens d'adozione", person.GensAdozione),
+                ("Famiglia", Dinastia.WithLatinNames(person.Family, dynasties ?? [])),
+                ("Gens", Dinastia.WithLatinNames(person.Gens, dynasties ?? [])),
+                ("Gens d'adozione", Dinastia.WithLatinNames(person.GensAdozione, dynasties ?? [])),
                 ("Sesso", DescribeSex(person.Sesso)));
         }
 
@@ -62,9 +63,9 @@ public static class PersonSheet
             ("Suffisso", person.Suffix),
             ("Soprannome", person.Nickname),
             ("Titolo principale", person.MainTitle),
-            ("Gens di nascita", person.Gens),
-            ("Gens d'adozione", person.GensAdozione),
-            ("Dinastia", person.Family),
+            ("Gens di nascita", Dinastia.WithLatinNames(person.Gens, dynasties ?? [])),
+            ("Gens d'adozione", Dinastia.WithLatinNames(person.GensAdozione, dynasties ?? [])),
+            ("Dinastia", Dinastia.WithLatinNames(person.Family, dynasties ?? [])),
             ("Sesso", DescribeSex(person.Sesso)));
     }
 
@@ -266,7 +267,7 @@ public static class PersonSheet
             var visited = new HashSet<int>();
             while (dynasty?.ParentId is int p && visited.Add(p) && dynasties.FirstOrDefault(d => d.Id == p) is { } parent)
             {
-                parents.Insert(0, parent.Nome);
+                parents.Insert(0, parent.NomeCompleto);
                 dynasty = parent;
             }
 

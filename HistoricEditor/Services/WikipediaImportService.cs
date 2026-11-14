@@ -374,6 +374,55 @@ public sealed partial class WikipediaImportService
         }).ToList();
         dynasties = MarkGensLine(dynasties);
 
+        // Nomi latini (2026-11-14): la gens vera e propria nella forma «gens Iulia», i rami al plurale («Iulii Caesares»),
+        // le altre dinastie solo dall'etichetta latina. Una gens o un ramo senza etichetta italiana ha come nome italiano
+        // quello latino («Iulii Caesares», non l'inglese «Julii Caesares»).
+        bool GensProper(string id) => allGensIds.Contains(id)
+            || (related.TryGetValue(id, out var e) && ReadEntityIds(e.GetPropertyOrDefault("claims"), "P31").Contains(GensClassId));
+        var gensLineIds = dynasties.Where(d => d.Gens).Select(d => d.WikidataId)
+            .Concat(dynasties.Where(d => d.Gens && d.ParentWikidataId.Length > 0).Select(d => d.ParentWikidataId))
+            .ToHashSet(StringComparer.Ordinal);
+        var latinOf = new Dictionary<string, string>(StringComparer.Ordinal);
+        string LatinOf(string id)
+        {
+            if (id.Length == 0 || !related.TryGetValue(id, out var entity))
+            {
+                return string.Empty;
+            }
+
+            if (!latinOf.TryGetValue(id, out var latin))
+            {
+                var kind = GensProper(id) ? LatinFamilyKind.Gens : gensLineIds.Contains(id) ? LatinFamilyKind.Branch : LatinFamilyKind.Dynasty;
+                latin = latinOf[id] = LatinFamilyName(new[] { "la", "mul", "en" }.ToDictionary(l => l, l => GetString(entity.GetPropertyOrDefault("labels").GetPropertyOrDefault(l), "value"), StringComparer.Ordinal), kind);
+            }
+
+            return latin;
+        }
+
+        // Il nome italiano resta se Wikidata ha l'etichetta italiana o se viene dal titolo della voce italiana.
+        string ItalianOf(string id, string label)
+        {
+            if (!gensLineIds.Contains(id) || !related.TryGetValue(id, out var e) || ReadLabels(e).ContainsKey("it")
+                || !string.Equals(label, LabelOf(id), StringComparison.Ordinal))
+            {
+                return label;
+            }
+
+            return LatinOf(id) is { Length: > 0 } latin ? latin : label;
+        }
+        foreach (var id in familyLabels.Keys.ToList())
+        {
+            familyLabels[id] = ItalianOf(id, familyLabels[id]);
+        }
+
+        dynasties = [.. dynasties.Select(d => d with
+        {
+            Nome = familyLabels.GetValueOrDefault(d.WikidataId, d.Nome),
+            ParentNome = d.ParentWikidataId.Length == 0 ? d.ParentNome : ItalianOf(d.ParentWikidataId, d.ParentNome),
+            NomeLatino = LatinOf(d.WikidataId),
+            ParentNomeLatino = LatinOf(d.ParentWikidataId),
+        })];
+
         var titleLabels = rawTitles.SelectMany(t => new[] { t.EntityId, t.EndCauseId }).Where(IsEntityId).Distinct(StringComparer.Ordinal)
             .ToDictionary(id => id, LabelOf, StringComparer.Ordinal);
         var sesso = sexId == "Q6581072" ? Sessi.Femmina : Sessi.Maschio;
@@ -1356,6 +1405,60 @@ public sealed partial class WikipediaImportService
     private static bool IsAdoption(JsonElement statement)
         => statement.GetPropertyOrDefault("qualifiers").GetPropertyOrDefault("P828") is { ValueKind: JsonValueKind.Array } causes
             && causes.EnumerateArray().Any(c => AdoptionCauses.Contains(GetString(c.GetPropertyOrDefault("datavalue").GetPropertyOrDefault("value"), "id")));
+
+    // «gens» (istanza di): la gens vera e propria, non un suo ramo.
+    private const string GensClassId = "Q899409";
+
+    public enum LatinFamilyKind { Gens, Branch, Dynasty }
+
+    // Nome latino di una famiglia dalle etichette di Wikidata, che sono incoerenti: la gens Giulia ha «Iulii», la gens
+    // Ottavia «gens Octavia», l'inglese «Julia gens», il ramo dei Cesari «Julii Caesares», la Dinastia flavia «Gens Flavia».
+    // J → I sempre. Una gens nella forma «gens Iulia» (da «Iulii», «Julia gens», «Gens Iulia»); un ramo al plurale
+    // dall'etichetta latina, multilingue o inglese («Iulii Caesares»); una dinastia solo dall'etichetta latina, se non è
+    // una «gens …». Vuoto se non si trova.
+    internal static string LatinFamilyName(IReadOnlyDictionary<string, string> labels, LatinFamilyKind kind)
+    {
+        var languages = kind == LatinFamilyKind.Dynasty ? new[] { "la" } : ["la", "mul", "en"];
+        foreach (var language in languages)
+        {
+            var label = Regex.Replace(labels.GetValueOrDefault(language, string.Empty).Trim(), @"\s+", " ")
+                .Replace('J', 'I').Replace('j', 'i');
+            if (label.Length == 0)
+            {
+                continue;
+            }
+
+            if (kind == LatinFamilyKind.Dynasty)
+            {
+                return Regex.IsMatch(label, @"^gens\b", RegexOptions.IgnoreCase) ? string.Empty : label;
+            }
+
+            if (kind == LatinFamilyKind.Gens)
+            {
+                if (Regex.Match(label, @"^gens\s+(\p{L}+)$", RegexOptions.IgnoreCase) is { Success: true } prefixed)
+                {
+                    return $"gens {prefixed.Groups[1].Value}";
+                }
+
+                if (Regex.Match(label, @"^(\p{L}+)\s+gens$", RegexOptions.IgnoreCase) is { Success: true } suffixed)
+                {
+                    return $"gens {suffixed.Groups[1].Value}";
+                }
+
+                if (Regex.Match(label, @"^(\p{Lu}\p{L}+?)ii$") is { Success: true } plural)
+                {
+                    return $"gens {plural.Groups[1].Value}ia";
+                }
+
+                // Un'etichetta di altra forma (inglese «Julio-Claudian…») non è un nome latino: si prova la lingua seguente.
+                continue;
+            }
+
+            return label;
+        }
+
+        return string.Empty;
+    }
 
     // Famiglie (P53) con causa «adozione»: Augusto ha «Julii Caesares» per adozione accanto a «Octavii Rufi», ramo della
     // gens di nascita.

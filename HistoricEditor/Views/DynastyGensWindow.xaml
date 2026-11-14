@@ -12,21 +12,21 @@
 
         <Label Content="_Dinastia" Target="{Binding ElementName=DynastyInput}" />
         <DockPanel>
-            <Button DockPanel.Dock="Right" Content="Dinastia…" Click="EditDynasty_Click" Height="34" Padding="10,0" Margin="6,0,0,0" ToolTip="Modifica la dinastia: ramo di, Wikidata, note" AutomationProperties.Name="Modifica la dinastia" />
+            <Button x:Name="DynastyButton" DockPanel.Dock="Right" Content="Dinastia…" Click="EditDynasty_Click" Height="34" Padding="10,0" Margin="6,0,0,0" ToolTip="Modifica la dinastia nell'archivio: nome latino, ramo di, Wikidata, note. Con più dinastie nel campo, un menu permette di scegliere quale" AutomationProperties.Name="Modifica la dinastia" />
             <ComboBox x:Name="DynastyInput" Height="34" IsEditable="True" IsTextSearchEnabled="True" VerticalContentAlignment="Center" TextBoxBase.TextChanged="Input_TextChanged" AutomationProperties.Name="Dinastia" AutomationProperties.HelpText="{Binding Text, ElementName=DynastyPathText}" />
         </DockPanel>
         <TextBlock x:Name="DynastyPathText" FontSize="11" Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" Margin="2,4,0,12" />
 
         <Label Content="_Gens di nascita" Target="{Binding ElementName=GensInput}" />
         <DockPanel>
-            <Button DockPanel.Dock="Right" Content="Gens…" Click="EditGens_Click" Height="34" Padding="10,0" Margin="6,0,0,0" ToolTip="Modifica la gens: ramo di, Wikidata, note" AutomationProperties.Name="Modifica la gens di nascita" />
+            <Button x:Name="GensButton" DockPanel.Dock="Right" Content="Gens…" Click="EditGens_Click" Height="34" Padding="10,0" Margin="6,0,0,0" ToolTip="Modifica la gens nell'archivio: nome latino, ramo di, Wikidata, note. Con più gens nel campo (la gens e i suoi rami), un menu permette di scegliere quale" AutomationProperties.Name="Modifica la gens di nascita" />
             <ComboBox x:Name="GensInput" Height="34" IsEditable="True" IsTextSearchEnabled="True" VerticalContentAlignment="Center" TextBoxBase.TextChanged="Input_TextChanged" AutomationProperties.Name="Gens di nascita" AutomationProperties.HelpText="{Binding Text, ElementName=GensPathText}" />
         </DockPanel>
         <TextBlock x:Name="GensPathText" FontSize="11" Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" Margin="2,4,0,12" />
 
         <Label Content="Gens d'_adozione (facoltativa)" Target="{Binding ElementName=AdoptiveGensInput}" />
         <DockPanel>
-            <Button DockPanel.Dock="Right" Content="Gens…" Click="EditAdoptiveGens_Click" Height="34" Padding="10,0" Margin="6,0,0,0" ToolTip="Modifica la gens: ramo di, Wikidata, note" AutomationProperties.Name="Modifica la gens d'adozione" />
+            <Button x:Name="AdoptiveGensButton" DockPanel.Dock="Right" Content="Gens…" Click="EditAdoptiveGens_Click" Height="34" Padding="10,0" Margin="6,0,0,0" ToolTip="Modifica la gens nell'archivio: nome latino, ramo di, Wikidata, note. Con più gens nel campo (la gens e i suoi rami), un menu permette di scegliere quale" AutomationProperties.Name="Modifica la gens d'adozione" />
             <ComboBox x:Name="AdoptiveGensInput" Height="34" IsEditable="True" IsTextSearchEnabled="True" VerticalContentAlignment="Center" TextBoxBase.TextChanged="Input_TextChanged" AutomationProperties.Name="Gens d'adozione" AutomationProperties.HelpText="{Binding Text, ElementName=AdoptiveGensPathText}" />
         </DockPanel>
         <TextBlock x:Name="AdoptiveGensPathText" FontSize="11" Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" Margin="2,4,0,0" />

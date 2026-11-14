@@ -23,14 +23,15 @@ internal static class DynastyDescriptions
             var current = dynasty;
             while (current.ParentId is int p && visited.Add(p) && dynasties.FirstOrDefault(d => d.Id == p) is { } parent)
             {
-                result.Insert(0, parent.Nome.Trim());
+                result.Insert(0, parent.NomeCompleto);
                 current = parent;
             }
 
             return result;
         }
 
-        var paths = names.Select(n => Find(n) is { } d ? [.. Ancestors(d), n] : new List<string> { n }).ToList();
+        // Ogni famiglia registrata con il suo nome latino: «gens Giulia (gens Iulia) › Iulii Caesares».
+        var paths = names.Select(n => Find(n) is { } d ? [.. Ancestors(d), d.NomeCompleto] : new List<string> { n }).ToList();
         // Una famiglia già compresa nel percorso di un'altra indicata (la gens del ramo) non si ripete.
         var shown = paths
             .Where(p => !paths.Any(other => !ReferenceEquals(other, p) && other.Count > p.Count
@@ -46,10 +47,64 @@ internal static class DynastyDescriptions
         return (string.Join(" · ", shown), note);
     }
 
-    // Suggerimento sotto un campo: il percorso solo se aggiunge una gerarchia, poi la nota sulle famiglie nuove.
+    // Suggerimento sotto un campo: il percorso solo se aggiunge una gerarchia o un nome latino, poi la nota sulle famiglie
+    // nuove e quella sulle gens senza nome latino.
     public static string Hint(IReadOnlyList<Dinastia> dynasties, string text, bool gens)
     {
         var (path, note) = Summarize(dynasties, text, gens);
-        return string.Join("\n", new[] { path.Contains('›') ? path : string.Empty, note }.Where(s => s.Length > 0));
+        var latin = gens ? MissingLatin(dynasties, text) : string.Empty;
+        return string.Join("\n", new[] { path.Contains('›') || path.Contains('(') ? path : string.Empty, note, latin }.Where(s => s.Length > 0));
+    }
+
+    // Gens registrate (con i loro superiori) a cui manca il nome latino, che per le gens è atteso (2026-11-14).
+    public static string MissingLatin(IReadOnlyList<Dinastia> dynasties, string text)
+    {
+        var missing = new List<string>();
+        foreach (var name in PeopleGrouping.FamilyNames(text))
+        {
+            var visited = new HashSet<int>();
+            for (var d = Dinastia.Find(dynasties, name); d is not null && visited.Add(d.Id); d = d.ParentId is int p ? dynasties.FirstOrDefault(x => x.Id == p) : null)
+            {
+                if (d.IsGens && d.NomeLatino.Trim().Length == 0 && !missing.Contains(d.Nome.Trim(), PeopleGrouping.FamilyComparer))
+                {
+                    missing.Add(d.Nome.Trim());
+                }
+            }
+        }
+
+        return missing.Count == 0 ? string.Empty : $"Nome latino da completare nell'archivio delle dinastie: {string.Join(", ", missing)}";
+    }
+}
+
+// Pulsanti «Dinastia…» e «Gens…» (2026-11-14): con più nomi nel campo un menu sceglie quale aprire nell'archivio, con il
+// nome latino accanto («gens Giulia (gens Iulia)»); con un nome solo (o nessuno) l'archivio si apre subito.
+internal static class DynastyMenu
+{
+    public static string ButtonText(string label, string fieldText)
+        => PeopleGrouping.FamilyNames(fieldText).Count > 1 ? $"{label} ▾" : label;
+
+    public static void Choose(System.Windows.Controls.Button button, IReadOnlyList<Dinastia> dynasties, string fieldText, Action<string?> open)
+    {
+        var names = PeopleGrouping.FamilyNames(fieldText);
+        if (names.Count <= 1)
+        {
+            open(names.FirstOrDefault());
+            return;
+        }
+
+        var menu = new System.Windows.Controls.ContextMenu
+        {
+            PlacementTarget = button,
+            Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom,
+        };
+        foreach (var name in names)
+        {
+            // Il testo non ha tasti di scelta rapida: un trattino basso nel nome resta com'è.
+            var item = new System.Windows.Controls.MenuItem { Header = new System.Windows.Controls.TextBlock { Text = Dinastia.Find(dynasties, name)?.NomeCompleto ?? name } };
+            item.Click += (_, _) => open(name);
+            menu.Items.Add(item);
+        }
+
+        menu.IsOpen = true;
     }
 }

@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:HistoricEditor"
         Title="Dinastie"
-        Width="760" Height="560" MinWidth="620" MinHeight="420"
+        Width="760" Height="630" MinWidth="620" MinHeight="420"
         WindowStartupLocation="CenterOwner"
         Background="{DynamicResource AppBackground}" Foreground="{DynamicResource InkBrush}"
         FontFamily="Segoe UI" FontSize="13">
@@ -44,8 +44,13 @@
             <Label Content="N_ome" Target="{Binding ElementName=NameBox}" />
             <ComboBox x:Name="NameBox" IsEditable="True" Margin="0,0,0,10" AutomationProperties.Name="Nome della dinastia" ToolTip="Puoi scegliere una famiglia già usata nelle schede" />
 
+            <Label Content="Nome _latino" Target="{Binding ElementName=LatinNameBox}" />
+            <TextBox x:Name="LatinNameBox" Padding="8,6" Margin="0,0,0,10" TextChanged="LatinOrType_Changed" AutomationProperties.Name="Nome latino della dinastia"
+                     ToolTip="Per esempio «gens Iulia», «Iulii Caesares», «Domus Iulio-Claudia». Atteso per le gens romane e i loro rami" />
+            <TextBlock x:Name="LatinNameHint" FontSize="11" Foreground="{DynamicResource DangerBrush}" TextWrapping="Wrap" Margin="2,-6,0,10" Visibility="Collapsed" Text="Nome latino da completare: per una gens è atteso (la dinastia si salva comunque)." />
+
             <Label Content="_Tipo" Target="{Binding ElementName=TypeBox}" />
-            <ComboBox x:Name="TypeBox" Margin="0,0,0,10" SelectedIndex="0" AutomationProperties.Name="Tipo: dinastia o gens romana"
+            <ComboBox x:Name="TypeBox" Margin="0,0,0,10" SelectedIndex="0" SelectionChanged="LatinOrType_Changed" AutomationProperties.Name="Tipo: dinastia o gens romana"
                       ToolTip="Una gens romana (es. gens Iulia) raccoglie le persone con lo stesso nomen; i suoi rami (es. Cornelii Scipiones) si indicano con «Ramo di»">
                 <ComboBoxItem Content="Dinastia o casata" Tag="" />
                 <ComboBoxItem Content="Gens romana" Tag="gens" />

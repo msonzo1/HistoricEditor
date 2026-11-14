@@ -140,8 +140,9 @@ public sealed class WikipediaSearchResult
     public override string ToString() => string.IsNullOrWhiteSpace(Snippet) ? Title : $"{Title} — {Snippet}";
 }
 
-// Famiglia letta da Wikidata con l'eventuale dinastia di cui è ramo; Gens = gens romana (P5025).
-public sealed record ImportedDynasty(string Nome, string WikidataId, string ParentNome, string ParentWikidataId, bool Gens = false);
+// Famiglia letta da Wikidata con l'eventuale dinastia di cui è ramo; Gens = gens romana (P5025). NomeLatino e
+// ParentNomeLatino: nomi latini (etichetta latina, altrimenti inglese con J → I), vuoti se non si trovano.
+public sealed record ImportedDynasty(string Nome, string WikidataId, string ParentNome, string ParentWikidataId, bool Gens = false, string NomeLatino = "", string ParentNomeLatino = "");
 
 public sealed class WikipediaImportResult
 {

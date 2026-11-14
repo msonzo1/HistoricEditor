@@ -32,11 +32,11 @@ es: Marco Aurelio | suffisso  | soprannome  | titolo emperador romano | parti Ma
 nl: Marcus Aurelius | suffisso  | soprannome  | titolo Romeinse keizer | parti Marcus /  /  / 
 
 ## Dinastie
-Q3291176: Antonini ← Nerva–Antonine dynasty Q3202662
-Q11907287: Aurelies ← Nerva–Antonine dynasty Q3202662
-Q3202662: Nerva–Antonine dynasty ←
-Q2035133: gens Annia (gens) ←
-Q906810: gens Aurelia (gens) ←
+Q3291176: Antonini [la: ] ← Nerva–Antonine dynasty [la: ] Q3202662
+Q11907287: Aurelies [la: ] ← Nerva–Antonine dynasty [la: ] Q3202662
+Q3202662: Nerva–Antonine dynasty [la: ] ←  [la: ]
+Q2035133: gens Annia (gens) [la: gens Annia] ←  [la: ]
+Q906810: gens Aurelia (gens) [la: gens Aurelia] ←  [la: ]
 
 ## Date di nascita
 26/04/0121: giorno | normal | giuliano | +0121-04-26T00:00:00Z | qualificatori  | fonti Q45275993, Q746368, Wikipedia in italiano, Wikipedia in inglese, Wikipedia in tedesco, Wikipedia in francese, Wikipedia in spagnolo, Wikipedia in olandese

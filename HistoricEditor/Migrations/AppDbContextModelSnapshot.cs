@@ -80,6 +80,10 @@ namespace HistoricEditor.Migrations
                         .HasColumnType("TEXT")
                         .UseCollation("NOCASE");
 
+                    b.Property<string>("NomeLatino")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Note")
                         .IsRequired()
                         .HasColumnType("TEXT");

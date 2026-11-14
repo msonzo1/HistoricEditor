@@ -70,4 +70,34 @@ public class AdoptiveGensTests
             Directory.Delete(dir, recursive: true);
         }
     }
+
+    // Nome latino delle dinastie (2026-11-14): l'import lo scrive solo se manca, il modulo dell'archivio lo cambia; resta
+    // nel backup.
+    [Fact]
+    public void Store_KeepsLatinNameOfDynasties()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), $"historic-latin-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(dir);
+        try
+        {
+            using (var store = new PeopleStore(dir))
+            {
+                var giulia = store.EnsureDynasty("gens Giulia", "Q510193", null, TipiDinastia.Gens, "gens Iulia");
+                Assert.Equal(giulia, store.EnsureDynasty("gens Giulia", "Q510193", null, TipiDinastia.Gens, "Iulii"));
+                Assert.Equal("gens Iulia", store.GetDynasties().Single(d => d.Id == giulia).NomeLatino);
+
+                var ottavia = store.EnsureDynasty("gens Ottavia", string.Empty, null, TipiDinastia.Gens);
+                store.EnsureDynasty("gens Ottavia", "Q1759265", null, TipiDinastia.Gens, "gens Octavia");
+                Assert.Equal("gens Octavia", store.GetDynasties().Single(d => d.Id == ottavia).NomeLatino);
+
+                store.SaveDynasty(new Dinastia { Id = giulia, Nome = "gens Giulia", NomeLatino = " gens Iulia (Iulii) ", Tipo = TipiDinastia.Gens });
+                Assert.Equal("gens Giulia (gens Iulia (Iulii))", store.GetDynasties().Single(d => d.Id == giulia).NomeCompleto);
+            }
+        }
+        finally
+        {
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+            Directory.Delete(dir, recursive: true);
+        }
+    }
 }

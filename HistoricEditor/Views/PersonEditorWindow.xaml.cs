@@ -404,15 +404,20 @@ public partial class PersonEditorWindow : Window
     private void UpdateDynastyPath()
     {
         DynastyPathText.Text = DynastyDescriptions.Hint(dynasties, FamilyInput.Text, gens: false);
+        DynastyButton.Content = DynastyMenu.ButtonText("Dinastia…", FamilyInput.Text);
         UpdateRomanFamily();
     }
 
     private void FamilyInput_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e) => UpdateDynastyPath();
 
+    // Con più dinastie nel campo, un menu sceglie quale aprire nell'archivio.
     private void EditDynasty_Click(object sender, RoutedEventArgs e)
+        => DynastyMenu.Choose(DynastyButton, dynasties, FamilyInput.Text, OpenDynastyArchive);
+
+    private void OpenDynastyArchive(string? name)
     {
         var names = PeopleGrouping.FamilyNames(FamilyInput.Text);
-        var window = new DynastiesWindow(store, names.FirstOrDefault()) { Owner = this };
+        var window = new DynastiesWindow(store, name) { Owner = this };
         window.ShowDialog();
         LoadDynastyChoices();
         // Se una dinastia è stata rinominata nella finestra, la scheda segue il nuovo nome.
