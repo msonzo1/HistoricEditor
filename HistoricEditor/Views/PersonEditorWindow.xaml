@@ -536,15 +536,28 @@
 
         <!-- Barra di navigazione -->
         <Border Grid.Row="3" BorderBrush="{DynamicResource AppBorder}" BorderThickness="0,1,0,0" Padding="26,14" Margin="0,16,0,0">
-            <DockPanel>
-                <Button x:Name="DeletePersonButton" DockPanel.Dock="Left" Content="Elimina scheda" Click="DeletePerson_Click" Style="{StaticResource DangerButton}" Padding="14,9" Margin="0,0,12,0" Visibility="Collapsed" />
-                <Button x:Name="NextButton" DockPanel.Dock="Right" Content="Avanti →" Click="Next_Click" Style="{StaticResource PrimaryButton}" Padding="20,9" Margin="8,0,0,0" />
-                <Button x:Name="SaveButton" DockPanel.Dock="Right" Content="Salva" Click="Save_Click" Style="{StaticResource PrimaryButton}" Padding="20,9" Margin="8,0,0,0" />
-                <Button x:Name="CloseButton" DockPanel.Dock="Right" Content="Chiudi" Click="Close_Click" IsCancel="True" Style="{StaticResource GhostButton}" Padding="16,9" Margin="8,0,0,0" />
-                <Button x:Name="BackButton" DockPanel.Dock="Right" Content="← Indietro" Click="Back_Click" Style="{StaticResource GhostButton}" Padding="16,9" IsEnabled="False" />
-                <!-- Ultimo figlio del DockPanel: occupa lo spazio residuo. -->
-                <TextBlock x:Name="EditorMessage" Foreground="{DynamicResource SignalBrush}" FontSize="11" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,12,0" AutomationProperties.LiveSetting="Assertive" />
-            </DockPanel>
+            <StackPanel>
+                <!-- Messaggio su una riga propria, a tutta larghezza, sopra i pulsanti: un testo lungo va a capo senza
+                     allungare i pulsanti; senza messaggio la riga non occupa spazio. -->
+                <TextBlock x:Name="EditorMessage" Foreground="{DynamicResource SignalBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,10" AutomationProperties.LiveSetting="Assertive">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Style.Triggers>
+                                <Trigger Property="Text" Value="">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <DockPanel LastChildFill="False">
+                    <Button x:Name="DeletePersonButton" DockPanel.Dock="Left" Content="Elimina scheda" Click="DeletePerson_Click" Style="{StaticResource DangerButton}" Padding="14,9" Margin="0,0,12,0" VerticalAlignment="Center" Visibility="Collapsed" />
+                    <Button x:Name="NextButton" DockPanel.Dock="Right" Content="Avanti →" Click="Next_Click" Style="{StaticResource PrimaryButton}" Padding="20,9" Margin="8,0,0,0" VerticalAlignment="Center" />
+                    <Button x:Name="SaveButton" DockPanel.Dock="Right" Content="Salva" Click="Save_Click" Style="{StaticResource PrimaryButton}" Padding="20,9" Margin="8,0,0,0" VerticalAlignment="Center" />
+                    <Button x:Name="CloseButton" DockPanel.Dock="Right" Content="Chiudi" Click="Close_Click" IsCancel="True" Style="{StaticResource GhostButton}" Padding="16,9" Margin="8,0,0,0" VerticalAlignment="Center" />
+                    <Button x:Name="BackButton" DockPanel.Dock="Right" Content="← Indietro" Click="Back_Click" Style="{StaticResource GhostButton}" Padding="16,9" VerticalAlignment="Center" IsEnabled="False" />
+                </DockPanel>
+            </StackPanel>
         </Border>
     </Grid>
 </Window>
