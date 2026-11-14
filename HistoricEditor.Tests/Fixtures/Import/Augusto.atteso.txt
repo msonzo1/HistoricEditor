@@ -15,19 +15,19 @@ Morte: 19/08/0014 [calendario: giuliano]
 Edizioni non lette: 
 
 ## Nome romano
-Latino (praenomen / nomen / cognomen / agnomen): Gaius / Iūlius / Caepias Caesar / Octavianus
+Latino (praenomen / nomen / cognomen / agnomen): Gaius / Iūlius / Caepias Caesar / 
 Nome latino: Imperator Caesar Divi filius Augustus
-Italiano (prenome / gentilizio / cognome / agnome): Gaio / Giulio / Cesare Ottaviano / Augusto
+Italiano (prenome / gentilizio / cognome / agnome): Gaio / Giulio / Cesare Ottaviano / 
 Nome nel tempo: Gaio Ottavio | Gaius Octavius | filiazione  | dal 63 a.C. | Nome alla nascita | Praenomen:Gaius Nomen:Octavius
-Nome nel tempo: Gaio Giulio Cesare Ottaviano | Gaius Iulius Caesar Octavianus | filiazione  | dal  | Adozione | Praenomen:Gaius Nomen:Iulius Cognomen:Caesar Agnomen:Octavianus
+Nome nel tempo: Gaio Giulio Cesare Ottaviano | Gaius Iulius Caesar Octavianus | filiazione  | dal  | Adozione | Praenomen:Gaius Nomen:Iulius Cognomen:Caesar Nomen d'origine:Octavianus
 Nome nel tempo ★: Imperatore Cesare Augusto | Imperator Caesar Augustus | filiazione Divi filius | dal 27 a.C. | Assunzione del potere | Titolo:Imperator Titolo:Caesar Filiazione:Divi filius Titolo:Augustus
 
 ## Nomi nelle lingue
 it: Augusto | suffisso  | soprannome  | titolo imperatore romano | parti  /  /  / 
-en: Augustus | suffisso  | soprannome  | titolo Roman emperor | parti Gaius / Julius / Caesar Octavianus / Augustus
-de: Augustus | suffisso  | soprannome  | titolo römischer Kaiser | parti Gaius / Iulius / Caepias Caesar / Octavianus
-fr: Auguste | suffisso  | soprannome  | titolo empereur romain | parti Caius / Julius / Caepias Caesar / Octavianus
-es: Augusto | suffisso  | soprannome  | titolo emperador romano | parti Gaius / Iulius / Caepias Caesar / Octavianus
+en: Augustus | suffisso  | soprannome  | titolo Roman emperor | parti Gaius / Julius / Caesar Octavianus / 
+de: Augustus | suffisso  | soprannome  | titolo römischer Kaiser | parti Gaius / Iulius / Caepias Caesar / 
+fr: Auguste | suffisso  | soprannome  | titolo empereur romain | parti Gaius / Julius / Caesar Augustus / 
+es: Augusto | suffisso  | soprannome  | titolo emperador romano | parti Gayo / Julio / Cesar Octaviano / 
 nl: Augustus | suffisso  | soprannome  | titolo Romeinse keizer | parti Gaius /  / Caesar / 
 
 ## Dinastie

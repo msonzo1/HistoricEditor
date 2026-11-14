@@ -33,7 +33,7 @@
                 <DataGrid x:Name="PartsGrid" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserSortColumns="False" CanUserReorderColumns="False"
                           HeadersVisibility="Column" SelectionMode="Single" SelectionUnit="FullRow" RowHeight="38" MaxHeight="300" SelectionChanged="PartsGrid_SelectionChanged" AutomationProperties.Name="Parti del nome">
                     <DataGrid.Columns>
-                        <DataGridTemplateColumn Header="Parte" Width="150">
+                        <DataGridTemplateColumn Header="Parte" Width="172">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <ComboBox ItemsSource="{x:Static local:TipiParteNome.All}" SelectedItem="{Binding Tipo, UpdateSourceTrigger=PropertyChanged}" Margin="2" VerticalContentAlignment="Center" AutomationProperties.Name="Tipo della parte" />
@@ -57,7 +57,7 @@
                     </DataGrid.Columns>
                 </DataGrid>
                 <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                    <Button x:Name="AddPartButton" Content="+ Aggiungi parte ▾" Click="AddPart_Click" Padding="12,5" ToolTip="Aggiunge un praenomen, un nomen, la filiazione (composta dal praenomen del padre, se è noto), la tribù, un cognomen, un agnomen o un titolo" AutomationProperties.Name="Aggiungi una parte del nome">
+                    <Button x:Name="AddPartButton" Content="+ Aggiungi parte ▾" Click="AddPart_Click" Padding="12,5" ToolTip="Aggiunge un praenomen, un nomen, la filiazione (composta dal praenomen del padre, se è noto), la tribù, un cognomen, il nomen d'origine di un adottato (Octavianus), un agnomen o un titolo" AutomationProperties.Name="Aggiungi una parte del nome">
                         <Button.ContextMenu>
                             <ContextMenu x:Name="AddPartMenu" />
                         </Button.ContextMenu>

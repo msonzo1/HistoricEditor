@@ -278,7 +278,7 @@ public sealed partial class WikipediaImportService
 
         // Prima richiesta: famiglie, nomi romani, titoli e cause di fine con etichette e affermazioni insieme.
         var related = await ReadEntitiesAsync(
-            familyIds.Concat(surnameIds).Concat(gensIds).Concat(romanPartIds.Values.SelectMany(ids => ids)).Concat(endedPartIds.Values.SelectMany(ids => ids))
+            familyIds.Concat(surnameIds).Concat(gensIds).Concat(romanPartIds.Values.SelectMany(ids => ids)).Concat(ReadOriginNomenIds(claims)).Concat(endedPartIds.Values.SelectMany(ids => ids))
                 .Concat(rawTitles.SelectMany(t => new[] { t.EntityId, t.EndCauseId })),
             cancellationToken);
         // Senza gens di nascita su Wikidata (Marco Aurelio ha «valore sconosciuto») la si ricava dal nomen portato alla
@@ -468,6 +468,14 @@ public sealed partial class WikipediaImportService
         var italianParts = ItalianRomanParts(LocalParts("it"), new RomanParts(praenomen, nomen, cognomen, agnomen));
         // Nomi nel tempo dall'introduzione italiana; il tipo delle parole viene dalle parti di Wikidata (attuali e abbandonate).
         var knownRomanTypes = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var id in ReadOriginNomenIds(claims))
+        {
+            if (related.TryGetValue(id, out var part) && LatinLabel(part) is { Length: > 0 } label)
+            {
+                knownRomanTypes.TryAdd(label.Trim(), TipiParteNome.NomenOrigine);
+            }
+        }
+
         foreach (var (property, tipo) in new[] { ("P2358", TipiParteNome.Praenomen), ("P2359", TipiParteNome.Nomen), ("P2365", TipiParteNome.Cognomen), ("P2366", TipiParteNome.Agnomen) })
         {
             foreach (var id in romanPartIds[property].Concat(endedPartIds[property]))
@@ -500,6 +508,11 @@ public sealed partial class WikipediaImportService
         var gensNames = gensIds.Concat(branchIds.Where(id => !adoptiveBranchIds.Contains(id))).Distinct(StringComparer.Ordinal).Select(id => familyLabels.GetValueOrDefault(id, id));
         var adoptiveGensNames = adoptiveGensIds.Concat(adoptiveBranchIds).Distinct(StringComparer.Ordinal).Select(id => familyLabels.GetValueOrDefault(id, id));
         var familyNames = keptFamilyIds.Where(id => !gensLine.Contains(id)).Distinct(StringComparer.Ordinal).Select(id => familyLabels.GetValueOrDefault(id, id));
+        // Ultimo ripiego per la gens di nascita: il nomen d'origine di un adottato (Octavianus → gens Ottavia).
+        if (!gensNames.Any() && GensOfOriginNomen(romanNamesOverTime) is { Length: > 0 } originGens)
+        {
+            gensNames = [originGens];
+        }
 
         progress.Step(8, "Composizione della scheda…");
         return new WikipediaImportResult
@@ -1228,15 +1241,45 @@ public sealed partial class WikipediaImportService
     // cognomen manca (o era solo contestato) e c'è un agnomen, l'agnomen diventa il cognomen. Vespasiano ha su Wikidata
     // il cognomen «Sabinus» contestato e «Vespasianus» come agnomen, ma è «Titus Flavius Vespasianus» con
     // Vespasianus cognomen, come il figlio Tito.
+    // Il nomen d'origine di un adottato (Octavianus per Augusto) non è un agnomen, anche se Wikidata lo mette fra gli
+    // agnomina (con «diverso da» P1552 = «adoptive suffix nomina»): non entra nelle parti della persona.
     internal static Dictionary<string, string[]> ReadRomanNameParts(JsonElement claims)
     {
         var parts = RomanNameProperties.ToDictionary(p => p, p => ReadRomanPartIds(claims, p), StringComparer.Ordinal);
+        var origin = ReadOriginNomenIds(claims);
+        parts["P2366"] = [.. parts["P2366"].Where(id => !origin.Contains(id))];
         if (parts["P2365"].Length == 0 && parts["P2366"].Length > 0)
         {
             parts["P2365"] = parts["P2366"];
             parts["P2366"] = [];
         }
         return parts;
+    }
+
+    // «adoptive suffix nomina»: l'aggettivo in -ianus ricavato dal nomen di nascita di un adottato.
+    private const string AdoptiveSuffixNomina = "Q100890188";
+
+    // Agnomina di Wikidata che sono in realtà il nomen d'origine di un adottato (vedi ReadRomanNameParts).
+    internal static HashSet<string> ReadOriginNomenIds(JsonElement claims)
+    {
+        var ids = new HashSet<string>(StringComparer.Ordinal);
+        if (claims.ValueKind != JsonValueKind.Object || !claims.TryGetProperty("P2366", out var statements) || statements.ValueKind != JsonValueKind.Array)
+        {
+            return ids;
+        }
+
+        foreach (var statement in statements.EnumerateArray())
+        {
+            var origin = statement.GetPropertyOrDefault("qualifiers").GetPropertyOrDefault("P1552") is { ValueKind: JsonValueKind.Array } kinds
+                && kinds.EnumerateArray().Any(k => GetString(k.GetPropertyOrDefault("datavalue").GetPropertyOrDefault("value"), "id") == AdoptiveSuffixNomina);
+            var id = GetString(statement.GetPropertyOrDefault("mainsnak").GetPropertyOrDefault("datavalue").GetPropertyOrDefault("value"), "id");
+            if (origin && IsEntityId(id))
+            {
+                ids.Add(id);
+            }
+        }
+
+        return ids;
     }
 
     // Elementi di una parte del nome romano, senza quelli deprecati o contestati (P5102 «natura dell'affermazione»

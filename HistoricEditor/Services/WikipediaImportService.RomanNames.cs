@@ -106,6 +106,12 @@ public sealed partial class WikipediaImportService
             && SimilarRomanPart(italianWords[0], latinWords[0]);
     }
 
+    // Gens di nascita dal nomen d'origine di un nome nel tempo (Octavianus → gens Ottavia); vuota se non c'è.
+    internal static string GensOfOriginNomen(IEnumerable<RomanNameRecord> names)
+        => names.SelectMany(n => n.Parti).FirstOrDefault(p => p.Tipo == TipiParteNome.NomenOrigine) is { } part
+            ? RomanNaming.GensOfOriginNomen(part.Latino)
+            : string.Empty;
+
     // Righe di un nome: ogni parola latina con il suo tipo (quelli noti da Wikidata, poi le regole) e la parola italiana
     // nella stessa posizione, se le parole sono tante quante; altrimenti l'italiano proposto dal latino.
     internal static RomanNameRecord BuildIntroRomanName(string italian, string latin, IReadOnlyDictionary<string, string> knownTypes, IReadOnlyDictionary<string, string>? italianOf = null)
@@ -144,7 +150,18 @@ public sealed partial class WikipediaImportService
                 // Dopo Augusto «Caesar» è un titolo dinastico; resta cognomen solo dopo il nomen Iulius (Gaius Iulius Caesar).
                 tipo = TipiParteNome.Titolo;
             }
-            else if (knownTypes.TryGetValue(word, out var known))
+            else if (knownTypes.TryGetValue(word, out var known) && known != TipiParteNome.Agnomen)
+            {
+                tipo = known;
+            }
+            else if (RomanNaming.OriginNomen(word) is { Length: > 0 } originNomen
+                && knownTypes.GetValueOrDefault(originNomen) == TipiParteNome.Nomen)
+            {
+                // Aggettivo in -ianus da un nomen della persona (Octavius → Octavianus): nomen d'origine di un adottato,
+                // anche se Wikidata lo indica come agnomen.
+                tipo = TipiParteNome.NomenOrigine;
+            }
+            else if (known is not null)
             {
                 tipo = known;
             }
@@ -238,7 +255,8 @@ public sealed partial class WikipediaImportService
             }
             else if (Regex.IsMatch(moment, @"\badozione\b", RegexOptions.IgnoreCase))
             {
-                name.Motivo = "Adozione";
+                // Adozione per testamento (Augusto, adottato nel testamento di Cesare).
+                name.Motivo = Regex.IsMatch(moment, @"testament", RegexOptions.IgnoreCase) ? "Adozione testamentaria" : "Adozione";
             }
             else if (moment.Length > 0)
             {

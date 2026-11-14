@@ -25,8 +25,11 @@ public static class TipiParteNome
     // italiano mostrato.
     public const string Filiazione = "Filiazione";
     public const string Tribu = "Tribù";
+    // Aggettivo ricavato dal nomen di nascita di un adottato, con il suffisso -ianus (Octavius → Octavianus, Aemilius →
+    // Aemilianus): non è un agnomen, anche se Wikidata lo mette fra gli agnomina (2026-11-14). Si usa di rado.
+    public const string NomenOrigine = "Nomen d'origine";
 
-    public static IReadOnlyList<string> All { get; } = [Praenomen, Nomen, Filiazione, Tribu, Cognomen, Agnomen, Titolo];
+    public static IReadOnlyList<string> All { get; } = [Praenomen, Nomen, Filiazione, Tribu, Cognomen, NomenOrigine, Agnomen, Titolo];
 
     // Parte che fa parte del nome letto (non filiazione o tribù).
     public static bool IsNameWord(string tipo) => tipo is not (Filiazione or Tribu);
@@ -350,6 +353,8 @@ public sealed class RomanNameRecord
         "Titolo onorifico",
         "Manomissione",
         "Cambio di nome",
+        // Nome che la persona non ha mai usato, dato dagli storici moderni («Ottaviano» per Augusto negli anni 44–27 a.C.).
+        "Convenzione storiografica",
     ];
 }
 
@@ -470,6 +475,21 @@ public static class RomanNaming
         var text = (tribu ?? string.Empty).Trim();
         var match = TribeTable.FirstOrDefault(t => Comparer.Equals(t.Name, text));
         return match.Name is null ? text : match.Abbreviation;
+    }
+
+    // Nomen da cui viene l'aggettivo in -ianus di un adottato: «Octavianus» → «Octavius», «Aemilianus» → «Aemilius».
+    // Vuoto se la parola non finisce in -ianus.
+    public static string OriginNomen(string? word)
+    {
+        var text = (word ?? string.Empty).Trim();
+        return text.Length > 6 && text.EndsWith("ianus", StringComparison.Ordinal) ? text[..^4] + "us" : string.Empty;
+    }
+
+    // Gens di nascita ricavata dal nomen d'origine, quando non si conosce altrimenti: «Octavianus» → «gens Ottavia».
+    public static string GensOfOriginNomen(string? word)
+    {
+        var nomen = OriginNomen(word);
+        return nomen.Length == 0 ? string.Empty : $"gens {FeminineNomen(ItalianForm(nomen))}";
     }
 
     // Filiazione dal praenomen del padre: «Gaius» → «C. f.» (Gai filius). Vuota se il padre non ha praenomen.
@@ -694,7 +714,7 @@ public static class RomanNaming
         // Un solo nome senza periodo né motivo, con le parti nell'ordine consueto e senza titoli, è già tutto nei campi
         // della persona.
         var plain = list.Count == 1 && list[0].Dal.Length == 0 && list[0].Al.Length == 0 && list[0].Motivo.Length == 0
-            && list[0].Parti.All(p => p.Tipo != TipiParteNome.Titolo) && PlainOrder(list[0]);
+            && list[0].Parti.All(p => p.Tipo is not (TipiParteNome.Titolo or TipiParteNome.NomenOrigine)) && PlainOrder(list[0]);
         person.NomiNelTempo = plain ? [] : list;
     }
 

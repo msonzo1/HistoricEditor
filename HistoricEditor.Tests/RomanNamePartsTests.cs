@@ -346,4 +346,33 @@ public class RomanNamePartsTests
         Assert.Equal(("C. f.", "Fabia"), (person.Filiazione, person.Tribu));
         Assert.Equal("C. Iulius C. f. Fab. Caesar", RomanNaming.Epigraphic(person));
     }
+
+    // Il -ianus di un adottato è l'aggettivo dal suo nomen di nascita, non un agnomen (2026-11-14): tipo «Nomen d'origine»,
+    // riconosciuto da un nomen noto della persona; dà la gens di nascita se manca. L'adozione per testamento ha il suo motivo.
+    [Fact]
+    public void OriginNomen_IsAdjectiveFromBirthNomen()
+    {
+        Assert.Equal("Octavius", RomanNaming.OriginNomen("Octavianus"));
+        Assert.Equal("Aemilius", RomanNaming.OriginNomen("Aemilianus"));
+        Assert.Equal(string.Empty, RomanNaming.OriginNomen("Caesar"));
+        Assert.Equal("gens Ottavia", RomanNaming.GensOfOriginNomen("Octavianus"));
+        Assert.Equal("gens Emilia", RomanNaming.GensOfOriginNomen("Aemilianus"));
+
+        // Wikidata indica Octavius come nomen (abbandonato) e Octavianus come agnomen: vale il nomen d'origine.
+        var known = new Dictionary<string, string> { ["Octavius"] = TipiParteNome.Nomen, ["Octavianus"] = TipiParteNome.Agnomen };
+        var names = WikipediaImportService.RomanNamesOverTime(null, known, -63, -27, ruler: true,
+            "''Gaius Octavius'' (alla nascita)<br />''Gaius Iulius Caesar Octavianus'' (dopo l'adozione testamentaria)<br />''Imperator Caesar Divi filius Augustus'' (dopo l'ascesa al principato)");
+        var adopted = names[1];
+        Assert.Equal([TipiParteNome.Praenomen, TipiParteNome.Nomen, TipiParteNome.Cognomen, TipiParteNome.NomenOrigine], adopted.Parti.Select(p => p.Tipo));
+        Assert.Equal(("Gaio Giulio Cesare Ottaviano", "Adozione testamentaria"), (adopted.DisplayName, adopted.Motivo));
+        Assert.Equal(string.Empty, adopted.Agnomen);
+        Assert.Equal("gens Ottavia", WikipediaImportService.GensOfOriginNomen(names));
+
+        // Un nome con il nomen d'origine non è «semplice»: resta fra i nomi nel tempo con la sua riga.
+        var person = new HistoricalPerson { Name = "Ottaviano" };
+        adopted.Motivo = string.Empty;
+        RomanNaming.SetNames(person, [adopted]);
+        Assert.Equal(TipiParteNome.NomenOrigine, Assert.Single(person.NomiNelTempo).Parti[^1].Tipo);
+        Assert.Contains("Convenzione storiografica", RomanNameRecord.Reasons);
+    }
 }
