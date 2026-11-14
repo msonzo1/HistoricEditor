@@ -6,7 +6,7 @@ using System.Windows.Controls;
 namespace HistoricEditor;
 
 // Modulo di un nome romano della scheda: righe delle parti (tipo, latino, italiano) nell'ordine in cui si leggono,
-// filiazione, tribù, nome latino libero, periodo, motivo e il nome nelle altre lingue (forme delle stesse righe).
+// filiazione e tribù comprese, nome latino libero, periodo, motivo e il nome nelle altre lingue (forme delle stesse righe).
 public partial class RomanNameEditorWindow : Window
 {
     private sealed record LanguageRow(string Code, string Name, string FullName);
@@ -25,7 +25,6 @@ public partial class RomanNameEditorWindow : Window
         this.father = father;
         Result = name.Clone();
         Title = name.IsEmpty() ? "Nuovo nome romano" : $"Nome romano – {name.DisplayName}";
-        TribeInput.ItemsSource = RomanNaming.Tribes;
 
         // Un nome nuovo parte con praenomen, nomen e cognomen.
         var initial = name.OrderedParts.Count > 0
@@ -45,8 +44,6 @@ public partial class RomanNameEditorWindow : Window
             AddPartMenu.Items.Add(item);
         }
 
-        FiliationInput.Text = name.Filiazione;
-        TribeInput.Text = name.Tribu;
         LatinNameInput.Text = name.NomeLatino;
         FromInput.Text = name.Dal;
         ToInput.Text = name.Al;
@@ -83,7 +80,7 @@ public partial class RomanNameEditorWindow : Window
         }
 
         var selected = (LanguagesGrid.SelectedItem as LanguageRow)?.Code;
-        var filled = parts.Where(p => !p.IsEmpty()).ToList();
+        var filled = parts.Where(p => !p.IsEmpty() && TipiParteNome.IsNameWord(p.Tipo)).ToList();
         var rows = nameLanguages.Select(l =>
         {
             var name = string.Join(' ', filled.Select(p => p.Translation(l.Code)).Where(v => v.Length > 0));
@@ -147,7 +144,7 @@ public partial class RomanNameEditorWindow : Window
     // Modulo della lingua con le righe compilate di «Parti del nome».
     private void EditLanguage(string code, string languageName)
     {
-        var filled = parts.Where(p => !p.IsEmpty()).ToList();
+        var filled = parts.Where(p => !p.IsEmpty() && TipiParteNome.IsNameWord(p.Tipo)).ToList();
         if (filled.Count == 0)
         {
             EditorMessage.Text = "Compilare prima le parti del nome.";
@@ -192,7 +189,8 @@ public partial class RomanNameEditorWindow : Window
     private void Part_Changed(object sender, TextChangedEventArgs e) => UpdatePreview();
 
     // Una parte nuova va dopo l'ultima dello stesso tipo, altrimenti dopo quelle che di solito la precedono
-    // (praenomen, nomen, cognomen, agnomen); i titoli in fondo, da spostare con ↑ ↓ (Caesar va prima del praenomen).
+    // (praenomen, nomen, filiazione, tribù, cognomen, agnomen); i titoli in fondo, da spostare con ↑ ↓ (Caesar va prima
+    // del praenomen). La filiazione nuova si compone dal praenomen del padre, se è noto.
     private void InsertPart(string tipo)
     {
         var order = TipiParteNome.All.ToList();
@@ -206,7 +204,7 @@ public partial class RomanNameEditorWindow : Window
             }
         }
 
-        var part = new RomanNamePart { Tipo = tipo };
+        var part = new RomanNamePart { Tipo = tipo, Latino = tipo == TipiParteNome.Filiazione ? FiliationFromFather() : string.Empty };
         AddPart(part, index + 1);
         PartsGrid.SelectedItem = part;
         PartsGrid.ScrollIntoView(part);
@@ -272,9 +270,9 @@ public partial class RomanNameEditorWindow : Window
             (part.Latino, part.Italiano) = (p.Latino.Trim(), p.Italiano.Trim());
             return part;
         })];
+        // Filiazione e tribù sono righe: senza righe restano vuote.
+        (name.Filiazione, name.Tribu) = (string.Empty, string.Empty);
         name.FieldsFromParts();
-        name.Filiazione = FiliationInput.Text.Trim();
-        name.Tribu = TribeInput.Text.Trim();
         name.NomeLatino = LatinNameInput.Text.Trim();
         name.Nome = string.Empty;
         name.Dal = FromInput.Text.Trim();
@@ -285,7 +283,7 @@ public partial class RomanNameEditorWindow : Window
 
     private void UpdatePreview()
     {
-        if (LatinPreview is null || FiliationInput is null || TribeInput is null || LatinNameInput is null)
+        if (LatinPreview is null || LatinNameInput is null)
         {
             return;
         }
@@ -300,23 +298,18 @@ public partial class RomanNameEditorWindow : Window
                 : $"Nome latino: {latin}";
     }
 
-    private void FiliationFromFather_Click(object sender, RoutedEventArgs e)
+    // Filiazione proposta dal praenomen del padre («C. f.»); vuota, con la spiegazione, se il padre o il suo praenomen mancano.
+    private string FiliationFromFather()
     {
         if (father is null)
         {
-            EditorMessage.Text = "Indicare prima il padre nella scheda «Parentele e relazioni».";
-            return;
+            EditorMessage.Text = "Filiazione da completare: nella scheda «Parentele e relazioni» non è indicato il padre.";
+            return string.Empty;
         }
 
         var filiation = RomanNaming.Filiation(father.Praenomen);
-        if (filiation.Length == 0)
-        {
-            EditorMessage.Text = $"Nella scheda di {father.DisplayName} manca il praenomen.";
-            return;
-        }
-
-        FiliationInput.Text = filiation;
-        EditorMessage.Text = string.Empty;
+        EditorMessage.Text = filiation.Length == 0 ? $"Filiazione da completare: nella scheda di {father.DisplayName} manca il praenomen." : string.Empty;
+        return filiation;
     }
 
     private void Save_Click(object sender, RoutedEventArgs e)

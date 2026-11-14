@@ -321,6 +321,11 @@ public class ImportRegressionTests
         Assert.Contains("Giulia", r.GensAdozione);
         Assert.Equal((r.Gens, r.GensAdozione), (person.Gens, person.GensAdozione));
 
+        // La filiazione è una riga nel punto in cui si legge (2026-11-14): Imperator Caesar Divi filius Augustus.
+        var principal = r.NomiNelTempo[^1];
+        Assert.Equal([TipiParteNome.Titolo, TipiParteNome.Titolo, TipiParteNome.Filiazione, TipiParteNome.Titolo], principal.Parti.Select(p => p.Tipo));
+        Assert.Equal(("Divi filius", "Imperator Caesar Augustus"), (principal.Filiazione, principal.LatinName));
+
         ImportFixtures.AssertMatchesSnapshot(page, r);
     }
 

@@ -100,7 +100,9 @@ public class RomanNamePartsTests
         Assert.Single(person.NomiNelTempo);
 
         var principal = Assert.Single(RomanNaming.NamesOf(person));
-        Assert.Equal(6, principal.Parti.Count);
+        // La filiazione del campo (nomi salvati prima delle righe di filiazione) diventa una riga dopo il nomen.
+        Assert.Equal(7, principal.Parti.Count);
+        Assert.Equal((TipiParteNome.Filiazione, "M. f."), (principal.Parti[4].Tipo, principal.Parti[4].Latino));
         Assert.Equal(string.Empty, principal.NomeLatino);
         Assert.Equal("IMP. CAES. M. Aurelius M. f. Antoninus AVG.", RomanNaming.Epigraphic(person));
 
@@ -284,5 +286,64 @@ public class RomanNamePartsTests
         // Marco Annio Vero è solo nell'introduzione: va prima del nome che lo segue nel testo, quello dell'adozione.
         Assert.Equal(["Nome alla nascita", "Cambio di nome", "Adozione", "Assunzione del potere"], names.Select(n => n.Motivo));
         Assert.Equal([false, false, false, true], names.Select(n => n.Principale));
+    }
+
+    // Filiazione e tribù sono righe nel punto in cui si leggono (2026-11-14): fuori dal nome latino e italiano, abbreviate
+    // nella forma epigrafica.
+    [Fact]
+    public void FiliationAndTribeRows_StayInPlaceOnlyInEpigraphicForm()
+    {
+        var cicero = new RomanNameRecord
+        {
+            Parti =
+            [
+                Part(TipiParteNome.Praenomen, "Marcus", "Marco"),
+                Part(TipiParteNome.Nomen, "Tullius", "Tullio"),
+                Part(TipiParteNome.Filiazione, "M. f.", ""),
+                Part(TipiParteNome.Tribu, "Cornelia", ""),
+                Part(TipiParteNome.Cognomen, "Cicero", "Cicerone"),
+            ],
+        };
+        Assert.Equal("Marcus Tullius Cicero", cicero.LatinName);
+        Assert.Equal("Marco Tullio Cicerone", cicero.DisplayName);
+        Assert.Equal("M. Tullius M. f. Cor. Cicero", cicero.Epigraphic);
+
+        var augustus = new RomanNameRecord
+        {
+            Parti =
+            [
+                Part(TipiParteNome.Titolo, "Imperator", "Imperatore"),
+                Part(TipiParteNome.Titolo, "Caesar", "Cesare"),
+                Part(TipiParteNome.Filiazione, "Divi filius", "figlio del divo"),
+                Part(TipiParteNome.Titolo, "Augustus", "Augusto"),
+            ],
+        };
+        Assert.Equal("Imperator Caesar Augustus", augustus.LatinName);
+        Assert.Equal("Imperatore Cesare Augusto", augustus.DisplayName);
+        Assert.Equal("DIVI f.", RomanNaming.AbbreviateFiliation("Divi filius"));
+
+        // Il riassunto nei campi viene dalle righe; una riga tolta non torna dal campo.
+        var saved = Assert.Single(RomanNaming.Normalize([cicero]));
+        Assert.Equal(("M. f.", "Cornelia"), (saved.Filiazione, saved.Tribu));
+        saved.Parti.RemoveAll(p => p.Tipo == TipiParteNome.Tribu);
+        (saved.Filiazione, saved.Tribu) = (string.Empty, string.Empty);
+        saved.FieldsFromParts();
+        Assert.Equal(string.Empty, Assert.Single(RomanNaming.Normalize([saved])).Tribu);
+    }
+
+    // Un nome con solo i campi (persona senza nomi nel tempo) ha le righe nell'ordine consueto, filiazione e tribù dopo il
+    // nomen; resta tutto nei campi della persona.
+    [Fact]
+    public void PartsFromFields_PutsFiliationAndTribeAfterNomen()
+    {
+        var name = new RomanNameRecord { Praenomen = "Gaius", Nomen = "Iulius", Cognomen = "Caesar", Filiazione = "C. f.", Tribu = "Fabia" };
+        name.PartsFromFields();
+        Assert.Equal([TipiParteNome.Praenomen, TipiParteNome.Nomen, TipiParteNome.Filiazione, TipiParteNome.Tribu, TipiParteNome.Cognomen], name.Parti.Select(p => p.Tipo));
+
+        var person = new HistoricalPerson { Name = "Cesare" };
+        RomanNaming.SetNames(person, [name]);
+        Assert.Empty(person.NomiNelTempo);
+        Assert.Equal(("C. f.", "Fabia"), (person.Filiazione, person.Tribu));
+        Assert.Equal("C. Iulius C. f. Fab. Caesar", RomanNaming.Epigraphic(person));
     }
 }

@@ -111,10 +111,21 @@ public sealed partial class WikipediaImportService
     internal static RomanNameRecord BuildIntroRomanName(string italian, string latin, IReadOnlyDictionary<string, string> knownTypes, IReadOnlyDictionary<string, string>? italianOf = null)
     {
         var name = new RomanNameRecord();
+        // La filiazione resta una riga nel punto in cui è scritta (2026-11-14): «Imperator Caesar Divi filius Augustus».
+        // Le parole del nome si leggono senza, per allineare il latino all'italiano.
         var filiation = LatinFiliationPattern().Match(latin);
+        RomanNamePart? filiationPart = null;
+        var filiationIndex = 0;
         if (filiation.Success)
         {
-            name.Filiazione = filiation.Groups["fil"].Value.Trim();
+            var italianFiliation = ItalianFiliationPattern().Match(italian);
+            filiationPart = new RomanNamePart
+            {
+                Tipo = TipiParteNome.Filiazione,
+                Latino = filiation.Groups["fil"].Value.Trim(),
+                Italiano = italianFiliation.Success ? italianFiliation.Value.Trim() : string.Empty,
+            };
+            filiationIndex = latin[..filiation.Index].Split(' ', StringSplitOptions.RemoveEmptyEntries).Length;
             latin = latin.Remove(filiation.Index, filiation.Length);
             italian = ItalianFiliationPattern().Replace(italian, string.Empty);
         }
@@ -163,6 +174,11 @@ public sealed partial class WikipediaImportService
             var italianWord = italianWords.Length == latinWords.Length ? italianWords[i]
                 : italianOf?.GetValueOrDefault(word) ?? RomanNaming.ItalianForm(word);
             name.Parti.Add(new RomanNamePart { Tipo = tipo, Latino = word, Italiano = italianWord });
+        }
+
+        if (filiationPart is not null)
+        {
+            name.Parti.Insert(Math.Min(filiationIndex, name.Parti.Count), filiationPart);
         }
 
         name.FieldsFromParts();

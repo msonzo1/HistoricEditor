@@ -20,7 +20,7 @@ Nome latino: Imperator Caesar Divi filius Augustus
 Italiano (prenome / gentilizio / cognome / agnome): Gaio / Giulio / Cesare Ottaviano / Augusto
 Nome nel tempo: Gaio Ottavio | Gaius Octavius | filiazione  | dal 63 a.C. | Nome alla nascita | Praenomen:Gaius Nomen:Octavius
 Nome nel tempo: Gaio Giulio Cesare Ottaviano | Gaius Iulius Caesar Octavianus | filiazione  | dal  | Adozione | Praenomen:Gaius Nomen:Iulius Cognomen:Caesar Agnomen:Octavianus
-Nome nel tempo ★: Imperatore Cesare Augusto | Imperator Caesar Augustus | filiazione Divi filius | dal 27 a.C. | Assunzione del potere | Titolo:Imperator Titolo:Caesar Titolo:Augustus
+Nome nel tempo ★: Imperatore Cesare Augusto | Imperator Caesar Augustus | filiazione Divi filius | dal 27 a.C. | Assunzione del potere | Titolo:Imperator Titolo:Caesar Filiazione:Divi filius Titolo:Augustus
 
 ## Nomi nelle lingue
 it: Augusto | suffisso  | soprannome  | titolo imperatore romano | parti  /  /  / 

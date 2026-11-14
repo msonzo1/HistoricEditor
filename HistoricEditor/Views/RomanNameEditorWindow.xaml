@@ -27,7 +27,7 @@
 
         <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="0,0,6,0">
-                <TextBlock Text="Nome portato in un periodo della vita. Ogni riga è una parte del nome, in latino e in italiano, nell'ordine in cui si legge: il latino compone il nome latino e la forma epigrafica, l'italiano il nome mostrato. Scrivendo il latino, l'italiano vuoto viene proposto da solo." FontSize="11" Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" Margin="0,0,0,10" />
+                <TextBlock Text="Nome portato in un periodo della vita. Ogni riga è una parte del nome, in latino e in italiano, nell'ordine in cui si legge: il latino compone il nome latino e la forma epigrafica, l'italiano il nome mostrato. Scrivendo il latino, l'italiano vuoto viene proposto da solo. Anche la filiazione («C. f.», «Divi filius») e la tribù («Fabia») sono righe, nel punto in cui si leggono: compaiono solo nella forma epigrafica, abbreviate." FontSize="11" Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" Margin="0,0,0,10" />
 
                 <TextBlock Text="PARTI DEL NOME" Style="{StaticResource SectionTitle}" />
                 <DataGrid x:Name="PartsGrid" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserSortColumns="False" CanUserReorderColumns="False"
@@ -57,7 +57,7 @@
                     </DataGrid.Columns>
                 </DataGrid>
                 <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                    <Button x:Name="AddPartButton" Content="+ Aggiungi parte ▾" Click="AddPart_Click" Padding="12,5" ToolTip="Aggiunge un altro praenomen, nomen, cognomen, agnomen o titolo" AutomationProperties.Name="Aggiungi una parte del nome">
+                    <Button x:Name="AddPartButton" Content="+ Aggiungi parte ▾" Click="AddPart_Click" Padding="12,5" ToolTip="Aggiunge un praenomen, un nomen, la filiazione (composta dal praenomen del padre, se è noto), la tribù, un cognomen, un agnomen o un titolo" AutomationProperties.Name="Aggiungi una parte del nome">
                         <Button.ContextMenu>
                             <ContextMenu x:Name="AddPartMenu" />
                         </Button.ContextMenu>
@@ -67,35 +67,11 @@
                     <Button x:Name="RemovePartButton" Content="Elimina" Click="RemovePart_Click" Padding="12,5" Margin="8,0,0,0" AutomationProperties.Name="Elimina la parte selezionata" />
                 </StackPanel>
 
-                <Grid Margin="0,14,0,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="14" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-                    <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,0,10">
-                        <Label Content="Filia_zione" Target="{Binding ElementName=FiliationInput}" />
-                        <DockPanel>
-                            <Button DockPanel.Dock="Right" Content="Dal padre" Click="FiliationFromFather_Click" Height="34" Padding="10,0" Margin="6,0,0,0"
-                                    ToolTip="Compone la filiazione dal praenomen del padre indicato nella scheda «Parentele e relazioni»" AutomationProperties.Name="Filiazione dal praenomen del padre" />
-                            <TextBox x:Name="FiliationInput" Height="34" TextChanged="Part_Changed" AutomationProperties.Name="Filiazione" ToolTip="Praenomen del padre abbreviato, ad esempio «C. f.» (Gai filius)" />
-                        </DockPanel>
-                    </StackPanel>
-                    <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,0,10">
-                        <Label Content="_Tribù" Target="{Binding ElementName=TribeInput}" />
-                        <ComboBox x:Name="TribeInput" Height="34" IsEditable="True" VerticalContentAlignment="Center" TextBoxBase.TextChanged="Part_Changed"
-                                  AutomationProperties.Name="Tribù" ToolTip="Tribù di voto, ad esempio «Fabia» (abbreviata «Fab.» nelle epigrafi)" />
-                    </StackPanel>
-                    <StackPanel Grid.Row="1" Grid.ColumnSpan="3" Margin="0,0,0,6">
-                        <Label Content="Nome latino li_bero" Target="{Binding ElementName=LatinNameInput}" />
-                        <TextBox x:Name="LatinNameInput" Height="34" TextChanged="Part_Changed" AutomationProperties.Name="Nome latino libero"
-                                 ToolTip="Facoltativo: la forma latina quando non si compone bene dalle parti (donne, liberti, nomi grecanici). Se indicato, è il nome latino mostrato" />
-                    </StackPanel>
-                </Grid>
+                <StackPanel Margin="0,14,0,6">
+                    <Label Content="Nome latino li_bero" Target="{Binding ElementName=LatinNameInput}" />
+                    <TextBox x:Name="LatinNameInput" Height="34" TextChanged="Part_Changed" AutomationProperties.Name="Nome latino libero"
+                             ToolTip="Facoltativo: la forma latina quando non si compone bene dalle parti (donne, liberti, nomi grecanici). Se indicato, è il nome latino mostrato" />
+                </StackPanel>
                 <TextBlock x:Name="LatinPreview" FontSize="12" Foreground="{DynamicResource InkBrush}" TextWrapping="Wrap" Margin="2,2,0,10" AutomationProperties.LiveSetting="Polite" />
 
                 <TextBlock Text="PERIODO" Style="{StaticResource SectionTitle}" Margin="0,8,0,6" />
