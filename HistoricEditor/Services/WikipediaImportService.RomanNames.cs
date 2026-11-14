@@ -21,9 +21,49 @@ public sealed partial class WikipediaImportService
     [GeneratedRegex(@"(?:\b(?<birth>[Nn]at[oa])\s+(?:con\s+il\s+nome\s+di\s+|come\s+)?|\bdivenne\s+|\bil\s+nome\s+di\s+)(?<it>\p{Lu}[^()\n;]{1,120}?)\s*\(\s*(?:in\s+latino:?\s*)?(?<la>\p{Lu}[^();\n]{1,160}?)\s*[;)]")]
     private static partial Regex ChangedRomanNamePattern();
 
-    // Filiazione nel latino («Augusti filius», «Divi filius») e nell'italiano («figlio dell'Augusto», «figlio del divo»).
-    [GeneratedRegex(@"\b(?<fil>\p{Lu}\p{L}+\s+(?:filius|filia|f\.))(?=\s|$)")]
+    // Filiazione nel latino («Augusti filius», «Divi Nervae filius») e nell'italiano («figlio dell'Augusto», «figlio del divo»).
+    [GeneratedRegex(@"\b(?<fil>(?:Divi\s+)?\p{Lu}\p{L}+\s+(?:filius|filia|f\.))(?=\s|$)")]
     private static partial Regex LatinFiliationPattern();
+
+    // Titoli trionfali presi per le vittorie (agnomina): Germanicus, Dacicus, Parthicus Maximus…
+    private static readonly HashSet<string> TriumphalAgnomina = new(StringComparer.Ordinal)
+    {
+        "Germanicus", "Dacicus", "Parthicus", "Armeniacus", "Medicus", "Sarmaticus", "Britannicus", "Arabicus", "Adiabenicus",
+    };
+
+    // Campo «nome completo» dell'infobox italiana: «| nome completo = ''Titus Flavius Vespasianus'' (alla nascita)<br />…».
+    [GeneratedRegex(@"^\s*\|\s*nome\s+completo\s*=(?<value>[^\n]*)", RegexOptions.Multiline | RegexOptions.IgnoreCase)]
+    private static partial Regex InfoboxFullNamePattern();
+
+    // Ogni nome in corsivo e il testo che lo segue fino al nome successivo (il momento: «(alla nascita)», «dopo l'adozione;»).
+    [GeneratedRegex(@"''(?<la>[^']+?)''(?<rest>.*?)(?=''|$)", RegexOptions.Singleline)]
+    private static partial Regex InfoboxNamePattern();
+
+    internal static string InfoboxFullNameValue(string? wikitext)
+        => string.IsNullOrWhiteSpace(wikitext) ? string.Empty
+            : InfoboxFullNamePattern().Match(Regex.Replace(wikitext, @"<!--.*?-->", string.Empty, RegexOptions.Singleline)) is { Success: true } match
+                ? match.Groups["value"].Value.Trim()
+                : string.Empty;
+
+    internal sealed record InfoboxRomanName(string Latin, string Moment);
+
+    // Nomi in latino del campo «nome completo», ciascuno con il suo momento ripulito dal markup.
+    internal static List<InfoboxRomanName> InfoboxRomanNames(string? value)
+    {
+        var result = new List<InfoboxRomanName>();
+        foreach (Match match in InfoboxNamePattern().Matches(value ?? string.Empty))
+        {
+            var latin = Regex.Replace(match.Groups["la"].Value, @"\s+", " ").Trim();
+            var moment = Regex.Replace(match.Groups["rest"].Value, @"<[^>]*>|\[\[(?:[^|\]]*\|)?|\]\]", " ");
+            moment = Regex.Replace(moment.Replace('(', ' ').Replace(')', ' ').Replace(';', ' ').Replace(',', ' '), @"\s+", " ").Trim();
+            if (latin.Split(' ').Length >= 2 && latin.All(c => char.IsLetter(c) || c is ' ' or '.'))
+            {
+                result.Add(new InfoboxRomanName(latin, moment));
+            }
+        }
+
+        return result;
+    }
 
     [GeneratedRegex(@"\s*\bfigli[oa]\s+(?:di\s+|del\s+|dello\s+|della\s+|dell['’]\s*)?\p{L}+")]
     private static partial Regex ItalianFiliationPattern();
@@ -68,7 +108,7 @@ public sealed partial class WikipediaImportService
 
     // Righe di un nome: ogni parola latina con il suo tipo (quelli noti da Wikidata, poi le regole) e la parola italiana
     // nella stessa posizione, se le parole sono tante quante; altrimenti l'italiano proposto dal latino.
-    internal static RomanNameRecord BuildIntroRomanName(string italian, string latin, IReadOnlyDictionary<string, string> knownTypes)
+    internal static RomanNameRecord BuildIntroRomanName(string italian, string latin, IReadOnlyDictionary<string, string> knownTypes, IReadOnlyDictionary<string, string>? italianOf = null)
     {
         var name = new RomanNameRecord();
         var filiation = LatinFiliationPattern().Match(latin);
@@ -97,6 +137,10 @@ public sealed partial class WikipediaImportService
             {
                 tipo = known;
             }
+            else if (TriumphalAgnomina.Contains(word) || (word == "Maximus" && TriumphalAgnomina.Contains(previous)))
+            {
+                tipo = TipiParteNome.Agnomen;
+            }
             else if (word is "Imperator" or "Augustus" or "Augusta")
             {
                 tipo = TipiParteNome.Titolo;
@@ -116,7 +160,8 @@ public sealed partial class WikipediaImportService
 
             hasPraenomen |= tipo == TipiParteNome.Praenomen;
             hasCognomen |= tipo == TipiParteNome.Cognomen;
-            var italianWord = italianWords.Length == latinWords.Length ? italianWords[i] : RomanNaming.ItalianForm(word);
+            var italianWord = italianWords.Length == latinWords.Length ? italianWords[i]
+                : italianOf?.GetValueOrDefault(word) ?? RomanNaming.ItalianForm(word);
             name.Parti.Add(new RomanNamePart { Tipo = tipo, Latino = word, Italiano = italianWord });
         }
 
@@ -124,38 +169,127 @@ public sealed partial class WikipediaImportService
         return name;
     }
 
-    // Nomi nel tempo dall'introduzione: il nome alla nascita, i cambi di nome nell'ordine del testo e, ultimo e principale,
-    // il nome iniziale della voce (per gli imperatori quello da imperatore). Vuoto se l'introduzione non indica altri nomi
-    // oltre a quello iniziale: allora il nome resta quello di Wikidata.
+    // Nomi nel tempo dalle due fonti della voce italiana, unite: il campo «nome completo» dell'infobox e l'introduzione.
+    // Un nome presente in entrambe si prende una volta sola (confronto senza filiazione e senza «Imperator» iniziale, che
+    // l'introduzione spesso omette: vale la forma più completa, quella dell'infobox); uno presente in una sola si aggiunge.
+    // Ordine: quelli dell'infobox come sono scritti; dall'introduzione il nome alla nascita va dopo gli altri nomi alla
+    // nascita (o in testa), i cambi di nome e il nome iniziale prima dell'ultimo. L'ultimo è il principale. Vuoto se in
+    // tutto c'è un solo nome: allora il nome resta quello di Wikidata.
     internal static List<RomanNameRecord> RomanNamesOverTime(
-        string? introduction, IReadOnlyDictionary<string, string> knownTypes, int? birthYear, int? principalFrom, bool ruler)
+        string? introduction, IReadOnlyDictionary<string, string> knownTypes, int? birthYear, int? principalFrom, bool ruler, string? infoboxFullName = null)
     {
+        static string Year(int? year) => year is not int y ? string.Empty : y < 0 ? $"{-y} a.C." : y.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        static string Key(string latin)
+        {
+            var text = Regex.Replace(LatinFiliationPattern().Replace(latin, string.Empty), @"\s+", " ").Trim();
+            text = Regex.Replace(text, @"^Imperator\s+", string.Empty, RegexOptions.IgnoreCase);
+            return text.ToLowerInvariant();
+        }
+
         var found = IntroductionRomanNames(introduction);
-        var lead = found.FirstOrDefault(n => n.Kind == IntroNameKind.Lead);
-        var others = found.Where(n => n.Kind != IntroNameKind.Lead)
-            .DistinctBy(n => n.Latin, StringComparer.OrdinalIgnoreCase)
-            .Where(n => lead is null || !string.Equals(n.Latin, lead.Latin, StringComparison.OrdinalIgnoreCase))
+
+        // Italiano parola per parola dalle coppie italiano/latino dell'introduzione.
+        var italianOf = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var pair in found)
+        {
+            var latinWords = LatinFiliationPattern().Replace(pair.Latin, string.Empty).Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var italianWords = ItalianFiliationPattern().Replace(pair.Italian, string.Empty).Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (latinWords.Length == italianWords.Length)
+            {
+                foreach (var (latin, italian) in latinWords.Zip(italianWords))
+                {
+                    italianOf.TryAdd(latin, italian);
+                }
+            }
+        }
+
+        var names = new List<(string Key, RomanNameRecord Name)>();
+        foreach (var (latin, moment) in InfoboxRomanNames(infoboxFullName))
+        {
+            if (names.Any(n => n.Key == Key(latin)))
+            {
+                continue;
+            }
+
+            var name = BuildIntroRomanName(string.Empty, latin, knownTypes, italianOf);
+            if (Regex.IsMatch(moment, @"\bnascita\b", RegexOptions.IgnoreCase))
+            {
+                (name.Motivo, name.Dal) = ("Nome alla nascita", Year(birthYear));
+            }
+            else if (Regex.IsMatch(moment, @"ascesa|principato|potere imperiale|acclamazione", RegexOptions.IgnoreCase))
+            {
+                (name.Motivo, name.Dal) = ("Assunzione del potere", Year(principalFrom));
+            }
+            else if (Regex.IsMatch(moment, @"\badozione\b", RegexOptions.IgnoreCase))
+            {
+                name.Motivo = "Adozione";
+            }
+            else if (moment.Length > 0)
+            {
+                name.Motivo = char.ToUpper(moment[0]) + moment[1..];
+            }
+
+            names.Add((Key(latin), name));
+        }
+
+        var fromInfobox = names.Count;
+
+        // Dall'introduzione: prima i nomi alla nascita, poi i cambi di nome nell'ordine del testo, infine il nome iniziale.
+        var fromIntroduction = found.Where(n => n.Kind == IntroNameKind.Birth)
+            .Concat(found.Where(n => n.Kind == IntroNameKind.Change))
+            .Concat(found.Where(n => n.Kind == IntroNameKind.Lead))
             .ToList();
-        if (lead is null || others.Count == 0)
+        for (var j = 0; j < fromIntroduction.Count; j++)
+        {
+            var pair = fromIntroduction[j];
+            var key = Key(pair.Latin);
+            if (names.Any(n => n.Key == key))
+            {
+                continue;
+            }
+
+            var name = BuildIntroRomanName(pair.Italian, pair.Latin, knownTypes, italianOf);
+            int index;
+            switch (pair.Kind)
+            {
+                case IntroNameKind.Birth:
+                    (name.Motivo, name.Dal) = ("Nome alla nascita", Year(birthYear));
+                    index = names.FindLastIndex(n => n.Name.Motivo == "Nome alla nascita") + 1;
+                    break;
+                case IntroNameKind.Change:
+                    name.Motivo = "Cambio di nome";
+                    // Prima del nome che lo segue nel testo, se è già nell'elenco (Marco Annio Vero prima del nome dell'adozione);
+                    // altrimenti prima del principale dell'infobox, o in coda senza infobox.
+                    var following = fromIntroduction.Skip(j + 1).Select(n => Key(n.Latin)).ToHashSet();
+                    index = names.FindIndex(n => following.Contains(n.Key));
+                    if (index < 0)
+                    {
+                        index = fromInfobox > 0 ? names.Count - 1 : names.Count;
+                    }
+                    break;
+                default:
+                    // Il nome iniziale è il principale solo se l'infobox non ne ha uno più completo.
+                    (name.Motivo, name.Dal) = ruler ? ("Assunzione del potere", Year(principalFrom)) : (string.Empty, string.Empty);
+                    index = names.Any(n => n.Name.Motivo == "Assunzione del potere") ? names.Count - 1 : names.Count;
+                    break;
+            }
+
+            names.Insert(Math.Clamp(index, 0, names.Count), (key, name));
+        }
+
+        if (names.Count < 2)
         {
             return [];
         }
 
-        static string Year(int? year) => year is not int y ? string.Empty : y < 0 ? $"{-y} a.C." : y.ToString(System.Globalization.CultureInfo.InvariantCulture);
-        var names = new List<RomanNameRecord>();
-        foreach (var other in others.OrderBy(n => n.Kind == IntroNameKind.Birth ? 0 : 1))
+        var result = names.Select(n => n.Name).ToList();
+        var principal = result[^1];
+        principal.Principale = true;
+        if (ruler && principal.Motivo.Length == 0)
         {
-            var name = BuildIntroRomanName(other.Italian, other.Latin, knownTypes);
-            name.Motivo = other.Kind == IntroNameKind.Birth ? "Nome alla nascita" : "Cambio di nome";
-            name.Dal = other.Kind == IntroNameKind.Birth ? Year(birthYear) : string.Empty;
-            names.Add(name);
+            (principal.Motivo, principal.Dal) = ("Assunzione del potere", Year(principalFrom));
         }
 
-        var principal = BuildIntroRomanName(lead.Italian, lead.Latin, knownTypes);
-        principal.Principale = true;
-        principal.Dal = Year(principalFrom);
-        principal.Motivo = ruler ? "Assunzione del potere" : string.Empty;
-        names.Add(principal);
-        return names;
+        return result;
     }
 }

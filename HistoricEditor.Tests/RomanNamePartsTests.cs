@@ -245,4 +245,44 @@ public class RomanNamePartsTests
             Directory.Delete(dir, recursive: true);
         }
     }
+
+    // Campo «nome completo» dell'infobox italiana, nei formati usati dalle voci (parentesi, punto e virgola, <br>).
+    [Fact]
+    public void InfoboxRomanNames_ReadsNamesAndMoments()
+    {
+        var wikitext = "{{Magistrato romano\n|nome = Tito\n|nome completo = ''Titus Flavius Vespasianus'' (alla nascita)<br />''Titus Caesar Vespasianus'' (da figlio dell'imperatore)<br />''Imperator Titus Caesar Vespasianus Augustus'' (dopo l'ascesa al potere imperiale)\n|titolo = [[Imperatore romano]]\n}}";
+        var value = WikipediaImportService.InfoboxFullNameValue(wikitext);
+        Assert.Equal(
+            [("Titus Flavius Vespasianus", "alla nascita"), ("Titus Caesar Vespasianus", "da figlio dell'imperatore"), ("Imperator Titus Caesar Vespasianus Augustus", "dopo l'ascesa al potere imperiale")],
+            WikipediaImportService.InfoboxRomanNames(value).Select(n => (n.Latin, n.Moment)));
+
+        Assert.Equal(
+            [("Marcus Annius Verus", "dopo il matrimonio"), ("Marcus Aurelius Caesar Augusti filius", "dopo l'adozione")],
+            WikipediaImportService.InfoboxRomanNames("''Marcus Annius Verus'' dopo il matrimonio; ''Marcus Aurelius Caesar Augusti filius'' dopo l'adozione").Select(n => (n.Latin, n.Moment)));
+
+        // Un solo nome (Cesare) non dà nomi nel tempo: resta il nome di Wikidata.
+        Assert.Empty(WikipediaImportService.RomanNamesOverTime(null, new Dictionary<string, string>(), -100, null, ruler: false, "''Gaius Iulius Caesar''"));
+
+        var names = WikipediaImportService.RomanNamesOverTime(null, new Dictionary<string, string>(), 39, 79, ruler: true, value);
+        Assert.Equal(["Tito Flavio Vespasiano", "Tito Cesare Vespasiano", "Imperatore Tito Cesare Vespasiano Augusto"], names.Select(n => n.DisplayName));
+        Assert.Equal([false, false, true], names.Select(n => n.Principale));
+    }
+
+    // Infobox e introduzione unite (2026-11-14): un nome presente in entrambe una volta sola (l'introduzione omette
+    // «Imperator»: vale la forma dell'infobox), uno presente in una sola si aggiunge.
+    [Fact]
+    public void RomanNamesOverTime_MergesInfoboxAndIntroduction()
+    {
+        const string introduction = "Cesare Marco Aurelio Antonino Augusto (in latino Caesar Marcus Aurelius Antoninus Augustus; Roma, 26 aprile 121 – Sirmio, 17 marzo 180) è stato un imperatore. Nato Marco Annio Catilio Severo (Marcus Annius Catilius Severus), divenne Marco Annio Vero (Marcus Annius Verus) e assunse quindi il nome di Marco Aurelio Cesare figlio dell'Augusto (Marcus Aurelius Caesar Augusti filius).";
+        const string infobox = "''Marcus Annius Catilius Severus'' alla nascita; ''Marcus Aurelius Caesar Augusti filius'' dopo l'adozione; ''Imperator Caesar Marcus Aurelius Antoninus Augustus'' dopo l'ascesa al potere imperiale";
+
+        var names = WikipediaImportService.RomanNamesOverTime(introduction, new Dictionary<string, string>(), 121, 161, ruler: true, infobox);
+
+        Assert.Equal(
+            ["Marco Annio Catilio Severo", "Marco Annio Vero", "Marco Aurelio Cesare", "Imperatore Cesare Marco Aurelio Antonino Augusto"],
+            names.Select(n => n.DisplayName));
+        // Marco Annio Vero è solo nell'introduzione: va prima del nome che lo segue nel testo, quello dell'adozione.
+        Assert.Equal(["Nome alla nascita", "Cambio di nome", "Adozione", "Assunzione del potere"], names.Select(n => n.Motivo));
+        Assert.Equal([false, false, false, true], names.Select(n => n.Principale));
+    }
 }

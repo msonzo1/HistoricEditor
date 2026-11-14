@@ -47,6 +47,10 @@ public sealed partial class WikipediaImportService
         // riporta spesso il nome latino («Vicus Phalacrinae»).
         public string InfoboxBirthPlace { get; init; } = string.Empty;
         public string InfoboxDeathPlace { get; init; } = string.Empty;
+
+        // Campo «nome completo» dell'infobox italiana, grezzo: i nomi nel tempo in latino, ciascuno con il suo momento
+        // («''Titus Flavius Vespasianus'' (alla nascita)<br />''Titus Caesar Vespasianus'' (da figlio dell'imperatore)…»).
+        public string InfoboxFullName { get; init; } = string.Empty;
     }
 
     public async Task<IReadOnlyList<WikipediaSearchResult>> SearchAsync(string searchText, IProgress<string>? progress = null, CancellationToken cancellationToken = default)
@@ -484,7 +488,8 @@ public sealed partial class WikipediaImportService
             knownRomanTypes,
             HistoricalYear.Parse(birthDates.FirstOrDefault()?.Value),
             mainTitleStart,
-            mainTitle is not null && Regex.IsMatch(mainTitle.Titolo, @"^(Imperator[ei]|Imperatrice|Re|Regina|Faraone)\b"));
+            mainTitle is not null && Regex.IsMatch(mainTitle.Titolo, @"^(Imperator[ei]|Imperatrice|Re|Regina|Faraone)\b"),
+            leadDates.GetValueOrDefault("it")?.InfoboxFullName);
         localizedNames = AddRomanParts(localizedNames, Languages.Where(l => l.Code != "it").Select(l => (l.Code, l.Name, LocalParts(l.Code))));
         // La gens e i suoi rami nel campo Gens, le dinastie nel campo Famiglia (vedi MarkGensLine).
         var gensLine = dynasties.Where(d => d.Gens).Select(d => d.WikidataId).ToHashSet(StringComparer.Ordinal);
@@ -1794,6 +1799,7 @@ public sealed partial class WikipediaImportService
                 Extract = extract,
                 InfoboxBirthPlace = infoboxBirth,
                 InfoboxDeathPlace = infoboxDeath,
+                InfoboxFullName = InfoboxFullNameValue(wikitext),
             });
         }
         catch (Exception ex) when (IsOptionalFetchFailure(ex, cancellationToken))

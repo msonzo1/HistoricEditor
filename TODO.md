@@ -58,6 +58,7 @@
 - [x] Scheda romana: nomi nel tempo completi (parti italiane e latine, filiazione, tribù, periodo, motivo) con nome principale ★, modificabili solo nel modulo del nome; dinastia e gens in sola lettura, modificabili nel modulo «Dinastia e gens…»; scheda di lettura con l'elenco dei nomi (2026-11-13).
 - [x] Modulo del nome a tabella: righe ordinate (Praenomen, Nomen, Cognomen, Agnomen, Titolo) con latino e italiano, «+ Aggiungi parte», ↑ ↓, forma epigrafica con i titoli (2026-11-14).
 - [x] Import dei nomi nel tempo dall'introduzione italiana (nato…, divenne…, il nome di…, nome iniziale come principale): Vespasiano e Marco Aurelio nei test di non regressione (2026-11-14).
+- [x] Nomi nel tempo dal campo «nome completo» dell'infobox italiana unito all'introduzione (un nome in entrambe una volta sola, gli altri aggiunti): Tito con tre nomi, Traiano con l'adozione, Imperator nei nomi da imperatore, titoli trionfali come agnomina (2026-11-14).
 - [ ] Provare l'app: import o «Aggiorna da Wikipedia» di Vespasiano e Marco Aurelio (nomi nel tempo, titoli, filiazione «Augusti filius»).
 - [x] Nome nelle altre lingue per riga, in ogni nome: «In altre lingue» con Lingua e Nome completo, modulo della lingua con le stesse righe, «+ Aggiungi lingua», «Copia dal latino» (2026-11-14).
 - [ ] Provare l'app: nome nelle altre lingue (aggiungere una lingua al principale e vederla in «Lingua visualizzata» dopo il salvataggio).

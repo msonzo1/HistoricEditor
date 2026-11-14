@@ -18,6 +18,9 @@ Edizioni non lette:
 Latino (praenomen / nomen / cognomen / agnomen): Titus / Flavius / Vespasianus / 
 Nome latino: T. Flavius T.f.T.n. Vespasianus
 Italiano (prenome / gentilizio / cognome / agnome): Tito / Flavio / Vespasiano / 
+Nome nel tempo: Tito Flavio Vespasiano | Titus Flavius Vespasianus | filiazione  | dal 39 | Nome alla nascita | Praenomen:Titus Nomen:Flavius Cognomen:Vespasianus
+Nome nel tempo: Tito Cesare Vespasiano | Titus Caesar Vespasianus | filiazione  | dal  | Da figlio dell'imperatore | Praenomen:Titus Titolo:Caesar Cognomen:Vespasianus
+Nome nel tempo ★: Imperatore Tito Cesare Vespasiano Augusto | Imperator Titus Caesar Vespasianus Augustus | filiazione  | dal 79 | Assunzione del potere | Titolo:Imperator Praenomen:Titus Titolo:Caesar Cognomen:Vespasianus Titolo:Augustus
 
 ## Nomi nelle lingue
 it: Tito | suffisso  | soprannome  | titolo imperatore romano | parti  /  /  / 

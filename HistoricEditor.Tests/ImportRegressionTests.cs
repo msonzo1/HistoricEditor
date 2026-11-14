@@ -94,6 +94,13 @@ public class ImportRegressionTests
         Assert.Equal(("Tito", "Flavio", "Vespasiano"), (r.Prenome, r.Gentilizio, r.CognomeRomano));
         Assert.Equal(("Titus", "Flavius", "Vespasianus"), RomanParts(r, "en"));
 
+        // Nomi nel tempo dal campo «nome completo» dell'infobox italiana (2026-11-14): l'introduzione dà solo il nome da
+        // imperatore. Caesar prende il posto del nomen Flavius; da imperatore davanti c'è anche Imperator.
+        Assert.Equal(["Tito Flavio Vespasiano", "Tito Cesare Vespasiano", "Imperatore Tito Cesare Vespasiano Augusto"], r.NomiNelTempo.Select(n => n.DisplayName));
+        Assert.Equal(["Nome alla nascita", "Da figlio dell'imperatore", "Assunzione del potere"], r.NomiNelTempo.Select(n => n.Motivo));
+        Assert.Equal(("39", "79"), (r.NomiNelTempo[0].Dal, r.NomiNelTempo[2].Dal));
+        Assert.Equal([TipiParteNome.Titolo, TipiParteNome.Praenomen, TipiParteNome.Titolo, TipiParteNome.Cognomen, TipiParteNome.Titolo], r.NomiNelTempo[2].Parti.Select(p => p.Tipo));
+
         // Date: 30 dicembre 39 – 13 settembre 81. Anni a due cifre senza «d.C.» in tutte le introduzioni;
         // le date deprecate su Wikidata (40, 41) non entrano nella scheda.
         Assert.Equal("30/12/0039", person.Birth);
@@ -149,12 +156,12 @@ public class ImportRegressionTests
         Assert.Equal(("Titus", "Flavius", "Vespasianus"), RomanParts(r, "de"));
         Assert.Equal(("Tito", "Flavio", "Vespasiano"), RomanParts(r, "es"));
 
-        // Nomi nel tempo dall'introduzione italiana (2026-11-14): nato Tito Flavio Vespasiano, da imperatore Cesare Vespasiano
-        // Augusto, che è il principale; Caesar e Augustus sono titoli.
-        Assert.Equal(["Tito Flavio Vespasiano", "Cesare Vespasiano Augusto"], r.NomiNelTempo.Select(n => n.DisplayName));
+        // Nomi nel tempo dal campo «nome completo» dell'infobox italiana (2026-11-14): nato Titus Flavius Vespasianus,
+        // da imperatore Imperator Caesar Vespasianus Augustus, che è il principale; Imperator, Caesar e Augustus sono titoli.
+        Assert.Equal(["Tito Flavio Vespasiano", "Imperatore Cesare Vespasiano Augusto"], r.NomiNelTempo.Select(n => n.DisplayName));
         Assert.Equal(("9", "Nome alla nascita"), (r.NomiNelTempo[0].Dal, r.NomiNelTempo[0].Motivo));
         Assert.Equal(("69", "Assunzione del potere", true), (r.NomiNelTempo[1].Dal, r.NomiNelTempo[1].Motivo, r.NomiNelTempo[1].Principale));
-        Assert.Equal([TipiParteNome.Titolo, TipiParteNome.Cognomen, TipiParteNome.Titolo], r.NomiNelTempo[1].Parti.Select(p => p.Tipo));
+        Assert.Equal([TipiParteNome.Titolo, TipiParteNome.Titolo, TipiParteNome.Cognomen, TipiParteNome.Titolo], r.NomiNelTempo[1].Parti.Select(p => p.Tipo));
 
         // Date: 17 novembre 9 – 23 giugno 79 nelle introduzioni (anni a una e due cifre).
         Assert.Equal("17/11/0009", person.Birth);
@@ -247,6 +254,12 @@ public class ImportRegressionTests
         var dynasty = r.Dynasties.Single(d => d.WikidataId == "Q3202662");
         Assert.Equal((false, string.Empty), (dynasty.Gens, dynasty.ParentWikidataId));
 
+        // Nomi nel tempo dal campo «nome completo» dell'infobox italiana (2026-11-14): nato Marcus Ulpius Traianus, adottato da
+        // Nerva (filiazione «Divi Nervae filius»), da imperatore con Imperator e Augustus; Germanicus è un agnomen trionfale.
+        Assert.Equal(["Marco Ulpio Traiano", "Cesare Nerva Traiano Germanico", "Imperatore Cesare Nerva Traiano Augusto Germanico"], r.NomiNelTempo.Select(n => n.DisplayName));
+        Assert.Equal(["Nome alla nascita", "Adozione", "Assunzione del potere"], r.NomiNelTempo.Select(n => n.Motivo));
+        Assert.Equal(("Divi Nervae filius", TipiParteNome.Agnomen), (r.NomiNelTempo[2].Filiazione, r.NomiNelTempo[2].Parti[^1].Tipo));
+
         Assert.Equal("Imperatore romano", r.MainTitle);
         Assert.Contains("Q1427", r.ChildIds);
         ImportFixtures.AssertMatchesSnapshot(page, r);
@@ -274,17 +287,18 @@ public class ImportRegressionTests
         Assert.Contains(r.Dynasties, d => d.WikidataId == "Q906810" && d.Gens);
         Assert.Equal(("gens Annia", "gens Aurelia"), (person.Gens, person.GensAdozione));
 
-        // Nomi nel tempo dall'introduzione italiana (2026-11-14): nato Marco Annio Catilio Severo, poi Marco Annio Vero, poi
-        // Marco Aurelio Cesare figlio dell'Augusto (filiazione «Augusti filius»), da imperatore Cesare Marco Aurelio Antonino
-        // Augusto. Il «Marcus Aelius Aurelius Verus» del 138 non è nell'introduzione.
-        Assert.Equal(["Marco Annio Catilio Severo", "Marco Annio Vero", "Marco Aurelio Cesare", "Cesare Marco Aurelio Antonino Augusto"], r.NomiNelTempo.Select(n => n.DisplayName));
+        // Nomi nel tempo dal campo «nome completo» dell'infobox italiana (2026-11-14): Marcus Annius Catilius Severus alla
+        // nascita, Marcus Annius Verus dopo il matrimonio, Marcus Aurelius Caesar Augusti filius dopo l'adozione, Imperator
+        // Caesar Marcus Aurelius Antoninus Augustus da imperatore. L'italiano viene dalle coppie dell'introduzione.
+        Assert.Equal(["Marco Annio Catilio Severo", "Marco Annio Vero", "Marco Aurelio Cesare", "Imperatore Cesare Marco Aurelio Antonino Augusto"], r.NomiNelTempo.Select(n => n.DisplayName));
+        Assert.Equal(["Nome alla nascita", "Dopo il matrimonio", "Adozione", "Assunzione del potere"], r.NomiNelTempo.Select(n => n.Motivo));
         Assert.Equal([TipiParteNome.Praenomen, TipiParteNome.Nomen, TipiParteNome.Nomen, TipiParteNome.Cognomen], r.NomiNelTempo[0].Parti.Select(p => p.Tipo));
         Assert.Equal(("Augusti filius", TipiParteNome.Titolo), (r.NomiNelTempo[2].Filiazione, r.NomiNelTempo[2].Parti[2].Tipo));
         Assert.Equal(("121", "161"), (r.NomiNelTempo[0].Dal, r.NomiNelTempo[3].Dal));
 
         // Nella scheda le parti della persona sono il riassunto del nome principale.
         Assert.Equal(("Marcus", "Aurelius", "Antoninus"), (person.Praenomen, person.Nomen, person.Cognomen));
-        Assert.Equal("Caesar Marcus Aurelius Antoninus Augustus", person.NomeLatino);
+        Assert.Equal("Imperator Caesar Marcus Aurelius Antoninus Augustus", person.NomeLatino);
         Assert.Equal(4, person.NomiNelTempo.Count);
 
         ImportFixtures.AssertMatchesSnapshot(page, r);

@@ -19,9 +19,9 @@ Latino (praenomen / nomen / cognomen / agnomen): Marcus / Aelius Aurelius / Anto
 Nome latino: Marcus Aurelius Antoninus
 Italiano (prenome / gentilizio / cognome / agnome): Marco / Elio Aurelio / Antonino / 
 Nome nel tempo: Marco Annio Catilio Severo | Marcus Annius Catilius Severus | filiazione  | dal 121 | Nome alla nascita | Praenomen:Marcus Nomen:Annius Nomen:Catilius Cognomen:Severus
-Nome nel tempo: Marco Annio Vero | Marcus Annius Verus | filiazione  | dal  | Cambio di nome | Praenomen:Marcus Nomen:Annius Cognomen:Verus
-Nome nel tempo: Marco Aurelio Cesare | Marcus Aurelius Caesar | filiazione Augusti filius | dal  | Cambio di nome | Praenomen:Marcus Nomen:Aurelius Titolo:Caesar
-Nome nel tempo ★: Cesare Marco Aurelio Antonino Augusto | Caesar Marcus Aurelius Antoninus Augustus | filiazione  | dal 161 | Assunzione del potere | Titolo:Caesar Praenomen:Marcus Nomen:Aurelius Cognomen:Antoninus Titolo:Augustus
+Nome nel tempo: Marco Annio Vero | Marcus Annius Verus | filiazione  | dal  | Dopo il matrimonio | Praenomen:Marcus Nomen:Annius Cognomen:Verus
+Nome nel tempo: Marco Aurelio Cesare | Marcus Aurelius Caesar | filiazione Augusti filius | dal  | Adozione | Praenomen:Marcus Nomen:Aurelius Titolo:Caesar
+Nome nel tempo ★: Imperatore Cesare Marco Aurelio Antonino Augusto | Imperator Caesar Marcus Aurelius Antoninus Augustus | filiazione  | dal 161 | Assunzione del potere | Titolo:Imperator Titolo:Caesar Praenomen:Marcus Nomen:Aurelius Cognomen:Antoninus Titolo:Augustus
 
 ## Nomi nelle lingue
 it: Marco Aurelio | suffisso  | soprannome  | titolo imperatore romano | parti  /  /  / 
