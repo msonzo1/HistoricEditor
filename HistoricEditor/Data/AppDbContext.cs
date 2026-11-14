@@ -72,7 +72,12 @@ public sealed class AppDbContext : DbContext
         {
             b.ToJson();
             b.Ignore(n => n.OrderedParts);
-            b.OwnsMany(n => n.Parti, part => part.Ignore(p => p.AutoItalian));
+            b.Ignore(n => n.Languages);
+            b.OwnsMany(n => n.Parti, part =>
+            {
+                part.Ignore(p => p.AutoItalian);
+                part.OwnsMany(p => p.Traduzioni);
+            });
         });
         person.OwnsMany(p => p.WikipediaLeads, b => b.ToJson());
 

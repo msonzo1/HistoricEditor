@@ -6,19 +6,20 @@ using System.Windows.Controls;
 namespace HistoricEditor;
 
 // Modulo di un nome romano della scheda: righe delle parti (tipo, latino, italiano) nell'ordine in cui si leggono,
-// filiazione, tribù, nome latino libero, periodo e motivo. Per il nome principale anche le parti nelle altre lingue.
+// filiazione, tribù, nome latino libero, periodo, motivo e il nome nelle altre lingue (forme delle stesse righe).
 public partial class RomanNameEditorWindow : Window
 {
+    private sealed record LanguageRow(string Code, string Name, string FullName);
+
     private readonly HistoricalPerson? father;
-    private readonly List<LocalizedPersonName> languages;
     private readonly ObservableCollection<RomanNamePart> parts = [];
+    private readonly List<(string Code, string Name)> schedaLanguages;
+    // Lingue mostrate: quelle della scheda e quelle aggiunte in questo nome.
+    private readonly List<(string Code, string Name)> nameLanguages;
 
     public RomanNameRecord Result { get; private set; }
 
-    // Parti nelle altre lingue modificate (solo per il nome principale); null se non mostrate.
-    public IReadOnlyList<LocalizedPersonName>? ResultLanguages { get; private set; }
-
-    public RomanNameEditorWindow(RomanNameRecord name, HistoricalPerson? father, IEnumerable<LocalizedPersonName>? principalLanguages)
+    public RomanNameEditorWindow(RomanNameRecord name, HistoricalPerson? father, IEnumerable<(string Code, string Name)> schedaLanguages)
     {
         InitializeComponent();
         this.father = father;
@@ -35,7 +36,7 @@ public partial class RomanNameEditorWindow : Window
             AddPart(part, parts.Count);
         }
 
-        parts.CollectionChanged += (_, _) => { UpdatePreview(); UpdatePartButtons(); };
+        parts.CollectionChanged += (_, _) => { UpdatePreview(); UpdatePartButtons(); RefreshLanguages(); };
         PartsGrid.ItemsSource = parts;
         foreach (var tipo in TipiParteNome.All)
         {
@@ -51,13 +52,14 @@ public partial class RomanNameEditorWindow : Window
         ToInput.Text = name.Al;
         ReasonInput.Text = name.Motivo;
 
-        languages = (principalLanguages ?? []).Select(l => l.Clone()).ToList();
-        if (principalLanguages is not null && languages.Count > 0)
+        this.schedaLanguages = [.. schedaLanguages.Where(l => l.Code.Length > 0).DistinctBy(l => l.Code)];
+        nameLanguages = [.. this.schedaLanguages];
+        foreach (var code in parts.SelectMany(p => p.Traduzioni).Select(t => t.Lingua).Distinct().Where(c => nameLanguages.All(l => l.Code != c)))
         {
-            LanguagesGrid.ItemsSource = languages;
-            LanguagesPanel.Visibility = Visibility.Visible;
+            nameLanguages.Add((code, LanguageName(code)));
         }
 
+        RefreshLanguages();
         UpdatePreview();
         UpdatePartButtons();
     }
@@ -67,6 +69,122 @@ public partial class RomanNameEditorWindow : Window
         part.AutoItalian = true;
         part.PropertyChanged += Part_PropertyChanged;
         parts.Insert(index, part);
+    }
+
+    private static string LanguageName(string code)
+        => LocalizedPersonName.EditableLanguages.FirstOrDefault(l => l.Code == code).Name ?? code;
+
+    // Righe di «In altre lingue»: nome completo dalle forme delle parti, con le parti mancanti indicate.
+    private void RefreshLanguages()
+    {
+        if (LanguagesGrid is null || nameLanguages is null)
+        {
+            return;
+        }
+
+        var selected = (LanguagesGrid.SelectedItem as LanguageRow)?.Code;
+        var filled = parts.Where(p => !p.IsEmpty()).ToList();
+        var rows = nameLanguages.Select(l =>
+        {
+            var name = string.Join(' ', filled.Select(p => p.Translation(l.Code)).Where(v => v.Length > 0));
+            var missing = filled.Count(p => p.Translation(l.Code).Length == 0);
+            var text = name.Length == 0 ? "(da completare)"
+                : missing > 0 ? $"{name}  ({RomanNameLanguageWindow.Missing(missing, filled.Count)})"
+                : name;
+            return new LanguageRow(l.Code, l.Name, text);
+        }).ToList();
+        LanguagesGrid.ItemsSource = rows;
+        LanguagesGrid.SelectedItem = rows.FirstOrDefault(r => r.Code == selected);
+        UpdateLanguageButtons();
+    }
+
+    private void LanguagesGrid_SelectionChanged(object sender, SelectionChangedEventArgs e) => UpdateLanguageButtons();
+
+    private void UpdateLanguageButtons()
+    {
+        var selected = LanguagesGrid.SelectedItem is LanguageRow;
+        EditLanguageButton.IsEnabled = selected;
+        RemoveLanguageButton.IsEnabled = selected;
+        AddLanguageButton.IsEnabled = LocalizedPersonName.EditableLanguages.Any(l => nameLanguages.All(n => n.Code != l.Code));
+    }
+
+    private void AddLanguage_Click(object sender, RoutedEventArgs e)
+    {
+        AddLanguageMenu.Items.Clear();
+        foreach (var (code, languageName) in LocalizedPersonName.EditableLanguages.Where(l => nameLanguages.All(n => n.Code != l.Code)))
+        {
+            var item = new MenuItem { Header = $"{languageName} ({code})" };
+            item.Click += (_, _) =>
+            {
+                nameLanguages.Add((code, languageName));
+                RefreshLanguages();
+                EditLanguage(code, languageName);
+            };
+            AddLanguageMenu.Items.Add(item);
+        }
+
+        AddLanguageMenu.PlacementTarget = AddLanguageButton;
+        AddLanguageMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+        AddLanguageMenu.IsOpen = true;
+    }
+
+    private void LanguagesGrid_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (LanguagesGrid.SelectedItem is LanguageRow row && e.OriginalSource is DependencyObject source && ItemsControl.ContainerFromElement(LanguagesGrid, source) is DataGridRow)
+        {
+            EditLanguage(row.Code, row.Name);
+        }
+    }
+
+    private void EditLanguage_Click(object sender, RoutedEventArgs e)
+    {
+        if (LanguagesGrid.SelectedItem is LanguageRow row)
+        {
+            EditLanguage(row.Code, row.Name);
+        }
+    }
+
+    // Modulo della lingua con le righe compilate di «Parti del nome».
+    private void EditLanguage(string code, string languageName)
+    {
+        var filled = parts.Where(p => !p.IsEmpty()).ToList();
+        if (filled.Count == 0)
+        {
+            EditorMessage.Text = "Compilare prima le parti del nome.";
+            return;
+        }
+
+        var window = new RomanNameLanguageWindow(filled, code, languageName, ReadForm().DisplayName) { Owner = this };
+        if (window.ShowDialog() == true)
+        {
+            for (var i = 0; i < filled.Count; i++)
+            {
+                filled[i].SetTranslation(code, window.Result[i]);
+            }
+        }
+
+        RefreshLanguages();
+    }
+
+    // Toglie le forme della lingua; una lingua della scheda resta nell'elenco, da completare.
+    private void RemoveLanguage_Click(object sender, RoutedEventArgs e)
+    {
+        if (LanguagesGrid.SelectedItem is not LanguageRow row)
+        {
+            return;
+        }
+
+        foreach (var part in parts)
+        {
+            part.SetTranslation(row.Code, string.Empty);
+        }
+
+        if (schedaLanguages.All(l => l.Code != row.Code))
+        {
+            nameLanguages.RemoveAll(l => l.Code == row.Code);
+        }
+
+        RefreshLanguages();
     }
 
     private void Part_PropertyChanged(object? sender, PropertyChangedEventArgs e) => UpdatePreview();
@@ -148,7 +266,12 @@ public partial class RomanNameEditorWindow : Window
     private RomanNameRecord ReadForm()
     {
         var name = Result.Clone();
-        name.Parti = [.. parts.Where(p => !p.IsEmpty()).Select(p => new RomanNamePart { Tipo = p.Tipo, Latino = p.Latino.Trim(), Italiano = p.Italiano.Trim() })];
+        name.Parti = [.. parts.Where(p => !p.IsEmpty()).Select(p =>
+        {
+            var part = p.Clone();
+            (part.Latino, part.Italiano) = (p.Latino.Trim(), p.Italiano.Trim());
+            return part;
+        })];
         name.FieldsFromParts();
         name.Filiazione = FiliationInput.Text.Trim();
         name.Tribu = TribeInput.Text.Trim();
@@ -208,7 +331,6 @@ public partial class RomanNameEditorWindow : Window
         }
 
         Result = name;
-        ResultLanguages = LanguagesPanel.Visibility == Visibility.Visible ? languages : null;
         DialogResult = true;
     }
 }

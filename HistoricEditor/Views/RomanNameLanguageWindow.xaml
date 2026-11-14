@@ -1,0 +1,38 @@
+<Window x:Class="HistoricEditor.RomanNameLanguageWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Nome in un'altra lingua"
+        SizeToContent="Height" Width="640" MaxHeight="700"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource AppBackground}" Foreground="{DynamicResource InkBrush}"
+        FontFamily="Segoe UI" FontSize="13">
+    <DockPanel Margin="18">
+        <TextBlock x:Name="IntroText" DockPanel.Dock="Top" FontSize="11" Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" Margin="0,0,0,10" />
+        <DockPanel DockPanel.Dock="Bottom" Margin="0,16,0,0">
+            <Button DockPanel.Dock="Left" Content="Copia dal latino" Click="CopyLatin_Click" Padding="12,5" ToolTip="Riempie le parti vuote con la forma latina (in inglese e in tedesco di solito si usa quella)" AutomationProperties.Name="Copia le parti vuote dal latino" />
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Annulla" IsCancel="True" Padding="14,7" Margin="0,0,8,0" />
+                <Button Content="Salva" Click="Save_Click" Padding="14,7" Style="{StaticResource PrimaryButton}" />
+            </StackPanel>
+        </DockPanel>
+        <TextBlock x:Name="FullNamePreview" DockPanel.Dock="Bottom" FontSize="12" Foreground="{DynamicResource InkBrush}" TextWrapping="Wrap" Margin="2,10,0,0" AutomationProperties.LiveSetting="Polite" />
+
+        <DataGrid x:Name="RowsGrid" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserSortColumns="False" CanUserReorderColumns="False"
+                  HeadersVisibility="Column" SelectionMode="Single" RowHeight="38" AutomationProperties.Name="Parti del nome nella lingua">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Parte" Binding="{Binding Tipo}" IsReadOnly="True" Width="110" />
+                <DataGridTextColumn Header="Latino" Binding="{Binding Latino}" IsReadOnly="True" Width="*" />
+                <DataGridTextColumn Header="Italiano" Binding="{Binding Italiano}" IsReadOnly="True" Width="*" />
+                <DataGridTemplateColumn x:Name="LanguageColumn" Header="Lingua" Width="*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBox Text="{Binding Testo, UpdateSourceTrigger=PropertyChanged}" Margin="2" VerticalContentAlignment="Center"
+                                     Background="{DynamicResource AppSurface}" BorderBrush="{DynamicResource AppBorder}" BorderThickness="1" AutomationProperties.Name="Parte nella lingua" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</Window>

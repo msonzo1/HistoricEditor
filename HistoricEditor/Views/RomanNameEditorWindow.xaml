@@ -121,19 +121,26 @@
                     </StackPanel>
                 </Grid>
 
-                <!-- Solo per il nome principale: il riassunto per tipo nelle altre lingue della scheda. -->
-                <StackPanel x:Name="LanguagesPanel" Visibility="Collapsed" Margin="0,16,0,0">
+                <!-- Il nome nelle altre lingue: nome completo per lingua, modificabile solo nel modulo della lingua. -->
+                <StackPanel x:Name="LanguagesPanel" Margin="0,16,0,0">
                     <TextBlock Text="IN ALTRE LINGUE" Style="{StaticResource SectionTitle}" />
-                    <TextBlock Text="Parti del nome principale nelle altre lingue della scheda (le lingue si aggiungono in alto nella scheda)." FontSize="11" Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" Margin="0,0,0,6" />
-                    <DataGrid x:Name="LanguagesGrid" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" HeadersVisibility="Column" SelectionMode="Single" MaxHeight="200" AutomationProperties.Name="Parti del nome nelle altre lingue">
+                    <TextBlock Text="Il nome nelle altre lingue, composto dalle stesse parti. Ogni lingua si modifica nel suo modulo (doppio clic o «Modifica…»)." FontSize="11" Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" Margin="0,0,0,6" />
+                    <DataGrid x:Name="LanguagesGrid" AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False" CanUserDeleteRows="False" CanUserSortColumns="False" HeadersVisibility="Column" SelectionMode="Single" MinHeight="40" MaxHeight="200"
+                              MouseDoubleClick="LanguagesGrid_MouseDoubleClick" SelectionChanged="LanguagesGrid_SelectionChanged" AutomationProperties.Name="Il nome nelle altre lingue">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Lingua" Binding="{Binding LinguaNome}" IsReadOnly="True" Width="*" />
-                            <DataGridTextColumn Header="Prenome" Binding="{Binding Prenome, UpdateSourceTrigger=PropertyChanged}" Width="*" />
-                            <DataGridTextColumn Header="Nome gentilizio" Binding="{Binding Gentilizio, UpdateSourceTrigger=PropertyChanged}" Width="*" />
-                            <DataGridTextColumn Header="Cognome" Binding="{Binding CognomeRomano, UpdateSourceTrigger=PropertyChanged}" Width="*" />
-                            <DataGridTextColumn Header="Agnome" Binding="{Binding Agnome, UpdateSourceTrigger=PropertyChanged}" Width="*" />
+                            <DataGridTextColumn Header="Lingua" Binding="{Binding Name}" Width="140" />
+                            <DataGridTextColumn Header="Nome completo" Binding="{Binding FullName}" Width="*" />
                         </DataGrid.Columns>
                     </DataGrid>
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                        <Button x:Name="AddLanguageButton" Content="+ Aggiungi lingua ▾" Click="AddLanguage_Click" Padding="12,5" AutomationProperties.Name="Aggiungi una lingua al nome">
+                            <Button.ContextMenu>
+                                <ContextMenu x:Name="AddLanguageMenu" />
+                            </Button.ContextMenu>
+                        </Button>
+                        <Button x:Name="EditLanguageButton" Content="Modifica…" Click="EditLanguage_Click" Padding="12,5" Margin="8,0,0,0" AutomationProperties.Name="Modifica il nome nella lingua selezionata" />
+                        <Button x:Name="RemoveLanguageButton" Content="Elimina" Click="RemoveLanguage_Click" Padding="12,5" Margin="8,0,0,0" AutomationProperties.Name="Elimina le forme della lingua selezionata" />
+                    </StackPanel>
                 </StackPanel>
             </StackPanel>
         </ScrollViewer>

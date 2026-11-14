@@ -1798,6 +1798,33 @@ namespace HistoricEditor.Migrations
 
                                     b2.WithOwner()
                                         .HasForeignKey("RomanNameRecordHistoricalPersonId", "RomanNameRecord__synthesizedOrdinal");
+
+                                    b2.OwnsMany("HistoricEditor.PartTranslation", "Traduzioni", b3 =>
+                                        {
+                                            b3.Property<int>("RomanNamePartRomanNameRecordHistoricalPersonId");
+
+                                            b3.Property<int>("RomanNamePartRomanNameRecord__synthesizedOrdinal");
+
+                                            b3.Property<int>("RomanNamePart__synthesizedOrdinal");
+
+                                            b3.Property<int>("__synthesizedOrdinal")
+                                                .ValueGeneratedOnAddOrUpdate();
+
+                                            b3.Property<string>("Lingua")
+                                                .IsRequired();
+
+                                            b3.Property<string>("Testo")
+                                                .IsRequired();
+
+                                            b3.HasKey("RomanNamePartRomanNameRecordHistoricalPersonId", "RomanNamePartRomanNameRecord__synthesizedOrdinal", "RomanNamePart__synthesizedOrdinal", "__synthesizedOrdinal");
+
+                                            b3.ToTable("People");
+
+                                            b3.WithOwner()
+                                                .HasForeignKey("RomanNamePartRomanNameRecordHistoricalPersonId", "RomanNamePartRomanNameRecord__synthesizedOrdinal", "RomanNamePart__synthesizedOrdinal");
+                                        });
+
+                                    b2.Navigation("Traduzioni");
                                 });
 
                             b1.Navigation("Parti");

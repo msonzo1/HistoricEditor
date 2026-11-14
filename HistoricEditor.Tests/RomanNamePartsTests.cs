@@ -164,4 +164,85 @@ public class RomanNamePartsTests
         Assert.Equal(TipiParteNome.Cognomen, names[1].Parti[2].Tipo);
         Assert.Equal([TipiParteNome.Titolo, TipiParteNome.Titolo, TipiParteNome.Titolo], names[2].Parti.Select(p => p.Tipo));
     }
+
+    // Forme nelle altre lingue per riga (2026-11-14): ogni parte ha le sue, il nome completo si compone nell'ordine.
+    [Fact]
+    public void Translations_ComposeFullNameAndSummary()
+    {
+        var name = Emperor();
+        name.TranslationsFrom("es", "Marco", "Aurelio", "Antonino", "");
+        name.Parti[1].SetTranslation("es", "César");
+        name.Parti[5].SetTranslation("es", "Augusto");
+
+        Assert.Equal("César Marco Aurelio Antonino Augusto", name.FullName("es"));
+        Assert.Equal(5, name.TranslatedCount("es"));
+        Assert.Equal(("Marco", "Aurelio", "Antonino", ""), name.Summary("es"));
+        Assert.Equal(["es"], name.Languages);
+
+        // Più parole che righe dello stesso tipo: tutte nella prima.
+        var several = new RomanNameRecord { Parti = [Part(TipiParteNome.Praenomen, "Marcus", "Marco"), Part(TipiParteNome.Nomen, "Aurelius", "Aurelio")] };
+        several.TranslationsFrom("en", "Marcus", "Aelius Aurelius", "", "");
+        Assert.Equal("Aelius Aurelius", several.Parti[1].Translation("en"));
+    }
+
+    // Il principale riporta le sue forme nelle parti per lingua della persona (una lingua nuova si aggiunge, una tolta
+    // perde le parti); riletto, le forme tornano nelle righe. Le schede salvate prima le ricavano dalle parti per lingua.
+    [Fact]
+    public void SetNames_SyncsLanguagesOfPrincipal()
+    {
+        var person = new HistoricalPerson
+        {
+            Name = "Marco Aurelio",
+            LocalizedNames = [new LocalizedPersonName { Lingua = "fr", LinguaNome = "francese", Nome = "Marc Aurèle", Prenome = "Marc", Gentilizio = "Aurèle" }],
+        };
+        var emperor = Emperor();
+        emperor.TranslationsFrom("es", "Marco", "Aurelio", "Antonino", "");
+        RomanNaming.SetNames(person, [emperor]);
+
+        var spanish = person.LocalizedNames.Single(l => l.Lingua == "es");
+        Assert.Equal(("spagnolo", "Marco", "Aurelio", "Antonino"), (spanish.LinguaNome, spanish.Prenome, spanish.Gentilizio, spanish.CognomeRomano));
+        var french = person.LocalizedNames.Single(l => l.Lingua == "fr");
+        Assert.Equal(("Marc Aurèle", ""), (french.Nome, french.Prenome));
+
+        var principal = Assert.Single(RomanNaming.NamesOf(person));
+        Assert.Equal("Marco Aurelio Antonino", principal.FullName("es"));
+
+        var old = new HistoricalPerson
+        {
+            Name = "Gaio Giulio Cesare", Praenomen = "Gaius", Nomen = "Iulius", Cognomen = "Caesar",
+            LocalizedNames = [new LocalizedPersonName { Lingua = "en", LinguaNome = "inglese", Prenome = "Gaius", Gentilizio = "Julius", CognomeRomano = "Caesar" }],
+        };
+        Assert.Equal("Gaius Julius Caesar", Assert.Single(RomanNaming.NamesOf(old)).FullName("en"));
+    }
+
+    [Fact]
+    public void Store_KeepsTranslationsOfParts()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), $"historic-parts-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(dir);
+        try
+        {
+            int id;
+            using (var store = new PeopleStore(dir))
+            {
+                var person = new HistoricalPerson { Name = "Marco Aurelio", Onomastica = Onomastiche.Romana };
+                var birth = new RomanNameRecord { Parti = [Part(TipiParteNome.Praenomen, "Marcus", "Marco"), Part(TipiParteNome.Nomen, "Annius", "Annio"), Part(TipiParteNome.Cognomen, "Verus", "Vero")], Motivo = "Nome alla nascita" };
+                birth.Parti[1].SetTranslation("en", "Annius");
+                RomanNaming.SetNames(person, [birth, Emperor()]);
+                store.Add(person);
+                id = person.Id;
+            }
+
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+            using var reopened = new PeopleStore(dir);
+            var names = RomanNaming.NamesOf(reopened.GetPerson(id)!);
+            Assert.Equal("Annius", names[0].FullName("en"));
+            Assert.Equal(1, names[0].TranslatedCount("en"));
+        }
+        finally
+        {
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+            Directory.Delete(dir, recursive: true);
+        }
+    }
 }

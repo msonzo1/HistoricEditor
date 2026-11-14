@@ -166,6 +166,12 @@ public partial class PersonEditorWindow
             principal.PartsFromFields();
         }
 
+        // Le forme nelle altre lingue lette da Wikidata vanno nelle righe del principale (solo le lingue indicate).
+        foreach (var localized in import.LocalizedNames.Where(l => RomanNaming.HasRomanParts(l.Prenome, l.Gentilizio, l.CognomeRomano, l.Agnome)))
+        {
+            principal.TranslationsFrom(localized.Lingua, localized.Prenome, localized.Gentilizio, localized.CognomeRomano, localized.Agnome);
+        }
+
         if (created)
         {
             if (principal.HasParts)
@@ -241,7 +247,7 @@ public partial class PersonEditorWindow
 
     private string RomanSnapshot()
         => string.Join("\u001e", romanNames.Select(n => string.Join("|",
-            n.Principale, string.Join(";", n.OrderedParts.Select(p => $"{p.Tipo}:{p.Latino.Trim()}:{p.Italiano.Trim()}")),
+            n.Principale, string.Join(";", n.OrderedParts.Select(p => $"{p.Tipo}:{p.Latino.Trim()}:{p.Italiano.Trim()}:{string.Join(",", p.Traduzioni.Select(t => $"{t.Lingua}={t.Testo.Trim()}"))}")),
             n.Filiazione, n.Tribu, n.NomeLatino, n.Dal, n.Al, n.Motivo)))
             + "\u001d" + SelectedNaming + "\u001d" + gensText.Trim();
 
@@ -300,24 +306,34 @@ public partial class PersonEditorWindow
     {
         CommitShownLanguage();
         var father = editingPerson?.FatherId is int fatherId ? store.GetPerson(fatherId) : null;
-        var window = new RomanNameEditorWindow(name, father, name.Principale ? localizedNames : null) { Owner = this };
+        var window = new RomanNameEditorWindow(name, father, localizedNames.Select(l => (l.Lingua, l.LinguaNome))) { Owner = this };
         if (window.ShowDialog() != true)
         {
             return null;
         }
 
-        foreach (var edited in window.ResultLanguages ?? [])
+        // Una lingua aggiunta nel nome principale si aggiunge anche alla scheda (le sue parti si scrivono al salvataggio).
+        var result = window.Result;
+        if (name.Principale)
         {
-            if (localizedNames.FirstOrDefault(l => l.Lingua == edited.Lingua) is { } target)
+            var added = false;
+            foreach (var code in result.Languages.Where(c => localizedNames.All(l => l.Lingua != c)))
             {
-                target.Prenome = edited.Prenome.Trim();
-                target.Gentilizio = edited.Gentilizio.Trim();
-                target.CognomeRomano = edited.CognomeRomano.Trim();
-                target.Agnome = edited.Agnome.Trim();
+                localizedNames.Add(new LocalizedPersonName
+                {
+                    Lingua = code,
+                    LinguaNome = LocalizedPersonName.EditableLanguages.FirstOrDefault(l => l.Code == code).Name ?? code,
+                });
+                added = true;
+            }
+
+            if (added)
+            {
+                RebuildLanguageOptions(shownLanguage);
             }
         }
 
-        return window.Result;
+        return result;
     }
 
     private void RemoveRomanName_Click(object sender, RoutedEventArgs e)

@@ -59,7 +59,8 @@
 - [x] Modulo del nome a tabella: righe ordinate (Praenomen, Nomen, Cognomen, Agnomen, Titolo) con latino e italiano, «+ Aggiungi parte», ↑ ↓, forma epigrafica con i titoli (2026-11-14).
 - [x] Import dei nomi nel tempo dall'introduzione italiana (nato…, divenne…, il nome di…, nome iniziale come principale): Vespasiano e Marco Aurelio nei test di non regressione (2026-11-14).
 - [ ] Provare l'app: import o «Aggiorna da Wikipedia» di Vespasiano e Marco Aurelio (nomi nel tempo, titoli, filiazione «Augusti filius»).
-- [ ] Decidere come gestire le parti del nome nelle altre lingue (non come colonne della tabella; oggi tabellina «In altre lingue» del nome principale).
+- [x] Nome nelle altre lingue per riga, in ogni nome: «In altre lingue» con Lingua e Nome completo, modulo della lingua con le stesse righe, «+ Aggiungi lingua», «Copia dal latino» (2026-11-14).
+- [ ] Provare l'app: nome nelle altre lingue (aggiungere una lingua al principale e vederla in «Lingua visualizzata» dopo il salvataggio).
 - [ ] Provare l'app: scheda romana con più nomi (nuovo, modifica, elimina, principale), modulo «Dinastia e gens», parti nelle altre lingue nel modulo del nome principale, scheda di lettura.
 - [ ] Provare l'app: «Aggiorna da Wikipedia» su Marco Aurelio (nome italiano, campo Gens con gens Annia); la gens Aurelia già registrata resta in archivio e va tolta a mano se non serve.
 - [x] Barra del titolo scura ridisegnata subito all'apertura della scheda.

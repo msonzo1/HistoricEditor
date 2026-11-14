@@ -64,9 +64,33 @@ public sealed class RomanNamePart : System.ComponentModel.INotifyPropertyChanged
 
     public bool IsEmpty() => Latino.Trim().Length == 0 && Italiano.Trim().Length == 0;
 
-    public RomanNamePart Clone() => new() { Tipo = Tipo, Latino = Latino, Italiano = Italiano };
+    // Forme della parte nelle altre lingue («Caesar» in spagnolo «César»), una per lingua.
+    public List<PartTranslation> Traduzioni { get => field ??= []; set; } = [];
+
+    public string Translation(string lingua)
+        => Traduzioni.FirstOrDefault(t => t.Lingua == lingua)?.Testo.Trim() ?? string.Empty;
+
+    public void SetTranslation(string lingua, string testo)
+    {
+        Traduzioni.RemoveAll(t => t.Lingua == lingua);
+        if (testo.Trim().Length > 0)
+        {
+            Traduzioni.Add(new PartTranslation { Lingua = lingua, Testo = testo.Trim() });
+        }
+    }
+
+    public RomanNamePart Clone() => new() { Tipo = Tipo, Latino = Latino, Italiano = Italiano, Traduzioni = [.. Traduzioni.Select(t => t.Clone())] };
 
     private void Changed(string name) => PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(name));
+}
+
+// Forma di una parte del nome in un'altra lingua (codice della lingua, come nei nomi localizzati: «en», «es»…).
+public sealed class PartTranslation
+{
+    public string Lingua { get => field ?? string.Empty; set; } = string.Empty;
+    public string Testo { get => field ?? string.Empty; set; } = string.Empty;
+
+    public PartTranslation Clone() => new() { Lingua = Lingua, Testo = Testo };
 }
 
 // Nome portato in un periodo della vita (alla nascita, dopo un'adozione, all'assunzione del potere…). Le parti sono righe
@@ -161,6 +185,59 @@ public sealed class RomanNameRecord
         Gentilizio = Join(TipiParteNome.Nomen, p => p.Italiano);
         CognomeRomano = Join(TipiParteNome.Cognomen, p => p.Italiano);
         Agnome = Join(TipiParteNome.Agnomen, p => p.Italiano);
+    }
+
+    // Lingue in cui almeno una parte ha una forma.
+    [System.Text.Json.Serialization.JsonIgnore]
+    public IReadOnlyList<string> Languages => [.. Parti.SelectMany(p => p.Traduzioni).Where(t => t.Testo.Trim().Length > 0).Select(t => t.Lingua).Distinct()];
+
+    // Nome completo in una lingua, dalle parti nell'ordine scritto (quelle senza forma in quella lingua si saltano).
+    public string FullName(string lingua) => string.Join(' ', Parti.Select(p => p.Translation(lingua)).Where(v => v.Length > 0));
+
+    public int TranslatedCount(string lingua) => Parti.Count(p => p.Translation(lingua).Length > 0);
+
+    // Forme di una lingua dai quattro campi per tipo (nomi localizzati salvati prima, import da Wikidata): le parole di
+    // un tipo vanno nelle righe dello stesso tipo, una per riga se sono tante quante, altrimenti tutte nella prima.
+    public void TranslationsFrom(string lingua, string prenome, string gentilizio, string cognome, string agnome)
+    {
+        foreach (var part in Parti)
+        {
+            part.SetTranslation(lingua, string.Empty);
+        }
+
+        void Set(string tipo, string text)
+        {
+            var rows = Parti.Where(p => p.Tipo == tipo).ToList();
+            var words = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (rows.Count == 0 || words.Length == 0)
+            {
+                return;
+            }
+
+            if (words.Length == rows.Count)
+            {
+                for (var i = 0; i < rows.Count; i++)
+                {
+                    rows[i].SetTranslation(lingua, words[i]);
+                }
+            }
+            else
+            {
+                rows[0].SetTranslation(lingua, text.Trim());
+            }
+        }
+
+        Set(TipiParteNome.Praenomen, prenome);
+        Set(TipiParteNome.Nomen, gentilizio);
+        Set(TipiParteNome.Cognomen, cognome);
+        Set(TipiParteNome.Agnomen, agnome);
+    }
+
+    // Riassunto per tipo in una lingua (prenome, gentilizio, cognome, agnome), per i nomi localizzati della persona.
+    public (string Prenome, string Gentilizio, string Cognome, string Agnome) Summary(string lingua)
+    {
+        string Join(string tipo) => string.Join(' ', Parti.Where(p => p.Tipo == tipo).Select(p => p.Translation(lingua)).Where(v => v.Length > 0));
+        return (Join(TipiParteNome.Praenomen), Join(TipiParteNome.Nomen), Join(TipiParteNome.Cognomen), Join(TipiParteNome.Agnomen));
     }
 
     // Righe da mostrare: quelle salvate o, se mancano, quelle ricavate dai campi singoli.
@@ -444,7 +521,11 @@ public static class RomanNaming
                 Praenomen = n.Praenomen.Trim(), Nomen = n.Nomen.Trim(), Cognomen = n.Cognomen.Trim(), Agnomen = n.Agnomen.Trim(),
                 Filiazione = n.Filiazione.Trim(), Tribu = n.Tribu.Trim(),
                 NomeLatino = n.NomeLatino.Trim().Length > 0 ? n.NomeLatino.Trim() : n.Nome.Trim(),
-                Parti = [.. n.Parti.Where(p => !p.IsEmpty()).Select(p => new RomanNamePart { Tipo = p.Tipo, Latino = p.Latino.Trim(), Italiano = p.Italiano.Trim() })],
+                Parti = [.. n.Parti.Where(p => !p.IsEmpty()).Select(p => new RomanNamePart
+                {
+                    Tipo = p.Tipo, Latino = p.Latino.Trim(), Italiano = p.Italiano.Trim(),
+                    Traduzioni = [.. p.Traduzioni.Where(t => t.Lingua.Trim().Length > 0 && t.Testo.Trim().Length > 0).Select(t => new PartTranslation { Lingua = t.Lingua.Trim(), Testo = t.Testo.Trim() })],
+                })],
             };
             if (name.Parti.Count == 0)
             {
@@ -527,6 +608,16 @@ public static class RomanNaming
             CopyParts(person, principal);
         }
 
+        // Le forme nelle altre lingue che il principale non ha ancora vengono dalle parti per lingua della persona
+        // (schede salvate prima delle forme per riga, import da Wikidata).
+        foreach (var localized in person.LocalizedNames ?? [])
+        {
+            if (principal.TranslatedCount(localized.Lingua) == 0)
+            {
+                principal.TranslationsFrom(localized.Lingua, localized.Prenome, localized.Gentilizio, localized.CognomeRomano, localized.Agnome);
+            }
+        }
+
         return HasRomanParts(person) || names.Count > 1 || !principal.IsEmpty() ? names : [];
     }
 
@@ -546,11 +637,42 @@ public static class RomanNaming
         person.Filiazione = principal.Filiazione;
         person.Tribu = principal.Tribu;
         person.NomeLatino = PersonLatin(principal);
+        SyncLocalizedNames(person, principal);
         // Un solo nome senza periodo né motivo, con le parti nell'ordine consueto e senza titoli, è già tutto nei campi
         // della persona.
         var plain = list.Count == 1 && list[0].Dal.Length == 0 && list[0].Al.Length == 0 && list[0].Motivo.Length == 0
             && list[0].Parti.All(p => p.Tipo != TipiParteNome.Titolo) && PlainOrder(list[0]);
         person.NomiNelTempo = plain ? [] : list;
+    }
+
+    // Parti per lingua della persona (nomi localizzati) dal nome principale: una lingua che il principale ha e la scheda
+    // no viene aggiunta; una lingua senza forme nel principale perde le parti (gli altri valori della lingua restano).
+    private static void SyncLocalizedNames(HistoricalPerson person, RomanNameRecord principal)
+    {
+        var names = (person.LocalizedNames ?? []).Select(n => n.Clone()).ToList();
+        foreach (var lingua in principal.Languages.Union(names.Select(n => n.Lingua)).ToList())
+        {
+            var (prenome, gentilizio, cognome, agnome) = principal.Summary(lingua);
+            var entry = names.FirstOrDefault(n => n.Lingua == lingua);
+            if (entry is null)
+            {
+                if (!HasRomanParts(prenome, gentilizio, cognome, agnome))
+                {
+                    continue;
+                }
+
+                entry = new LocalizedPersonName
+                {
+                    Lingua = lingua,
+                    LinguaNome = LocalizedPersonName.EditableLanguages.FirstOrDefault(l => l.Code == lingua).Name ?? lingua,
+                };
+                names.Add(entry);
+            }
+
+            (entry.Prenome, entry.Gentilizio, entry.CognomeRomano, entry.Agnome) = (prenome, gentilizio, cognome, agnome);
+        }
+
+        person.LocalizedNames = LocalizedPersonName.Normalize(names);
     }
 
     // Righe nell'ordine praenomen, nomen, cognomen, agnomen (quello che si ricava dai campi singoli).
