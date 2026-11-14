@@ -184,7 +184,7 @@ public class PeopleGroupingTests
     [Theory]
     [InlineData("1500", "1558", "n. 1500 · m. 1558")]
     [InlineData("1500", "", "n. 1500")]
-    [InlineData("", "c. 1558", "m. c. 1558")]
+    [InlineData("", "c. 1558", "m. circa 1558")]
     [InlineData("", " ", "Date non indicate")]
     public void DescribeDates_FormatsAvailableDates(string birth, string death, string expected)
         => Assert.Equal(expected, PeopleGrouping.DescribeDates(birth, death));

@@ -251,7 +251,7 @@ public static class DynastySheet
             p.DisplayName,
             string.IsNullOrWhiteSpace(p.Birth) && string.IsNullOrWhiteSpace(p.Death)
                 ? string.Empty
-                : $"{(string.IsNullOrWhiteSpace(p.Birth) ? "?" : DateFormats.Normalize(p.Birth.Trim()))} – {(string.IsNullOrWhiteSpace(p.Death) ? "?" : DateFormats.Normalize(p.Death.Trim()))}",
+                : $"{(string.IsNullOrWhiteSpace(p.Birth) ? "?" : DateFormats.Readable(p.Birth.Trim()))} – {(string.IsNullOrWhiteSpace(p.Death) ? "?" : DateFormats.Readable(p.Death.Trim()))}",
             Branch(p, dynasty))),
     ];
 

@@ -58,13 +58,21 @@ public static partial class DateFormats
     }
 
     // Riscrive nel formato in uso ogni ipotesi (separate da «;») che sia proprio una data: «17/11/9 d.C.» → «17/11/0009»,
-    // «10 febbraio 1525» → «10/02/1525», «44 a.C.» resta così. Il testo libero («c. 1540», «XV secolo», «1503-1519»)
-    // non cambia. Se nessuna ipotesi cambia si restituisce il testo originale.
+    // «10 febbraio 1525» → «10/02/1525», «44 a.C.» resta così; le date incerte vanno nella forma compatta di UncertainDate.
+    // Il testo libero non riconosciuto non cambia. Se nessuna ipotesi cambia si restituisce il testo originale.
     public static string Normalize(string? text, string? format = null)
     {
         if (string.IsNullOrWhiteSpace(text))
         {
             return text ?? string.Empty;
+        }
+
+        // Le date incerte riconosciute (tra, prima, dopo, circa, secolo, più date) si riscrivono nella forma compatta:
+        // «1503-1519» → «tra 1503 e 1519», «circa 1540» → «c. 1540».
+        if (UncertainDate.Parse(text) is { } uncertain)
+        {
+            var compact = uncertain.Compact(format);
+            return string.Equals(compact, text.Trim(), StringComparison.Ordinal) ? text : compact;
         }
 
         var pieces = text.Split(';');
@@ -85,6 +93,11 @@ public static partial class DateFormats
 
         return changed ? string.Join("; ", pieces.Where(p => p.Length > 0)) : text;
     }
+
+    // Forma leggibile per elenchi e schede: «17 novembre 9», «12 o 13 luglio 100 a.C.», «tra il 1503 e il 1519»;
+    // il testo non riconosciuto resta com'è (nel formato in uso se è una data).
+    public static string Readable(string? text)
+        => UncertainDate.Parse(text) is { } uncertain ? uncertain.Readable() : Normalize(text);
 
     // Vero solo se tutto il testo è una data: giorno/mese/anno, mese/anno o anno (con «/», «.» o «-»), oppure
     // «10 febbraio 1525», «marzo 1550». Un anno di una o due cifre vale solo con «a.C.»/«d.C.» o dopo il nome del mese,

@@ -73,6 +73,11 @@
 - [ ] Nome italiano della «Nerva–Antonine dynasty»: Wikidata non ha né etichetta né voce italiana (oggi va rinominata a mano).
 - [ ] Indicare il luogo storico anche nella scheda di lettura e negli elenchi (oggi solo nei campi del modulo e nell'albero dei luoghi).
 
+## Date incerte (2026-11-14)
+- [x] Forme fisse (giorno, mese, anno, secolo, «o», «tra», «prima», «dopo», «c.») con forma compatta nei campi e leggibile in elenchi e schede, ordinamento sul centro, filtro della mappa sull'intervallo (`UncertainDate`).
+- [ ] Editor della data nel calendario accanto ai campi: tipo (data, più date, tra, prima, dopo), precisione (giorno, mese, anno, secolo), «circa».
+- [ ] Estendere forma leggibile e intervalli alle altre date (titoli, eventi, unioni).
+
 ## Dinastie
 - [x] Dinastie con rami (es. Asburgo → Asburgo di Spagna): finestra «Dinastie…», vista Famiglie annidata, conteggi cumulativi, backup JSON.
 - [x] Campo Famiglia della scheda come scelta tra le dinastie (o nome nuovo, registrato al salvataggio), con pulsante «Dinastia…» e indicazione del ramo.

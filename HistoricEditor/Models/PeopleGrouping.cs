@@ -61,11 +61,11 @@ public sealed class PersonEntry(HistoricalPerson person) : PeopleTreeNode
 
     public string Sesso => PeopleGrouping.DescribeSex(Person.Sesso);
 
-    public string Nascita => DateFormats.Normalize(Person.Birth);
+    public string Nascita => DateFormats.Readable(Person.Birth);
 
     public string LuogoNascita => Person.BirthPlace;
 
-    public string Morte => DateFormats.Normalize(Person.Death);
+    public string Morte => DateFormats.Readable(Person.Death);
 
     public string LuogoMorte => Person.DeathPlace;
 
@@ -238,12 +238,12 @@ public static class PeopleGrouping
         var parts = new List<string>();
         if (!string.IsNullOrWhiteSpace(birth))
         {
-            parts.Add($"n. {DateFormats.Normalize(birth.Trim())}");
+            parts.Add($"n. {DateFormats.Readable(birth.Trim())}");
         }
 
         if (!string.IsNullOrWhiteSpace(death))
         {
-            parts.Add($"m. {DateFormats.Normalize(death.Trim())}");
+            parts.Add($"m. {DateFormats.Readable(death.Trim())}");
         }
 
         return parts.Count == 0 ? "Date non indicate" : string.Join(" · ", parts);

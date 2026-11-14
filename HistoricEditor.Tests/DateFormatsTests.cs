@@ -36,7 +36,6 @@ public class DateFormatsTests
     [Theory]
     [InlineData("c. 1540")]
     [InlineData("XV secolo")]
-    [InlineData("1503-1519")]
     [InlineData("23/06/79")]
     [InlineData("anni 1450")]
     [InlineData("")]

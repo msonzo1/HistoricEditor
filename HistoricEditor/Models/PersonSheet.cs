@@ -103,7 +103,7 @@ public static class PersonSheet
     // Data con il calendario e lo stile dell'anno, se indicati: «10 febbraio 1525 (calendario giuliano, stile fiorentino)».
     public static string DescribeDate(string? date, string? calendario, string? stile)
     {
-        var text = DateFormats.Normalize((date ?? string.Empty).Trim());
+        var text = DateFormats.Readable((date ?? string.Empty).Trim());
         if (text.Length == 0)
         {
             return string.Empty;

@@ -27,6 +27,12 @@ public sealed record MapPoint(
     string TipoEvento,
     bool Approssimato)
 {
+    // Intervallo di anni di una data incerta («tra 1503 e 1519», «XV secolo»): il filtro sul periodo vale se si sovrappone.
+    // Senza intervallo vale l'anno; un estremo nullo con l'intervallo impostato è aperto («prima del 1500»).
+    public bool HasRange { get; init; }
+    public int? AnnoDa { get; init; }
+    public int? AnnoA { get; init; }
+
     public string Categoria => Kind switch
     {
         MapPointKind.Nascita => "Nascita",
@@ -158,8 +164,15 @@ public static class HistoricalMap
                     return;
                 }
 
+                var uncertain = UncertainDate.Parse(date);
+                var ranged = uncertain is not null && uncertain.FirstYear != uncertain.LastYear;
                 points.Add(new MapPoint(kind, c.Lat, c.Lon, person.DisplayName, Describe(luogoId, specificoId, fallback),
-                    (date ?? string.Empty).Trim(), HistoricalCalendar.ModernYear(date, style), person.Id, null, [person.Id], family, string.Empty, c.Approssimato));
+                    (date ?? string.Empty).Trim(), HistoricalCalendar.ModernYear(date, style), person.Id, null, [person.Id], family, string.Empty, c.Approssimato)
+                {
+                    HasRange = ranged,
+                    AnnoDa = ranged ? uncertain!.FirstYear : null,
+                    AnnoA = ranged ? uncertain!.LastYear : null,
+                });
             }
 
             Add(MapPointKind.Nascita, person.BirthLuogoId, person.BirthLuogoSpecificoId, person.Birth, person.BirthStile, person.BirthPlace);
@@ -209,6 +222,12 @@ public static class HistoricalMap
             }
 
             // Con un periodo impostato, gli elementi senza un anno riconoscibile non possono essere collocati.
+            if (p.HasRange)
+            {
+                return (filter.AAnno is not int until || p.AnnoDa is not int start || start <= until)
+                    && (filter.DaAnno is not int since || p.AnnoA is not int end || end >= since);
+            }
+
             return p.Anno is int year && (filter.DaAnno is not int from || year >= from) && (filter.AAnno is not int to || year <= to);
         }
 

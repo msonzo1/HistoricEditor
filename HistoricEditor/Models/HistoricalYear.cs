@@ -12,6 +12,12 @@ public static partial class HistoricalYear
             return null;
         }
 
+        // Date incerte riconosciute: «tra 1503 e 1519» → 1511 (il centro), «XV secolo» → 1450, «12 o 13 luglio 1550» → 1550.
+        if (UncertainDate.Parse(text) is { } uncertain)
+        {
+            return uncertain.SortYear;
+        }
+
         var match = YearPattern().Match(text);
         if (!match.Success)
         {
