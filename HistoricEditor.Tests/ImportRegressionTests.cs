@@ -269,9 +269,10 @@ public class ImportRegressionTests
         Assert.Equal(("Marco", "Elio Aurelio", "Antonino"), (r.Prenome, r.Gentilizio, r.CognomeRomano));
 
         // Nato nella gens Annia (gens di nascita «sconosciuta» su Wikidata, ricavata dal nomen Annius), adottato nella gens
-        // Aurelia: conta la gens di nascita.
-        Assert.Equal("gens Annia", r.Gens);
-        Assert.DoesNotContain(r.Dynasties, d => d.WikidataId == "Q906810");
+        // Aurelia (P5025 con causa «adozione»): due campi separati (2026-11-14); entrambe registrate come gens.
+        Assert.Equal(("gens Annia", "gens Aurelia"), (r.Gens, r.GensAdozione));
+        Assert.Contains(r.Dynasties, d => d.WikidataId == "Q906810" && d.Gens);
+        Assert.Equal(("gens Annia", "gens Aurelia"), (person.Gens, person.GensAdozione));
 
         // Nomi nel tempo dall'introduzione italiana (2026-11-14): nato Marco Annio Catilio Severo, poi Marco Annio Vero, poi
         // Marco Aurelio Cesare figlio dell'Augusto (filiazione «Augusti filius»), da imperatore Cesare Marco Aurelio Antonino

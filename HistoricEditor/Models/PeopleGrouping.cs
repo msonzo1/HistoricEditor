@@ -116,9 +116,9 @@ public static class PeopleGrouping
 
     public static string JoinFamilyNames(IEnumerable<string> names) => string.Join("; ", names);
 
-    // Dinastie e gens della scheda (campi Famiglia e Gens), per i collegamenti con le dinastie registrate.
+    // Dinastie e gens della scheda (campi Famiglia, Gens di nascita e Gens d'adozione), per i collegamenti con le dinastie registrate.
     public static List<string> AllFamilyNames(HistoricalPerson person)
-        => [.. FamilyNames(person.Family).Concat(FamilyNames(person.Gens)).Distinct(Comparer)];
+        => [.. FamilyNames(person.Family).Concat(FamilyNames(person.Gens)).Concat(FamilyNames(person.GensAdozione)).Distinct(Comparer)];
 
     // Raggruppa per dinastia: le persone collegate (links) vanno sotto ciascuna delle loro dinastie,
     // quelle non collegate secondo i nomi scritti nei campi «Gens» o «Famiglia» (senza distinguere maiuscole).
@@ -134,10 +134,12 @@ public static class PeopleGrouping
         var byFamily = new Dictionary<string, List<HistoricalPerson>>(Comparer);
         foreach (var person in people)
         {
-            // Una persona compare sotto la sua gens; sotto le dinastie solo se non ha una gens (Traiano: nella gens Ulpia,
-            // ramo Ulpii Traiani, non anche nella Dinastia Nerva-Antonina).
-            var allLinked = linksByPerson[person.Id].Distinct().ToList();
+            // Una persona compare sotto la sua gens di nascita; sotto le dinastie solo se non ha una gens (Traiano: nella gens
+            // Ulpia, ramo Ulpii Traiani, non anche nella Dinastia Nerva-Antonina). La gens d'adozione non conta qui: Marco
+            // Aurelio compare nella gens Annia, non anche nella gens Aurelia.
             var gensNames = FamilyNames(person.Gens);
+            var adoptive = FamilyNames(person.GensAdozione).Where(n => !gensNames.Contains(n, Comparer)).ToHashSet(Comparer);
+            var allLinked = linksByPerson[person.Id].Distinct().Where(id => !adoptive.Contains(byId[id].Nome.Trim())).ToList();
             var gensLinks = allLinked.Where(id => byId[id].IsGens).ToList();
             var useGens = gensLinks.Count > 0 || gensNames.Count > 0;
             List<int> linked = useGens ? gensLinks : [.. allLinked.Where(id => !byId[id].IsGens)];

@@ -9,6 +9,7 @@ Sesso: M
 Titolo principale: Imperatore romano
 Famiglia: Antonini; Aurelies; Nerva–Antonine dynasty
 Gens: gens Annia
+Gens d'adozione: gens Aurelia
 Nascita: 26/04/0121 [calendario: giuliano]
 Morte: 17/03/0180 [calendario: giuliano]
 Edizioni non lette: 
@@ -35,6 +36,7 @@ Q3291176: Antonini ← Nerva–Antonine dynasty Q3202662
 Q11907287: Aurelies ← Nerva–Antonine dynasty Q3202662
 Q3202662: Nerva–Antonine dynasty ←
 Q2035133: gens Annia (gens) ←
+Q906810: gens Aurelia (gens) ←
 
 ## Date di nascita
 26/04/0121: giorno | normal | giuliano | +0121-04-26T00:00:00Z | qualificatori  | fonti Q45275993, Q746368, Wikipedia in italiano, Wikipedia in inglese, Wikipedia in tedesco, Wikipedia in francese, Wikipedia in spagnolo, Wikipedia in olandese

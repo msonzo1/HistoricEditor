@@ -12,8 +12,11 @@ public sealed class HistoricalPerson
     // Dinastie o casate, separate da «;» (es. «Asburgo; Lorena»); per i Romani la dinastia, non la gens.
     public string Family { get; set; } = string.Empty;
 
-    // Gens romana e suoi rami, separati da «;» («gens Ulpia; Ulpii Traiani»), distinta dalla dinastia (Nerva-Antonina).
+    // Gens romana di nascita e suoi rami, separati da «;» («gens Ulpia; Ulpii Traiani»), distinta dalla dinastia (Nerva-Antonina).
     public string Gens { get; set; } = string.Empty;
+
+    // Gens acquisita con l'adozione (Marco Aurelio, nato nella gens Annia, adottato nella gens Aurelia); facoltativa.
+    public string GensAdozione { get; set; } = string.Empty;
     public string Sesso { get; set; } = string.Empty;
     public string Nickname { get; set; } = string.Empty;
     public string MainTitle { get; set; } = string.Empty;

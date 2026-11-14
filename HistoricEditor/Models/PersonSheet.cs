@@ -38,6 +38,7 @@ public static class PersonSheet
                 ("Titolo principale", person.MainTitle),
                 ("Famiglia", person.Family),
                 ("Gens", person.Gens),
+                ("Gens d'adozione", person.GensAdozione),
                 ("Sesso", DescribeSex(person.Sesso)));
         }
 
@@ -61,7 +62,8 @@ public static class PersonSheet
             ("Suffisso", person.Suffix),
             ("Soprannome", person.Nickname),
             ("Titolo principale", person.MainTitle),
-            ("Gens", person.Gens),
+            ("Gens di nascita", person.Gens),
+            ("Gens d'adozione", person.GensAdozione),
             ("Dinastia", person.Family),
             ("Sesso", DescribeSex(person.Sesso)));
     }

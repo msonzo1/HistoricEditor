@@ -23,6 +23,7 @@ public static class ImportedPersonCreator
             Suffix = import.Suffix.Trim(),
             Family = import.Family.Trim(),
             Gens = import.Gens.Trim(),
+            GensAdozione = import.GensAdozione.Trim(),
             Sesso = import.Sesso,
             Nickname = import.Nickname.Trim(),
             MainTitle = import.MainTitle.Trim(),
@@ -89,7 +90,7 @@ public static class ImportedPersonCreator
         person.BurialPlace = PlaceText(store, person.BurialLuogoId, person.BurialLuogoSpecificoId);
 
         store.Add(person);
-        RegisterDynasties(store, person.Family, import, gens: person.Gens);
+        RegisterDynasties(store, person.Family, import, gens: PeopleGrouping.JoinFamilyNames(PeopleGrouping.FamilyNames(person.Gens).Concat(PeopleGrouping.FamilyNames(person.GensAdozione))));
         LinkRelatives(store, person.Id, import);
         return (person, unresolved);
     }

@@ -14,6 +14,9 @@ public partial class PersonEditorWindow
     // Gens della persona: si modifica solo nel modulo «Dinastia e gens».
     private string gensText = string.Empty;
 
+    // Gens d'adozione, facoltativa: anche questa solo nel modulo «Dinastia e gens».
+    private string adoptiveGensText = string.Empty;
+
     private bool romanForm;
 
     private void InitializeRomanInputs()
@@ -87,34 +90,48 @@ public partial class PersonEditorWindow
     }
 
     // Dinastia e gens mostrate nel riquadro del nome romano come percorso («gens Flavia › Flavii Sabini»);
-    // sotto, solo se servono, le famiglie non ancora registrate.
+    // sotto, solo se servono, le famiglie non ancora registrate. La gens di nascita mancante si segnala con il colore
+    // di avviso; la riga della gens d'adozione compare solo se è indicata.
     private void UpdateRomanFamily()
     {
         static void Show(TextBlock value, TextBlock note, (string Path, string Note) summary)
         {
             value.Text = summary.Path.Length > 0 ? summary.Path : "Non indicata";
             value.Opacity = summary.Path.Length > 0 ? 1 : 0.6;
+            value.SetResourceReference(TextBlock.ForegroundProperty, "InkBrush");
             note.Text = summary.Note;
             note.Visibility = summary.Note.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
         }
 
         Show(RomanDynastyText, RomanDynastyPath, DynastyDescriptions.Summarize(dynasties, FamilyInput.Text, gens: false));
         Show(RomanGensText, RomanGensPath, DynastyDescriptions.Summarize(dynasties, gensText, gens: true));
+        if (gensText.Trim().Length == 0)
+        {
+            RomanGensText.Opacity = 1;
+            RomanGensText.SetResourceReference(TextBlock.ForegroundProperty, "DangerBrush");
+            RomanGensText.Text = "Non indicata: quasi sempre nota, da completare con «Dinastia e gens…»";
+        }
+
+        Show(RomanAdoptiveGensText, RomanAdoptiveGensPath, DynastyDescriptions.Summarize(dynasties, adoptiveGensText, gens: true));
+        var adoptive = adoptiveGensText.Trim().Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+        RomanAdoptiveGensLabel.Visibility = adoptive;
+        RomanAdoptiveGensPanel.Visibility = adoptive;
     }
 
-    private void SetGens(string gens)
+    private void SetGens(string gens, string adoptive)
     {
         gensText = gens.Trim();
+        adoptiveGensText = adoptive.Trim();
         UpdateRomanFamily();
     }
 
     private void EditDynastyGens_Click(object sender, RoutedEventArgs e)
     {
-        var window = new DynastyGensWindow(store, FamilyInput.Text, gensText) { Owner = this };
+        var window = new DynastyGensWindow(store, FamilyInput.Text, gensText, adoptiveGensText) { Owner = this };
         if (window.ShowDialog() == true)
         {
             FamilyInput.Text = window.ResultFamily;
-            SetGens(window.ResultGens);
+            SetGens(window.ResultGens, window.ResultAdoptiveGens);
         }
 
         // Nel modulo si possono anche modificare o rinominare le dinastie registrate.
@@ -249,7 +266,7 @@ public partial class PersonEditorWindow
         => string.Join("\u001e", romanNames.Select(n => string.Join("|",
             n.Principale, string.Join(";", n.OrderedParts.Select(p => $"{p.Tipo}:{p.Latino.Trim()}:{p.Italiano.Trim()}:{string.Join(",", p.Traduzioni.Select(t => $"{t.Lingua}={t.Testo.Trim()}"))}")),
             n.Filiazione, n.Tribu, n.NomeLatino, n.Dal, n.Al, n.Motivo)))
-            + "\u001d" + SelectedNaming + "\u001d" + gensText.Trim();
+            + "\u001d" + SelectedNaming + "\u001d" + gensText.Trim() + "\u001d" + adoptiveGensText.Trim();
 
     private RomanNameRecord? SelectedRomanName => RomanNamesGrid.SelectedItem as RomanNameRecord;
 

@@ -355,9 +355,18 @@ public partial class PersonEditorWindow : Window
 
         RegisterFamilyAsDynasty(person.Family, TipiDinastia.Dinastia);
         RegisterFamilyAsDynasty(person.Gens, TipiDinastia.Gens);
+        RegisterFamilyAsDynasty(person.GensAdozione, TipiDinastia.Gens);
         savedSnapshot = FormSnapshot();
         HeaderText.Text = person.DisplayName;
-        Feedback.Success(EditorMessage, "Scheda salvata.");
+        // La gens di nascita è quasi sempre nota: se manca in una scheda romana si salva lo stesso, ma lo si segnala.
+        if (romanForm && person.Gens.Trim().Length == 0)
+        {
+            Feedback.Error(EditorMessage, "Scheda salvata, ma manca la gens di nascita (pulsante «Dinastia e gens…»).");
+        }
+        else
+        {
+            Feedback.Success(EditorMessage, "Scheda salvata.");
+        }
 
         if (firstImportSave)
         {
@@ -474,7 +483,7 @@ public partial class PersonEditorWindow : Window
 
         if (gensText.Trim().Length == 0 && saved.Gens.Length > 0)
         {
-            SetGens(saved.Gens);
+            SetGens(saved.Gens, adoptiveGensText);
             person.Gens = saved.Gens;
             changed = true;
         }

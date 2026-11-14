@@ -9,6 +9,7 @@ Sesso: M
 Titolo principale: Imperatore romano
 Famiglia: Dinastia flavia
 Gens: gens Flavia; Flavii Sabini
+Gens d'adozione: 
 Nascita: 17/11/0009 [calendario: giuliano]
 Morte: 23/06/0079 [calendario: giuliano]
 Edizioni non lette: 

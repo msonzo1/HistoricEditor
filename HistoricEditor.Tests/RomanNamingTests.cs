@@ -198,7 +198,7 @@ public class RomanNamingTests
         var fields = PersonSheet.MainFields(Caesar());
 
         Assert.Equal(
-            ["Nome italiano", "Prenome", "Nome gentilizio", "Cognome", "Nome latino", "Forma epigrafica", "Praenomen", "Nomen", "Cognomen", "Filiazione", "Tribù", "Gens", "Sesso"],
+            ["Nome italiano", "Prenome", "Nome gentilizio", "Cognome", "Nome latino", "Forma epigrafica", "Praenomen", "Nomen", "Cognomen", "Filiazione", "Tribù", "Gens di nascita", "Sesso"],
             fields.Select(f => f.Etichetta));
         Assert.Equal(["Gaio", "Giulio", "Cesare"], fields.Skip(1).Take(3).Select(f => f.Valore));
         Assert.Equal("Gaius Iulius Caesar", fields[4].Valore);

@@ -61,6 +61,8 @@
 - [ ] Provare l'app: import o «Aggiorna da Wikipedia» di Vespasiano e Marco Aurelio (nomi nel tempo, titoli, filiazione «Augusti filius»).
 - [x] Nome nelle altre lingue per riga, in ogni nome: «In altre lingue» con Lingua e Nome completo, modulo della lingua con le stesse righe, «+ Aggiungi lingua», «Copia dal latino» (2026-11-14).
 - [ ] Provare l'app: nome nelle altre lingue (aggiungere una lingua al principale e vederla in «Lingua visualizzata» dopo il salvataggio).
+- [x] Gens di nascita e gens d'adozione separate (campo GensAdozione, migrazione PersonAdoptiveGens): modulo «Dinastia e gens», avviso se manca la gens di nascita, import della gens adottiva, eredità ai figli (2026-11-14).
+- [ ] Provare l'app: «Aggiorna da Wikipedia» su Marco Aurelio (gens Annia di nascita, gens Aurelia d'adozione).
 - [ ] Provare l'app: scheda romana con più nomi (nuovo, modifica, elimina, principale), modulo «Dinastia e gens», parti nelle altre lingue nel modulo del nome principale, scheda di lettura.
 - [ ] Provare l'app: «Aggiorna da Wikipedia» su Marco Aurelio (nome italiano, campo Gens con gens Annia); la gens Aurelia già registrata resta in archivio e va tolta a mano se non serve.
 - [x] Barra del titolo scura ridisegnata subito all'apertura della scheda.

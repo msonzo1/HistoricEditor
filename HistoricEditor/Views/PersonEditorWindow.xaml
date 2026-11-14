@@ -189,16 +189,22 @@
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="Auto" />
                                                 <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="Auto" />
                                             </Grid.RowDefinitions>
                                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Dinastia" Foreground="{DynamicResource QuietBrush}" Margin="0,0,14,6" />
                                             <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,6">
                                                 <TextBlock x:Name="RomanDynastyText" FontWeight="SemiBold" Foreground="{DynamicResource InkBrush}" TextWrapping="Wrap" AutomationProperties.Name="Dinastia" />
                                                 <TextBlock x:Name="RomanDynastyPath" FontSize="11" Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" />
                                             </StackPanel>
-                                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Gens" Foreground="{DynamicResource QuietBrush}" Margin="0,0,14,0" />
-                                            <StackPanel Grid.Row="1" Grid.Column="1">
-                                                <TextBlock x:Name="RomanGensText" FontWeight="SemiBold" Foreground="{DynamicResource InkBrush}" TextWrapping="Wrap" AutomationProperties.Name="Gens" />
+                                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Gens di nascita" Foreground="{DynamicResource QuietBrush}" Margin="0,0,14,6" />
+                                            <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,0,6">
+                                                <TextBlock x:Name="RomanGensText" FontWeight="SemiBold" Foreground="{DynamicResource InkBrush}" TextWrapping="Wrap" AutomationProperties.Name="Gens di nascita" />
                                                 <TextBlock x:Name="RomanGensPath" FontSize="11" Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" />
+                                            </StackPanel>
+                                            <TextBlock x:Name="RomanAdoptiveGensLabel" Grid.Row="2" Grid.Column="0" Text="Gens d'adozione" Foreground="{DynamicResource QuietBrush}" Margin="0,0,14,0" Visibility="Collapsed" />
+                                            <StackPanel x:Name="RomanAdoptiveGensPanel" Grid.Row="2" Grid.Column="1" Visibility="Collapsed">
+                                                <TextBlock x:Name="RomanAdoptiveGensText" FontWeight="SemiBold" Foreground="{DynamicResource InkBrush}" TextWrapping="Wrap" AutomationProperties.Name="Gens d'adozione" />
+                                                <TextBlock x:Name="RomanAdoptiveGensPath" FontSize="11" Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" />
                                             </StackPanel>
                                         </Grid>
                                     </DockPanel>

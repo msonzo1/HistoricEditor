@@ -9,6 +9,7 @@ Sesso: M
 Titolo principale: Dittatore romano
 Famiglia: 
 Gens: gens Giulia; Julii Caesares
+Gens d'adozione: 
 Nascita: 13/07/100 a.C.; 12/07/100 a.C. [calendario: giuliano]
 Morte: 15/03/44 a.C. [calendario: giuliano]
 Edizioni non lette: 

@@ -2,13 +2,13 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Dinastia e gens"
-        SizeToContent="Height" Width="560"
+        SizeToContent="Height" Width="600"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner"
         Background="{DynamicResource AppBackground}" Foreground="{DynamicResource InkBrush}"
         FontFamily="Segoe UI" FontSize="13">
     <StackPanel Margin="18">
-        <TextBlock Text="La gens è quella di nascita, con i suoi rami (es. «gens Ulpia; Ulpii Traiani»); la dinastia è la casata regnante, che può comprendere più gentes (es. «Dinastia Nerva-Antonina»). Più nomi si separano con «;»; un nome nuovo viene registrato al salvataggio della scheda." FontSize="11" Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" Margin="0,0,0,12" />
+        <TextBlock Text="La gens di nascita è quella in cui il personaggio è nato, con i suoi rami (es. «gens Ulpia; Ulpii Traiani»), ed è quasi sempre nota; la gens d'adozione, facoltativa, è quella in cui è entrato con un'adozione (Marco Aurelio, nato nella gens Annia, adottato nella gens Aurelia). La dinastia è la casata regnante, che può comprendere più gentes (es. «Dinastia Nerva-Antonina»). Più nomi si separano con «;»; un nome nuovo viene registrato al salvataggio della scheda." FontSize="11" Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" Margin="0,0,0,12" />
 
         <Label Content="_Dinastia" Target="{Binding ElementName=DynastyInput}" />
         <DockPanel>
@@ -17,12 +17,19 @@
         </DockPanel>
         <TextBlock x:Name="DynastyPathText" FontSize="11" Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" Margin="2,4,0,12" />
 
-        <Label Content="_Gens" Target="{Binding ElementName=GensInput}" />
+        <Label Content="_Gens di nascita" Target="{Binding ElementName=GensInput}" />
         <DockPanel>
-            <Button DockPanel.Dock="Right" Content="Gens…" Click="EditGens_Click" Height="34" Padding="10,0" Margin="6,0,0,0" ToolTip="Modifica la gens: ramo di, Wikidata, note" AutomationProperties.Name="Modifica la gens" />
-            <ComboBox x:Name="GensInput" Height="34" IsEditable="True" IsTextSearchEnabled="True" VerticalContentAlignment="Center" TextBoxBase.TextChanged="Input_TextChanged" AutomationProperties.Name="Gens" AutomationProperties.HelpText="{Binding Text, ElementName=GensPathText}" />
+            <Button DockPanel.Dock="Right" Content="Gens…" Click="EditGens_Click" Height="34" Padding="10,0" Margin="6,0,0,0" ToolTip="Modifica la gens: ramo di, Wikidata, note" AutomationProperties.Name="Modifica la gens di nascita" />
+            <ComboBox x:Name="GensInput" Height="34" IsEditable="True" IsTextSearchEnabled="True" VerticalContentAlignment="Center" TextBoxBase.TextChanged="Input_TextChanged" AutomationProperties.Name="Gens di nascita" AutomationProperties.HelpText="{Binding Text, ElementName=GensPathText}" />
         </DockPanel>
-        <TextBlock x:Name="GensPathText" FontSize="11" Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" Margin="2,4,0,0" />
+        <TextBlock x:Name="GensPathText" FontSize="11" Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" Margin="2,4,0,12" />
+
+        <Label Content="Gens d'_adozione (facoltativa)" Target="{Binding ElementName=AdoptiveGensInput}" />
+        <DockPanel>
+            <Button DockPanel.Dock="Right" Content="Gens…" Click="EditAdoptiveGens_Click" Height="34" Padding="10,0" Margin="6,0,0,0" ToolTip="Modifica la gens: ramo di, Wikidata, note" AutomationProperties.Name="Modifica la gens d'adozione" />
+            <ComboBox x:Name="AdoptiveGensInput" Height="34" IsEditable="True" IsTextSearchEnabled="True" VerticalContentAlignment="Center" TextBoxBase.TextChanged="Input_TextChanged" AutomationProperties.Name="Gens d'adozione" AutomationProperties.HelpText="{Binding Text, ElementName=AdoptiveGensPathText}" />
+        </DockPanel>
+        <TextBlock x:Name="AdoptiveGensPathText" FontSize="11" Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" Margin="2,4,0,0" />
 
         <DockPanel Margin="0,16,0,0">
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">

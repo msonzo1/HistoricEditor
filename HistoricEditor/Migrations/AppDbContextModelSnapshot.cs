@@ -274,6 +274,10 @@ namespace HistoricEditor.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("GensAdozione")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Gentilizio")
                         .IsRequired()
                         .HasColumnType("TEXT");

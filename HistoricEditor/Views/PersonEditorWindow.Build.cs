@@ -61,6 +61,7 @@ public partial class PersonEditorWindow
         person.Suffix = SuffixInput.Text.Trim();
         person.Family = FamilyInput.Text.Trim();
         person.Gens = gensText.Trim();
+        person.GensAdozione = adoptiveGensText.Trim();
         person.Sesso = SelectedSex;
         person.Nickname = NicknameInput.Text.Trim();
         person.MainTitle = MainTitleInput.Text.Trim();
@@ -100,7 +101,7 @@ public partial class PersonEditorWindow
         SurnameInput.Text = person.Surname;
         SuffixInput.Text = person.Suffix;
         FamilyInput.Text = person.Family;
-        SetGens(person.Gens);
+        SetGens(person.Gens, person.GensAdozione);
         SelectSex(person.Sesso);
         NicknameInput.Text = person.Nickname;
         MainTitleInput.Text = person.MainTitle;
@@ -133,7 +134,8 @@ public partial class PersonEditorWindow
         SetTitles(import.Titles);
         SetLocalizedNames(import.LocalizedNames);
         FamilyInput.Text = import.Family;
-        SetGens(import.Gens);
+        // Una gens d'adozione scritta a mano resta se Wikidata non ne indica una.
+        SetGens(import.Gens, import.GensAdozione.Trim().Length > 0 ? import.GensAdozione : adoptiveGensText);
         SelectSex(import.Sesso);
         PrefillRomanName(import);
         BirthInput.Text = FormatDateInput(import.BirthDates);

@@ -26,6 +26,7 @@ internal static class ImportSnapshot
         Line("Titolo principale", r.MainTitle);
         Line("Famiglia", r.Family);
         Line("Gens", r.Gens);
+        Line("Gens d'adozione", r.GensAdozione);
         Line("Nascita", $"{person.Birth} [calendario: {person.BirthCalendario}]");
         Line("Morte", $"{person.Death} [calendario: {person.DeathCalendario}]");
         Line("Edizioni non lette", string.Join(", ", r.UnreadEditions));

@@ -278,27 +278,27 @@ public sealed partial class WikipediaImportService
                 .Concat(rawTitles.SelectMany(t => new[] { t.EntityId, t.EndCauseId })),
             cancellationToken);
         // Senza gens di nascita su Wikidata (Marco Aurelio ha «valore sconosciuto») la si ricava dal nomen portato alla
-        // nascita, cioè quello abbandonato se c'è; la gens adottiva vale solo se non si trova altro.
+        // nascita, cioè quello abbandonato se c'è, senza contare la gens d'adozione; se non si trova resta vuota (la gens
+        // d'adozione ha un campo proprio).
         if (gensIds.Length == 0)
         {
-            gensIds = GensOfNomina(endedNomenIds.Length > 0 ? endedNomenIds : romanPartIds["P2359"], related);
-            if (gensIds.Length == 0)
-            {
-                gensIds = adoptiveGensIds;
-            }
-
-            foreach (var (id, gens) in await ReadEntitiesAsync(gensIds.Where(id => !related.ContainsKey(id)), cancellationToken))
-            {
-                related[id] = gens;
-            }
+            gensIds = [.. GensOfNomina(endedNomenIds.Length > 0 ? endedNomenIds : romanPartIds["P2359"], related).Except(adoptiveGensIds, StringComparer.Ordinal)];
         }
+
+        foreach (var (id, gens) in await ReadEntitiesAsync(gensIds.Concat(adoptiveGensIds).Where(id => !related.ContainsKey(id)), cancellationToken))
+        {
+            related[id] = gens;
+        }
+
+        adoptiveGensIds = [.. adoptiveGensIds.Except(gensIds, StringComparer.Ordinal)];
+        var allGensIds = gensIds.Concat(adoptiveGensIds).ToArray();
         familyIds = [.. familyIds.Where(id => !related.TryGetValue(id, out var family)
             || family.GetPropertyOrDefault("claims") is var familyClaims
             && !IsNotAFamily(ReadEntityIds(familyClaims, "P31"), ReadEntityIds(familyClaims, "P36").Any()))];
         // Dinastia superiore: il primo P361 (poi P279) che non sia una pagina di servizio di Wikipedia; la «Dinastia flavia»
         // indica come «parte di» la «list of Roman dynasties», che non è una dinastia.
         var parentCandidates = new Dictionary<string, List<string>>(StringComparer.Ordinal);
-        foreach (var id in familyIds.Concat(gensIds).Distinct(StringComparer.Ordinal))
+        foreach (var id in familyIds.Concat(allGensIds).Distinct(StringComparer.Ordinal))
         {
             if (related.TryGetValue(id, out var family))
             {
@@ -355,10 +355,10 @@ public sealed partial class WikipediaImportService
                 ? v
                 : extraLabels.GetValueOrDefault(id, id);
 
-        var familyLabels = familyIds.Concat(gensIds).Distinct(StringComparer.Ordinal).ToDictionary(id => id, LabelOf, StringComparer.Ordinal);
+        var familyLabels = familyIds.Concat(allGensIds).Distinct(StringComparer.Ordinal).ToDictionary(id => id, LabelOf, StringComparer.Ordinal);
         await UseItalianArticleTitlesAsync(familyLabels, related, cancellationToken);
         var parentLabels = familyParents.Values.Distinct(StringComparer.Ordinal).ToDictionary(id => id, LabelOf, StringComparer.Ordinal);
-        var dynasties = familyIds.Concat(gensIds).Distinct(StringComparer.Ordinal).Select(id =>
+        var dynasties = familyIds.Concat(allGensIds).Distinct(StringComparer.Ordinal).Select(id =>
         {
             var parentId = familyParents.GetValueOrDefault(id, string.Empty);
             return new ImportedDynasty(
@@ -366,7 +366,7 @@ public sealed partial class WikipediaImportService
                 id,
                 parentId.Length == 0 ? string.Empty : familyLabels.GetValueOrDefault(parentId, parentLabels.GetValueOrDefault(parentId, parentId)),
                 parentId,
-                Gens: gensIds.Contains(id));
+                Gens: allGensIds.Contains(id));
         }).ToList();
         dynasties = MarkGensLine(dynasties);
 
@@ -489,6 +489,7 @@ public sealed partial class WikipediaImportService
         // La gens e i suoi rami nel campo Gens, le dinastie nel campo Famiglia (vedi MarkGensLine).
         var gensLine = dynasties.Where(d => d.Gens).Select(d => d.WikidataId).ToHashSet(StringComparer.Ordinal);
         var gensNames = gensIds.Concat(keptFamilyIds.Where(gensLine.Contains)).Distinct(StringComparer.Ordinal).Select(id => familyLabels.GetValueOrDefault(id, id));
+        var adoptiveGensNames = adoptiveGensIds.Select(id => familyLabels.GetValueOrDefault(id, id));
         var familyNames = keptFamilyIds.Where(id => !gensLine.Contains(id)).Distinct(StringComparer.Ordinal).Select(id => familyLabels.GetValueOrDefault(id, id));
 
         progress.Step(8, "Composizione della scheda…");
@@ -526,6 +527,7 @@ public sealed partial class WikipediaImportService
             NomiNelTempo = romanNamesOverTime,
             Family = string.Join("; ", familyNames),
             Gens = string.Join("; ", gensNames),
+            GensAdozione = string.Join("; ", adoptiveGensNames),
             Dynasties = [.. dynasties.Where(d => d.Gens || keptFamilyIds.Contains(d.WikidataId))],
             ArticleTitle = title,
             ArticleUrl = articleUrl,

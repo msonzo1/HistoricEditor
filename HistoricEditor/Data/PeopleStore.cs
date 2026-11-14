@@ -225,6 +225,7 @@ public sealed partial class PeopleStore : IDisposable
         existing.Suffix = person.Suffix;
         existing.Family = person.Family;
         existing.Gens = person.Gens;
+        existing.GensAdozione = person.GensAdozione;
         existing.Sesso = person.Sesso;
         existing.Nickname = person.Nickname;
         existing.MainTitle = person.MainTitle;
@@ -337,7 +338,7 @@ public sealed partial class PeopleStore : IDisposable
     {
         var name = dynasty.Nome.Trim();
         var linked = dynasty.Id == 0 ? [] : context.PersoneDinastie.Where(l => l.DinastiaId == dynasty.Id).Select(l => l.PersonaId).ToHashSet();
-        foreach (var person in context.People.Where(p => (p.Family != null && p.Family.Length > 0) || (p.Gens != null && p.Gens.Length > 0)).AsEnumerable()
+        foreach (var person in context.People.Where(p => (p.Family != null && p.Family.Length > 0) || (p.Gens != null && p.Gens.Length > 0) || (p.GensAdozione != null && p.GensAdozione.Length > 0)).AsEnumerable()
             .Where(p => !linked.Contains(p.Id) && PeopleGrouping.AllFamilyNames(p).Contains(name, PeopleGrouping.FamilyComparer)))
         {
             context.PersoneDinastie.Add(new PersonaDinastia { PersonaId = person.Id, Dinastia = dynasty });
@@ -351,7 +352,7 @@ public sealed partial class PeopleStore : IDisposable
             .GroupBy(d => d.Nome.Trim(), PeopleGrouping.FamilyComparer)
             .ToDictionary(g => g.Key, g => g.First().Id, PeopleGrouping.FamilyComparer);
         context.PersoneDinastie.RemoveRange(context.PersoneDinastie);
-        foreach (var person in context.People.AsNoTracking().Where(p => (p.Family != null && p.Family.Length > 0) || (p.Gens != null && p.Gens.Length > 0)).AsEnumerable())
+        foreach (var person in context.People.AsNoTracking().Where(p => (p.Family != null && p.Family.Length > 0) || (p.Gens != null && p.Gens.Length > 0) || (p.GensAdozione != null && p.GensAdozione.Length > 0)).AsEnumerable())
         {
             foreach (var name in PeopleGrouping.AllFamilyNames(person))
             {
@@ -404,6 +405,7 @@ public sealed partial class PeopleStore : IDisposable
             {
                 person.Family = RenameFamily(person.Family, oldName, nome);
                 person.Gens = RenameFamily(person.Gens, oldName, nome);
+                person.GensAdozione = RenameFamily(person.GensAdozione, oldName, nome);
             }
         }
 
@@ -1226,7 +1228,7 @@ public sealed partial class PeopleStore : IDisposable
     {
         var person = context.People.Find(personId);
         if (person is null || person.FatherId is not int fatherId
-            || context.People.AsNoTracking().Where(p => p.Id == fatherId).Select(p => new { p.Family, p.Gens }).FirstOrDefault() is not { } father)
+            || context.People.AsNoTracking().Where(p => p.Id == fatherId).Select(p => new { p.Family, p.Gens, p.GensAdozione }).FirstOrDefault() is not { } father)
         {
             return false;
         }
@@ -1238,9 +1240,12 @@ public sealed partial class PeopleStore : IDisposable
             changed = true;
         }
 
-        if (string.IsNullOrWhiteSpace(person.Gens) && !string.IsNullOrWhiteSpace(father.Gens))
+        // Il figlio porta il nome del padre al momento della nascita: la gens d'adozione del padre, se c'è (Commodo, figlio
+        // di Marco Aurelio, è della gens Aurelia, non Annia).
+        var fatherGens = !string.IsNullOrWhiteSpace(father.GensAdozione) ? father.GensAdozione : father.Gens;
+        if (string.IsNullOrWhiteSpace(person.Gens) && !string.IsNullOrWhiteSpace(fatherGens))
         {
-            person.Gens = father.Gens.Trim();
+            person.Gens = fatherGens.Trim();
             changed = true;
         }
 

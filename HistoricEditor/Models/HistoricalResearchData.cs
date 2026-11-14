@@ -174,6 +174,9 @@ public sealed class WikipediaImportResult
 
     // Gens e suoi rami («gens Ulpia; Ulpii Traiani»), separati dalle dinastie del campo Family.
     public string Gens { get; init; } = string.Empty;
+
+    // Gens d'adozione (P5025 con causa «adozione»), separata da quella di nascita.
+    public string GensAdozione { get; init; } = string.Empty;
     public List<ImportedDynasty> Dynasties { get; init; } = [];
     public string Sesso { get; init; } = string.Empty;
     public string ArticleTitle { get; init; } = string.Empty;
