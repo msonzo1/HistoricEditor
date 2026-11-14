@@ -23,6 +23,9 @@ public class UncertainDateTests
     [InlineData("prima del 1500", "prima del 1500", "prima del 1500")]
     [InlineData("ante 850", "prima dell'0850", "prima dell'850")]
     [InlineData("dopo il 1500", "dopo il 1500", "dopo il 1500")]
+    [InlineData("prima di marzo 1500", "prima di 03/1500", "prima di marzo 1500")]
+    [InlineData("dopo 03/1500", "dopo 03/1500", "dopo marzo 1500")]
+    [InlineData("tra 03/1500 e 04/1501", "tra 03/1500 e 04/1501", "tra marzo 1500 e aprile 1501")]
     [InlineData("c. 1540", "c. 1540", "circa 1540")]
     [InlineData("circa XV secolo", "c. XV secolo", "circa XV secolo")]
     public void Parse_GivesCompactAndReadableForms(string text, string compact, string readable)

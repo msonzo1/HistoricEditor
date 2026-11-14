@@ -75,7 +75,8 @@
 
 ## Date incerte (2026-11-14)
 - [x] Forme fisse (giorno, mese, anno, secolo, «o», «tra», «prima», «dopo», «c.») con forma compatta nei campi e leggibile in elenchi e schede, ordinamento sul centro, filtro della mappa sull'intervallo (`UncertainDate`).
-- [ ] Editor della data nel calendario accanto ai campi: tipo (data, più date, tra, prima, dopo), precisione (giorno, mese, anno, secolo), «circa».
+- [x] Editor della data nel calendario accanto ai campi: tipo (una data, più date, tra, prima, dopo), precisione (giorno, mese, anno, secolo), «circa», date scelte con ×, anteprima del risultato.
+- [ ] Provare l'app: editor della data nei campi di nascita e morte (più date, intervallo, secolo, circa).
 - [ ] Estendere forma leggibile e intervalli alle altre date (titoli, eventi, unioni).
 
 ## Dinastie

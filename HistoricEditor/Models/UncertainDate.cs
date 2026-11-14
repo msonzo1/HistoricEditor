@@ -151,6 +151,7 @@ public sealed partial record UncertainDate(UncertainDateKind Kind, IReadOnlyList
             UncertainDateKind.After => $"dopo {Preposition("il", Points[0])} {Point(Points[0])}".Replace("' ", "'"),
             _ => string.Join("; ", Points.Select(Point)),
         };
+        body = Regex.Replace(body, @"\s{2,}", " ");
         return Circa ? $"c. {body}" : body;
     }
 
@@ -166,7 +167,7 @@ public sealed partial record UncertainDate(UncertainDateKind Kind, IReadOnlyList
             UncertainDateKind.Alternatives => ReadableAlternatives(),
             _ => ReadablePoint(Points[0]),
         };
-        body = body.Replace("' ", "'");
+        body = Regex.Replace(body.Replace("' ", "'"), @"\s{2,}", " ");
         return Circa ? $"circa {body}" : body;
     }
 
@@ -204,6 +205,12 @@ public sealed partial record UncertainDate(UncertainDateKind Kind, IReadOnlyList
     // Articolo o preposizione articolata davanti al punto: «il 1503» ma «l'800», «l'8 marzo», «l'11 aprile»; «del»/«dell'».
     private static string Preposition(string word, DatePoint point)
     {
+        // Col solo mese niente articolo: «prima di marzo 1500», «dopo marzo 1500», «tra marzo e aprile 1500».
+        if (!point.IsCentury && point.Month is not null && point.Day is null)
+        {
+            return word == "del" ? "di" : string.Empty;
+        }
+
         var elided = !point.IsCentury && ((point.Day ?? point.Year) is int n && StartsWithVowelSound(Math.Abs(n), point.Day is not null));
         return (word, elided) switch
         {
