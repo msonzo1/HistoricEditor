@@ -7,7 +7,12 @@ namespace HistoricEditor;
 
 public partial class DynastiesWindow : Window
 {
-    private sealed record DynastyItem(Dinastia? Dinastia, string Percorso);
+    // Il testo mostrato nell'elenco «Ramo di» è il percorso: con un tipo privato DisplayMemberPath non funziona e WPF
+    // mostrerebbe il testo del record («DynastyItem { Dinastia = … }»).
+    private sealed record DynastyItem(Dinastia? Dinastia, string Percorso)
+    {
+        public override string ToString() => Percorso;
+    }
 
     private static readonly StringComparer Comparer = StringComparer.Create(CultureInfo.GetCultureInfo("it-IT"), ignoreCase: true);
 

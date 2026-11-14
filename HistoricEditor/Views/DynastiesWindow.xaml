@@ -52,7 +52,7 @@
             </ComboBox>
 
             <Label Content="_Ramo di" Target="{Binding ElementName=ParentBox}" />
-            <ComboBox x:Name="ParentBox" DisplayMemberPath="Percorso" Margin="0,0,0,10" AutomationProperties.Name="Dinastia principale di cui è ramo" />
+            <ComboBox x:Name="ParentBox" Margin="0,0,0,10" AutomationProperties.Name="Dinastia principale di cui è ramo" />
 
             <Label Content="_Wikidata" Target="{Binding ElementName=WikidataBox}" />
             <TextBox x:Name="WikidataBox" Padding="8,6" Margin="0,0,0,10" AutomationProperties.Name="Identificativo Wikidata della dinastia" />
