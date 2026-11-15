@@ -52,7 +52,7 @@ nascita: Q220 Roma | Italia | tipo Città di confine | 41.893055555556, 12.48277
     divisione: Unità amministrativa (P131) Italia Q38
     divisione: Paese (P17) Italia Q38
     nome storico: Colonia Lucia Annia Commodiana (la, 191 – 193)
-    in archivio: Stato Italia > Regione Lazio > Provincia città metropolitana di Roma Capitale > Comune Roma [automatico]
+    in archivio: Stato Italia > Regione Lazio > Provincia Città metropolitana di Roma Capitale > Comune Roma [automatico]
 morte: Q944814 Teatro di Pompeo | Italia | tipo Teatro romano | 41.89527778, 12.47361111
     divisione: Unità amministrativa (P131) Roma Q220
     divisione: Paese (P17) Italia Q38
@@ -63,7 +63,7 @@ morte: Q944814 Teatro di Pompeo | Italia | tipo Teatro romano | 41.89527778, 12.
     divisione: Paese (P17) Italia Q38
     divisione: Unità amministrativa (P131) Italia Q38
     divisione: Paese (P17) Italia Q38
-    in archivio: Stato Italia > Regione Lazio > Provincia città metropolitana di Roma Capitale > Comune Roma > luogo storico Teatro di Pompeo [automatico]
+    in archivio: Stato Italia > Regione Lazio > Provincia Città metropolitana di Roma Capitale > Comune Roma > luogo storico Teatro di Pompeo [automatico]
 sepoltura: Q1133288 Tempio del Divo Giulio | Italia | tipo Sito archeologico | 41.89203611, 12.48609167
     divisione: Unità amministrativa (P131) Roma Q220
     divisione: Paese (P17) Italia Q38
@@ -74,7 +74,7 @@ sepoltura: Q1133288 Tempio del Divo Giulio | Italia | tipo Sito archeologico | 4
     divisione: Paese (P17) Italia Q38
     divisione: Unità amministrativa (P131) Italia Q38
     divisione: Paese (P17) Italia Q38
-    in archivio: Stato Italia > Regione Lazio > Provincia città metropolitana di Roma Capitale > Comune Roma > luogo specifico Tempio del Divo Giulio (In rovina) [automatico]
+    in archivio: Stato Italia > Regione Lazio > Provincia Città metropolitana di Roma Capitale > Comune Roma > luogo specifico Tempio del Divo Giulio (In rovina) [automatico]
 
 ## Titoli
 Dittatore romano: n.  | 01/10/49 a.C. () – 15/03/44 a.C. () | Q236885 | prima   | dopo  

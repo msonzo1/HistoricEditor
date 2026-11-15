@@ -90,7 +90,7 @@ sepoltura: Q192784 Colonna Traiana | Italia | tipo Sito archeologico | 41.895833
     divisione: Paese (P17) Italia Q38
     divisione: Unità amministrativa (P131) Italia Q38
     divisione: Paese (P17) Italia Q38
-    in archivio: Stato Italia > Regione Lazio > Provincia città metropolitana di Roma Capitale > Comune Roma > luogo specifico Colonna Traiana [automatico]
+    in archivio: Stato Italia > Regione Lazio > Provincia Città metropolitana di Roma Capitale > Comune Roma > luogo specifico Colonna Traiana [automatico]
 
 ## Titoli
 Imperatore romano: n. 13 | 28/01/0098 () – 07/08/0117 () | Q842606 | prima Nerva Q1424 | dopo Adriano Q1427

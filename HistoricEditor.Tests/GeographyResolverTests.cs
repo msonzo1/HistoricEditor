@@ -354,7 +354,7 @@ public class GeographyResolverTests : IDisposable
 
         Assert.True(result.Confident);
         Assert.Null(result.SpecificName);
-        Assert.Equal(new[] { "Italia", "Lombardia", "provincia di Bergamo", "Bergamo" }, result.Levels.Select(l => l.Nome));
+        Assert.Equal(new[] { "Italia", "Lombardia", "Provincia di Bergamo", "Bergamo" }, result.Levels.Select(l => l.Nome));
     }
 
     [Fact]
@@ -396,7 +396,7 @@ public class GeographyResolverTests : IDisposable
 
         Assert.True(result.Confident);
         Assert.Equal("Reggia di Caserta", result.SpecificName);
-        Assert.Equal(new[] { "Italia", "Campania", "provincia di Caserta", "Caserta" }, result.Levels.Select(l => l.Nome));
+        Assert.Equal(new[] { "Italia", "Campania", "Provincia di Caserta", "Caserta" }, result.Levels.Select(l => l.Nome));
     }
 
     [Fact]
@@ -424,7 +424,7 @@ public class GeographyResolverTests : IDisposable
 
         Assert.True(result.Confident);
         Assert.Equal("Mausoleo di Augusto", result.SpecificName);
-        Assert.Equal(new[] { "Italia", "Lazio", "città metropolitana di Roma Capitale", "Roma" }, result.Levels.Select(l => l.Nome));
+        Assert.Equal(new[] { "Italia", "Lazio", "Città metropolitana di Roma Capitale", "Roma" }, result.Levels.Select(l => l.Nome));
     }
 
     [Fact]

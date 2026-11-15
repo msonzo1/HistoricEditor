@@ -34,6 +34,7 @@ public static class GeographyResolver
     public static DerivedPlace DeriveLevels(AppDbContext context, HistoricalPlaceRecord place)
     {
         var derived = DeriveLevelsCore(context, place);
+        ItalianDivisions.Normalize(derived.Levels, place.AdministrativeDivisions);
         var confident = derived.Confident && !place.AdministrativeDivisions.Any(d => d.Relation == PlaceDivision.NearbyMunicipalityRelation);
         if (place.HistoricName.Trim().Length > 0)
         {
@@ -403,7 +404,12 @@ public static class GeographyResolver
 
             if (existing is null)
             {
-                existing = new Luogo { Nome = nome, Tipo = tipo, ParentId = pid };
+                // Regione e provincia italiane dell'elenco: il codice Wikidata le tiene collegate alla voce dell'elenco
+                // anche se il nome viene cambiato nella sezione Luoghi.
+                var division = i > 0 && string.Equals(levels[0].Nome.Trim(), ItalianDivisions.Country, StringComparison.OrdinalIgnoreCase)
+                    ? ItalianDivisions.Find(tipo, nome)
+                    : null;
+                existing = new Luogo { Nome = nome, Tipo = tipo, ParentId = pid, WikidataId = division?.WikidataId ?? string.Empty };
                 context.Luoghi.Add(existing);
                 context.SaveChanges();
             }

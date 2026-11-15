@@ -19,13 +19,12 @@ public class PendingPlaceTests
             var seeded = store.GetAllPlaces().Count;
             var pending = ImportedPlaceResolver.Prepare(store, Firenze(), "Luogo di nascita", null!)!;
 
-            // Preparato senza scrivere: nell'archivio ci sono solo i luoghi di partenza (Stati e regioni) e il testo viene dall'import.
+            // Preparato senza scrivere: l'archivio resta com'era e il testo viene dall'import.
             Assert.Equal(seeded, store.GetAllPlaces().Count);
             Assert.Equal("Firenze, Città metropolitana di Firenze, Toscana, Italia", pending.Description.DisplayText);
-            // Il selettore si aprirebbe sul luogo esistente più vicino.
-            var existing = ImportedPlaceResolver.FindExisting(store, pending);
-            Assert.Equal(((int?)null, (int?)null), (existing.LuogoId, existing.SpecificoId));
-            Assert.Equal("Toscana", store.GetPlace(existing.Nearest!.Value)!.Nome);
+            // Archivio vuoto (niente più regioni scritte all'avvio): nessun luogo esistente da cui aprire il selettore.
+            Assert.Equal(0, seeded);
+            Assert.Equal((null, null, null), ImportedPlaceResolver.FindExisting(store, pending));
 
             // Un salvataggio che fallisce non lascia luoghi.
             Assert.Throws<InvalidOperationException>(() => store.SaveTogether(() =>

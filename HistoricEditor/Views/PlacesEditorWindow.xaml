@@ -7,6 +7,17 @@
         ResizeMode="CanResize"
         Background="{DynamicResource AppBackground}" Foreground="{DynamicResource InkBrush}"
         FontFamily="Segoe UI" FontSize="13">
+    <Window.Resources>
+        <!-- Voci delle tendine Regione e Provincia (Italia, 2026-11-15): l'icona segna quelle già nell'archivio; l'ultima voce
+             permette di scrivere un nome nuovo. -->
+        <DataTemplate x:Key="LevelChoiceTemplate">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Width="20" Text="{Binding Icon}" FontFamily="Segoe MDL2 Assets" FontSize="11" VerticalAlignment="Center"
+                           Foreground="{DynamicResource QuietBrush}" ToolTip="{Binding IconTip}" />
+                <TextBlock Text="{Binding Nome}" FontStyle="{Binding Style}" VerticalAlignment="Center" />
+            </StackPanel>
+        </DataTemplate>
+    </Window.Resources>
     <Grid Margin="18">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />

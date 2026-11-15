@@ -54,8 +54,9 @@ public sealed partial class PeopleStore : IDisposable
         var created = new AppDbContext(dbPath);
         try
         {
+            // Niente più luoghi scritti all'avvio (2026-11-15): regioni e province italiane stanno in ItalianDivisions e
+            // entrano nell'archivio solo quando un luogo le usa.
             created.Database.Migrate();
-            GeographySeeder.Seed(created);
             created.ChangeTracker.Clear();
             return created;
         }
@@ -739,6 +740,14 @@ public sealed partial class PeopleStore : IDisposable
 
     public int? FindPlace(int? parentId, string tipo, string nome)
         => GeographyResolver.FindChild(context, parentId, tipo.Trim(), nome.Trim())?.Id;
+
+    // Luoghi di un certo tipo dentro un luogo (le province di una regione), per le tendine della finestra dei livelli.
+    public IReadOnlyList<(string Nome, string WikidataId)> GetChildPlaces(int? parentId, string tipo)
+        => [.. context.Luoghi.AsNoTracking()
+            .Where(l => l.ParentId == parentId && l.Tipo == tipo && !l.Storico)
+            .Select(l => new { l.Nome, l.WikidataId })
+            .AsEnumerable()
+            .Select(l => (l.Nome, l.WikidataId))];
 
     // Il luogo storico che EnsureHistoricPlace riuserebbe, senza crearlo.
     public int? FindHistoricPlace(string nome, string tipo, int? parentId, string wikidataId)

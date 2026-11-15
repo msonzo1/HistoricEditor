@@ -120,6 +120,9 @@
 - [x] Ampliare l'elenco delle suddivisioni senza livello inferiore (comunità autonome spagnole uniprovinciali, Bruxelles, Valle d'Aosta, Parigi/Lione, Azzorre/Madera, cantoni svizzeri senza distretti, Republika Srpska/Brčko).
 - [x] Livelli dedotti da tabella quando mancano in P131 (regioni di Norvegia e terre di Svezia).
 - [ ] Lavorare sui contesti storici dei luoghi di nascita/morte/sepoltura (nome all'epoca, entità politica, unità, periodo).
+- [x] Regioni e province italiane nel codice (`ItalianDivisions`, 20 regioni e 109 province, con codice Wikidata) come tendine nella finestra dei livelli, con le voci già in archivio segnate e «Nuova …» in fondo; nomi dell'elenco anche all'import; nessun luogo scritto all'avvio (2026-11-15).
+- [ ] Provare l'app: «Nuovo luogo…» con l'Italia (scelta della regione e delle sue province, «Nuova provincia…»), e un import con un luogo italiano incerto.
+- [ ] Tendine anche per le suddivisioni di altri Paesi, con lo stesso sistema dell'Italia.
 
 ### Mappatura Stato per Stato dei tipi Wikidata (P31) delle suddivisioni (`GeoSchemas.LevelTypesByCountry`)
 - [x] Italia (regione, provincia/città metropolitana/libero consorzio, comune).

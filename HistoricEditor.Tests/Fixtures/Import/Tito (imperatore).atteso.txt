@@ -54,7 +54,7 @@ nascita: Q220 Roma | Italia | tipo Città di confine | 41.893055555556, 12.48277
     divisione: Unità amministrativa (P131) Italia Q38
     divisione: Paese (P17) Italia Q38
     nome storico: Colonia Lucia Annia Commodiana (la, 191 – 193)
-    in archivio: Stato Italia > Regione Lazio > Provincia città metropolitana di Roma Capitale > Comune Roma [automatico]
+    in archivio: Stato Italia > Regione Lazio > Provincia Città metropolitana di Roma Capitale > Comune Roma [automatico]
 morte: Q383071 Aquae Cutiliae | Italia | tipo Sito archeologico | 42.380104, 13.008757
     divisione: Unità amministrativa (P131) Castel Sant’Angelo Q223509
     divisione: Paese (P17) antica Roma Q1747689
@@ -66,7 +66,7 @@ morte: Q383071 Aquae Cutiliae | Italia | tipo Sito archeologico | 42.380104, 13.
     divisione: Paese (P17) Italia Q38
     divisione: Unità amministrativa (P131) Italia Q38
     divisione: Paese (P17) Italia Q38
-    in archivio: Stato Italia > Regione Lazio > Provincia provincia di Rieti > Comune Castel Sant’Angelo > luogo storico Aquae Cutiliae > luogo specifico Terme di Cotilia (Sito archeologico, In rovina) [automatico]
+    in archivio: Stato Italia > Regione Lazio > Provincia Provincia di Rieti > Comune Castel Sant’Angelo > luogo storico Aquae Cutiliae > luogo specifico Terme di Cotilia (Sito archeologico, In rovina) [automatico]
 sepoltura: Q770847 Mausoleo di Augusto | Italia | tipo Sito archeologico | 41.90611, 12.47639
     divisione: Unità amministrativa (P131) Campo Marzio Q1031426
     divisione: Unità amministrativa (P131) Municipio Roma I Q550592
@@ -86,7 +86,7 @@ sepoltura: Q770847 Mausoleo di Augusto | Italia | tipo Sito archeologico | 41.90
     divisione: Paese (P17) Italia Q38
     divisione: Unità amministrativa (P131) Lazio Q1282
     divisione: Paese (P17) Italia Q38
-    in archivio: Stato Italia > Regione Lazio > Provincia città metropolitana di Roma Capitale > Comune Roma > luogo specifico Mausoleo di Augusto [automatico]
+    in archivio: Stato Italia > Regione Lazio > Provincia Città metropolitana di Roma Capitale > Comune Roma > luogo specifico Mausoleo di Augusto [automatico]
 
 ## Titoli
 Imperatore romano: n. 10 | 24/06/0079 () – 13/09/0081 () | Q842606 | prima Vespasiano Q1419 | dopo Domiziano Q1423
