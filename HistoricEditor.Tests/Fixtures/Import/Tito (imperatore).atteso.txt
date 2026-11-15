@@ -8,7 +8,7 @@ Nome / Cognome / Suffisso / Soprannome: Tito /  /  /
 Sesso: M
 Titolo principale: Imperatore romano
 Famiglia: Dinastia flavia
-Gens: gens Flavia; Flavii Sabini
+Gens: Gens Flavia; Flavii Sabini
 Gens d'adozione: 
 Nascita: 30/12/0039 [calendario: giuliano]
 Morte: 13/09/0081 [calendario: giuliano]
@@ -32,8 +32,8 @@ nl: Titus | suffisso  | soprannome  | titolo Romeinse keizer | parti Titus /  / 
 
 ## Dinastie
 Q200565: Dinastia flavia [la: ] ←  [la: ]
-Q121033352: Flavii Sabini (gens) [la: Flavii Sabini] ← gens Flavia [la: gens Flavia] Q12297672
-Q12297672: gens Flavia (gens) [la: gens Flavia] ←  [la: ]
+Q121033352: Flavii Sabini (gens) [la: Flavii Sabini] ← Gens Flavia [la: Gens Flavia] Q12297672
+Q12297672: Gens Flavia (gens) [la: Gens Flavia] ←  [la: ]
 
 ## Date di nascita
 30/12/0039: giorno | normal | giuliano | +0039-12-30T00:00:00Z | qualificatori  | fonti Q5375741, Q69525831, Q746368, Wikipedia in italiano, Wikipedia in inglese, Wikipedia in tedesco, Wikipedia in francese, Wikipedia in spagnolo, Wikipedia in olandese

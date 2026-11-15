@@ -7,11 +7,11 @@ namespace HistoricEditor.Tests;
 // indipendente (non più appesa al ramo della gens, come stabilito il 2026-11-11).
 public class DynastyBranchTests
 {
-    private static readonly ImportedDynasty GensFlavia = new("gens Flavia", "Q12297672", string.Empty, string.Empty, Gens: true);
-    private static readonly ImportedDynasty FlaviiSabini = new("Flavii Sabini", "Q121033352", "gens Flavia", "Q12297672");
+    private static readonly ImportedDynasty GensFlavia = new("Gens Flavia", "Q12297672", string.Empty, string.Empty, Gens: true);
+    private static readonly ImportedDynasty FlaviiSabini = new("Flavii Sabini", "Q121033352", "Gens Flavia", "Q12297672");
     private static readonly ImportedDynasty DinastiaFlavia = new("Dinastia flavia", "Q200565", string.Empty, string.Empty);
 
-    // Flavii Sabini è un ramo della gens Flavia: è una gens anche lui. La Dinastia flavia resta una dinastia, senza superiore.
+    // Flavii Sabini è un ramo della Gens Flavia: è una gens anche lui. La Dinastia flavia resta una dinastia, senza superiore.
     [Fact]
     public void GensBranch_IsMarkedAsGens_DynastyStaysIndependent()
     {

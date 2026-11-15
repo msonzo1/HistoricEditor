@@ -377,8 +377,8 @@ public class RomanNamePartsTests
         Assert.Equal("Octavius", RomanNaming.OriginNomen("Octavianus"));
         Assert.Equal("Aemilius", RomanNaming.OriginNomen("Aemilianus"));
         Assert.Equal(string.Empty, RomanNaming.OriginNomen("Caesar"));
-        Assert.Equal("gens Ottavia", RomanNaming.GensOfOriginNomen("Octavianus"));
-        Assert.Equal("gens Emilia", RomanNaming.GensOfOriginNomen("Aemilianus"));
+        Assert.Equal("Gens Ottavia", RomanNaming.GensOfOriginNomen("Octavianus"));
+        Assert.Equal("Gens Emilia", RomanNaming.GensOfOriginNomen("Aemilianus"));
 
         // Wikidata indica Octavius come nomen (abbandonato) e Octavianus come agnomen: vale il nomen d'origine.
         var known = new Dictionary<string, string> { ["Octavius"] = TipiParteNome.Nomen, ["Octavianus"] = TipiParteNome.Agnomen };
@@ -388,7 +388,7 @@ public class RomanNamePartsTests
         Assert.Equal([TipiParteNome.Praenomen, TipiParteNome.Nomen, TipiParteNome.Cognomen, TipiParteNome.NomenOrigine], adopted.Parti.Select(p => p.Tipo));
         Assert.Equal(("Gaio Giulio Cesare Ottaviano", "Adozione testamentaria"), (adopted.DisplayName, adopted.Motivo));
         Assert.Equal(string.Empty, adopted.Agnomen);
-        Assert.Equal("gens Ottavia", WikipediaImportService.GensOfOriginNomen(names));
+        Assert.Equal("Gens Ottavia", WikipediaImportService.GensOfOriginNomen(names));
 
         // Un nome con il nomen d'origine non è «semplice»: resta fra i nomi nel tempo con la sua riga.
         var person = new HistoricalPerson { Name = "Ottaviano" };

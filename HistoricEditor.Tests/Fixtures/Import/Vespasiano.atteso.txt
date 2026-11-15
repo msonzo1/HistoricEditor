@@ -8,7 +8,7 @@ Nome / Cognome / Suffisso / Soprannome: Vespasiano /  /  / Mulio
 Sesso: M
 Titolo principale: Imperatore romano
 Famiglia: Dinastia flavia
-Gens: gens Flavia; Flavii Sabini
+Gens: Gens Flavia; Flavii Sabini
 Gens d'adozione: 
 Nascita: 17/11/0009 [calendario: giuliano]
 Morte: 23/06/0079 [calendario: giuliano]
@@ -31,8 +31,8 @@ nl: Vespasianus | suffisso  | soprannome  | titolo Romeinse keizer | parti Titus
 
 ## Dinastie
 Q200565: Dinastia flavia [la: ] ←  [la: ]
-Q121033352: Flavii Sabini (gens) [la: Flavii Sabini] ← gens Flavia [la: gens Flavia] Q12297672
-Q12297672: gens Flavia (gens) [la: gens Flavia] ←  [la: ]
+Q121033352: Flavii Sabini (gens) [la: Flavii Sabini] ← Gens Flavia [la: Gens Flavia] Q12297672
+Q12297672: Gens Flavia (gens) [la: Gens Flavia] ←  [la: ]
 
 ## Date di nascita
 17/11/0009: giorno | preferred | giuliano | +0009-11-17T00:00:00Z | qualificatori  | fonti Q5375741, Q26844121, Q24360833, Q136831703, Wikipedia in italiano, Wikipedia in tedesco, Wikipedia in francese, Wikipedia in spagnolo, Wikipedia in olandese

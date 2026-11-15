@@ -506,7 +506,7 @@ public static class RomanNaming
     public static string GensOfOriginNomen(string? word)
     {
         var nomen = OriginNomen(word);
-        return nomen.Length == 0 ? string.Empty : $"gens {FeminineNomen(ItalianForm(nomen))}";
+        return nomen.Length == 0 ? string.Empty : $"Gens {FeminineNomen(ItalianForm(nomen))}";
     }
 
     // Filiazione dal praenomen del padre: «Gaius» → «C. f.» (Gai filius). Vuota se il padre non ha praenomen.

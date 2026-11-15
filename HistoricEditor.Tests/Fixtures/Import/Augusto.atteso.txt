@@ -7,9 +7,9 @@ Nome visualizzato: Augusto
 Nome / Cognome / Suffisso / Soprannome: Augusto /  /  / Thurinus
 Sesso: M
 Titolo principale: Imperatore romano
-Famiglia: dinastia Giulio-Claudia
-Gens: gens Ottavia; Octavii Rufi
-Gens d'adozione: gens Giulia; Iulii Caesares
+Famiglia: Dinastia Giulio-Claudia
+Gens: Gens Ottavia; Octavii Rufi
+Gens d'adozione: Gens Giulia; Iulii Caesares
 Nascita: 23/09/63 a.C. [calendario: giuliano]
 Morte: 19/08/0014 [calendario: giuliano]
 Edizioni non lette: 
@@ -31,11 +31,11 @@ es: Augusto | suffisso  | soprannome  | titolo emperador romano | parti Gayo / J
 nl: Augustus | suffisso  | soprannome  | titolo Romeinse keizer | parti Gaius /  / Caesar / 
 
 ## Dinastie
-Q192841: dinastia Giulio-Claudia [la: Domus Iulio-Claudia] ←  [la: ]
-Q3268376: Iulii Caesares (gens) [la: Iulii Caesares] ← gens Giulia [la: gens Iulia] Q510193
-Q105335230: Octavii Rufi (gens) [la: Octavii Rufi] ← gens Ottavia [la: gens Octavia] Q1759265
-Q1759265: gens Ottavia (gens) [la: gens Octavia] ←  [la: ]
-Q510193: gens Giulia (gens) [la: gens Iulia] ←  [la: ]
+Q192841: Dinastia Giulio-Claudia [la: Domus Iulio-Claudia] ←  [la: ]
+Q3268376: Iulii Caesares (gens) [la: Iulii Caesares] ← Gens Giulia [la: Gens Iulia] Q510193
+Q105335230: Octavii Rufi (gens) [la: Octavii Rufi] ← Gens Ottavia [la: Gens Octavia] Q1759265
+Q1759265: Gens Ottavia (gens) [la: Gens Octavia] ←  [la: ]
+Q510193: Gens Giulia (gens) [la: Gens Iulia] ←  [la: ]
 
 ## Date di nascita
 23/09/63 a.C.: giorno | preferred | giuliano | -0063-09-23T00:00:00Z | qualificatori  | fonti Q45262034, Q110768614, Q746368, Riferimento Wikidata, Q186717, Q100166489, Wikipedia in italiano, Wikipedia in inglese, Wikipedia in tedesco, Wikipedia in francese, Wikipedia in spagnolo, Wikipedia in olandese

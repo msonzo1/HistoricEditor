@@ -59,9 +59,9 @@ public partial class PersonEditorWindow
         person.Name = NameInput.Text.Trim();
         person.Surname = SurnameInput.Text.Trim();
         person.Suffix = SuffixInput.Text.Trim();
-        person.Family = FamilyInput.Text.Trim();
-        person.Gens = gensText.Trim();
-        person.GensAdozione = adoptiveGensText.Trim();
+        person.Family = DynastyNames.CapitalizeAll(FamilyInput.Text);
+        person.Gens = DynastyNames.CapitalizeAll(gensText);
+        person.GensAdozione = DynastyNames.CapitalizeAll(adoptiveGensText);
         person.Sesso = SelectedSex;
         person.Nickname = NicknameInput.Text.Trim();
         person.MainTitle = MainTitleInput.Text.Trim();

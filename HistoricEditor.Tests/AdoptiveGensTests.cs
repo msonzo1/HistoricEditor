@@ -10,7 +10,7 @@ public class AdoptiveGensTests
     private static HistoricalPerson MarcusAurelius() => new()
     {
         Id = 1, Name = "Marco Aurelio", Onomastica = Onomastiche.Romana,
-        Gens = "gens Annia", GensAdozione = "gens Aurelia", Family = "Dinastia Nerva-Antonina",
+        Gens = "Gens Annia", GensAdozione = "Gens Aurelia", Family = "Dinastia Nerva-Antonina",
     };
 
     // Nell'elenco delle Persone il personaggio compare solo sotto la gens di nascita.
@@ -19,30 +19,30 @@ public class AdoptiveGensTests
     {
         Dinastia[] dynasties =
         [
-            new() { Id = 1, Nome = "gens Annia", Tipo = TipiDinastia.Gens },
-            new() { Id = 2, Nome = "gens Aurelia", Tipo = TipiDinastia.Gens },
+            new() { Id = 1, Nome = "Gens Annia", Tipo = TipiDinastia.Gens },
+            new() { Id = 2, Nome = "Gens Aurelia", Tipo = TipiDinastia.Gens },
             new() { Id = 3, Nome = "Dinastia Nerva-Antonina" },
         ];
         PersonaDinastia[] links = [new() { PersonaId = 1, DinastiaId = 1 }, new() { PersonaId = 1, DinastiaId = 2 }, new() { PersonaId = 1, DinastiaId = 3 }];
 
         var groups = PeopleGrouping.Build([MarcusAurelius()], dynasties, links);
         var all = groups.SelectMany(g => g.SelfAndDescendants()).SelectMany(g => g.Persone.Select(p => g.Famiglia)).ToList();
-        Assert.Equal(["gens Annia"], all);
+        Assert.Equal(["Gens Annia"], all);
 
         // Per i collegamenti (sezione Dinastie, mappa, linea del tempo) conta anche la gens d'adozione.
-        Assert.Contains("gens Aurelia", PeopleGrouping.AllFamilyNames(MarcusAurelius()));
+        Assert.Contains("Gens Aurelia", PeopleGrouping.AllFamilyNames(MarcusAurelius()));
     }
 
     [Fact]
     public void Sheet_ShowsBothGens()
     {
         var fields = PersonSheet.MainFields(MarcusAurelius());
-        Assert.Equal("gens Annia", fields.Single(f => f.Etichetta == "Gens di nascita").Valore);
-        Assert.Equal("gens Aurelia", fields.Single(f => f.Etichetta == "Gens d'adozione").Valore);
+        Assert.Equal("Gens Annia", fields.Single(f => f.Etichetta == "Gens di nascita").Valore);
+        Assert.Equal("Gens Aurelia", fields.Single(f => f.Etichetta == "Gens d'adozione").Valore);
     }
 
     // Il figlio senza gens prende quella del padre al momento della nascita: la gens d'adozione, se c'è (Commodo, figlio di
-    // Marco Aurelio, è della gens Aurelia). La gens d'adozione si salva, si rilegge e segue la rinomina della gens.
+    // Marco Aurelio, è della Gens Aurelia). La gens d'adozione si salva, si rilegge e segue la rinomina della gens.
     [Fact]
     public void Store_KeepsAdoptiveGensAndChildInheritsIt()
     {
@@ -54,15 +54,15 @@ public class AdoptiveGensTests
             var father = MarcusAurelius();
             father.Id = 0;
             store.Add(father);
-            var gens = store.EnsureDynasty("gens Aurelia", string.Empty, null, TipiDinastia.Gens);
+            var gens = store.EnsureDynasty("Gens Aurelia", string.Empty, null, TipiDinastia.Gens);
             var child = new HistoricalPerson { Name = "Commodo", FatherId = father.Id };
             store.Add(child);
 
             Assert.True(store.InheritFatherFamilyIfMissing(child.Id));
-            Assert.Equal("gens Aurelia", store.GetPerson(child.Id)!.Gens);
+            Assert.Equal("Gens Aurelia", store.GetPerson(child.Id)!.Gens);
 
-            store.SaveDynasty(new Dinastia { Id = gens, Nome = "gens Aurelia (adottiva)", Tipo = TipiDinastia.Gens });
-            Assert.Equal("gens Aurelia (adottiva)", store.GetPerson(father.Id)!.GensAdozione);
+            store.SaveDynasty(new Dinastia { Id = gens, Nome = "Gens Aurelia (adottiva)", Tipo = TipiDinastia.Gens });
+            Assert.Equal("Gens Aurelia (adottiva)", store.GetPerson(father.Id)!.GensAdozione);
         }
         finally
         {
@@ -82,16 +82,16 @@ public class AdoptiveGensTests
         {
             using (var store = new PeopleStore(dir))
             {
-                var giulia = store.EnsureDynasty("gens Giulia", "Q510193", null, TipiDinastia.Gens, "gens Iulia");
-                Assert.Equal(giulia, store.EnsureDynasty("gens Giulia", "Q510193", null, TipiDinastia.Gens, "Iulii"));
-                Assert.Equal("gens Iulia", store.GetDynasties().Single(d => d.Id == giulia).NomeLatino);
+                var giulia = store.EnsureDynasty("Gens Giulia", "Q510193", null, TipiDinastia.Gens, "Gens Iulia");
+                Assert.Equal(giulia, store.EnsureDynasty("Gens Giulia", "Q510193", null, TipiDinastia.Gens, "Iulii"));
+                Assert.Equal("Gens Iulia", store.GetDynasties().Single(d => d.Id == giulia).NomeLatino);
 
-                var ottavia = store.EnsureDynasty("gens Ottavia", string.Empty, null, TipiDinastia.Gens);
-                store.EnsureDynasty("gens Ottavia", "Q1759265", null, TipiDinastia.Gens, "gens Octavia");
-                Assert.Equal("gens Octavia", store.GetDynasties().Single(d => d.Id == ottavia).NomeLatino);
+                var ottavia = store.EnsureDynasty("Gens Ottavia", string.Empty, null, TipiDinastia.Gens);
+                store.EnsureDynasty("Gens Ottavia", "Q1759265", null, TipiDinastia.Gens, "Gens Octavia");
+                Assert.Equal("Gens Octavia", store.GetDynasties().Single(d => d.Id == ottavia).NomeLatino);
 
-                store.SaveDynasty(new Dinastia { Id = giulia, Nome = "gens Giulia", NomeLatino = " gens Iulia (Iulii) ", Tipo = TipiDinastia.Gens });
-                Assert.Equal("gens Giulia (gens Iulia (Iulii))", store.GetDynasties().Single(d => d.Id == giulia).NomeCompleto);
+                store.SaveDynasty(new Dinastia { Id = giulia, Nome = "Gens Giulia", NomeLatino = " Gens Iulia (Iulii) ", Tipo = TipiDinastia.Gens });
+                Assert.Equal("Gens Giulia (Gens Iulia (Iulii))", store.GetDynasties().Single(d => d.Id == giulia).NomeCompleto);
             }
         }
         finally

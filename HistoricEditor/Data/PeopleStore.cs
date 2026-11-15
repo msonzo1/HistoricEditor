@@ -375,13 +375,13 @@ public sealed partial class PeopleStore : IDisposable
     // Crea o aggiorna una dinastia; rinominandola aggiorna anche la famiglia delle schede collegate.
     public int SaveDynasty(Dinastia data)
     {
-        var nome = (data.Nome ?? string.Empty).Trim();
+        var nome = DynastyNames.Capitalize(data.Nome);
         if (nome.Length == 0)
         {
             throw new InvalidOperationException("Il nome della dinastia è obbligatorio.");
         }
 
-        if (context.Dinastie.Any(d => d.Id != data.Id && d.Nome == nome))
+        if (context.Dinastie.Any(d => d.Id != data.Id && d.Nome.ToLower() == nome.ToLower()))
         {
             throw new InvalidOperationException($"Esiste già una dinastia chiamata «{nome}».");
         }
@@ -411,7 +411,7 @@ public sealed partial class PeopleStore : IDisposable
         }
 
         entity.Nome = nome;
-        entity.NomeLatino = (data.NomeLatino ?? string.Empty).Trim();
+        entity.NomeLatino = DynastyNames.Capitalize(data.NomeLatino);
         entity.ParentId = data.ParentId;
         entity.WikidataId = (data.WikidataId ?? string.Empty).Trim();
         entity.Note = data.Note ?? string.Empty;
@@ -445,11 +445,11 @@ public sealed partial class PeopleStore : IDisposable
     // Il nome latino si scrive solo se manca (uno scritto a mano resta).
     public int EnsureDynasty(string nome, string wikidataId, int? parentId, string tipo = TipiDinastia.Dinastia, string nomeLatino = "")
     {
-        nome = (nome ?? string.Empty).Trim();
+        nome = DynastyNames.Capitalize(nome);
         wikidataId = (wikidataId ?? string.Empty).Trim();
-        nomeLatino = (nomeLatino ?? string.Empty).Trim();
+        nomeLatino = DynastyNames.Capitalize(nomeLatino);
         var entity = (wikidataId.Length > 0 ? context.Dinastie.FirstOrDefault(d => d.WikidataId == wikidataId) : null)
-            ?? context.Dinastie.FirstOrDefault(d => d.Nome == nome);
+            ?? context.Dinastie.FirstOrDefault(d => d.Nome.ToLower() == nome.ToLower());
         if (entity is null)
         {
             entity = new Dinastia { Nome = nome, NomeLatino = nomeLatino, WikidataId = wikidataId, ParentId = parentId, Tipo = tipo };

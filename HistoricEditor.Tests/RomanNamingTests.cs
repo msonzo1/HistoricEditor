@@ -18,7 +18,7 @@ public class RomanNamingTests
         Cognomen = "Caesar",
         Filiazione = "C. f.",
         Tribu = "Fabia",
-        Gens = "gens Iulia",
+        Gens = "Gens Iulia",
         Prenome = "Gaio",
         Gentilizio = "Giulio",
         CognomeRomano = "Cesare",
@@ -208,7 +208,7 @@ public class RomanNamingTests
         // Con «Standard» la scheda torna quella consueta.
         var greek = Caesar();
         greek.Onomastica = Onomastiche.Standard;
-        Assert.Equal("Gens", PersonSheet.MainFields(greek).Single(f => f.Valore == "gens Iulia").Etichetta);
+        Assert.Equal("Gens", PersonSheet.MainFields(greek).Single(f => f.Valore == "Gens Iulia").Etichetta);
         Assert.Equal(string.Empty, PersonSheet.LatinSubtitle(greek));
     }
 
@@ -232,11 +232,11 @@ public class RomanNamingTests
 
         IReadOnlyList<Dinastia> dynasties =
         [
-            new Dinastia { Id = 1, Nome = "gens Cornelia", Tipo = TipiDinastia.Gens },
+            new Dinastia { Id = 1, Nome = "Gens Cornelia", Tipo = TipiDinastia.Gens },
             new Dinastia { Id = 2, Nome = "Cornelii Scipiones", ParentId = 1, Tipo = TipiDinastia.Gens },
         ];
-        Assert.Equal("Gens romana", PersonSheet.DynastyPath("gens Cornelia", dynasties));
-        Assert.Equal("Ramo di: gens Cornelia", PersonSheet.DynastyPath("Cornelii Scipiones", dynasties));
+        Assert.Equal("Gens romana", PersonSheet.DynastyPath("Gens Cornelia", dynasties));
+        Assert.Equal("Ramo di: Gens Cornelia", PersonSheet.DynastyPath("Cornelii Scipiones", dynasties));
     }
 
     [Fact]
@@ -272,8 +272,8 @@ public class RomanNamingTests
                 edited.NomiNelTempo = [new RomanNameRecord { Nome = "Divus Iulius", Dal = "42 a.C.", Motivo = "Titolo onorifico" }];
                 store.Update(edited);
 
-                var gens = store.EnsureDynasty("gens Iulia", "", null);
-                store.SaveDynasty(new Dinastia { Id = gens, Nome = "gens Iulia", Tipo = TipiDinastia.Gens });
+                var gens = store.EnsureDynasty("Gens Iulia", "", null);
+                store.SaveDynasty(new Dinastia { Id = gens, Nome = "Gens Iulia", Tipo = TipiDinastia.Gens });
                 store.ExportJson(store.LoadAll());
             }
 
@@ -288,8 +288,8 @@ public class RomanNamingTests
             Assert.Equal(("Gaius", "Julius", "Caesar"), (english.Prenome, english.Gentilizio, english.CognomeRomano));
             var name = Assert.Single(caesar.NomiNelTempo);
             Assert.Equal(("Divus Iulius", "42 a.C.", "Titolo onorifico"), (name.Nome, name.Dal, name.Motivo));
-            Assert.True(restored.GetDynasties().Single(d => d.Nome == "gens Iulia").IsGens);
-            Assert.Equal("gens Iulia", caesar.Gens);
+            Assert.True(restored.GetDynasties().Single(d => d.Nome == "Gens Iulia").IsGens);
+            Assert.Equal("Gens Iulia", caesar.Gens);
         }
         finally
         {
@@ -307,7 +307,7 @@ public class RomanNamingTests
         try
         {
             using var store = new PeopleStore(dir);
-            var claudia = store.EnsureDynasty("gens Claudia", "", null, TipiDinastia.Gens);
+            var claudia = store.EnsureDynasty("Gens Claudia", "", null, TipiDinastia.Gens);
             Assert.True(store.GetDynasties().Single(d => d.Id == claudia).IsGens);
 
             // Una dinastia già registrata non diventa gens per un nome scritto a mano…
@@ -322,11 +322,11 @@ public class RomanNamingTests
             // All'import le gens di Wikidata (con il ramo) vengono prima delle famiglie scritte.
             var import = new WikipediaImportResult
             {
-                Dynasties = [new ImportedDynasty("Cornelii Scipiones", "Q1", "gens Cornelia", "Q2", Gens: true)],
+                Dynasties = [new ImportedDynasty("Cornelii Scipiones", "Q1", "Gens Cornelia", "Q2", Gens: true)],
             };
             Assert.True(ImportedPersonCreator.RegisterDynasties(store, "Cornelii Scipiones; Scipioni", import));
             var dynasties = store.GetDynasties();
-            var cornelia = dynasties.Single(d => d.Nome == "gens Cornelia");
+            var cornelia = dynasties.Single(d => d.Nome == "Gens Cornelia");
             var scipiones = dynasties.Single(d => d.Nome == "Cornelii Scipiones");
             Assert.True(cornelia.IsGens && scipiones.IsGens);
             Assert.Equal(cornelia.Id, scipiones.ParentId);

@@ -44,6 +44,23 @@ public sealed class Dinastia
     }
 }
 
+// Nomi di dinastie e gens sempre con la maiuscola iniziale (2026-11-15), anche in latino: «Gens Giulia», «Gens Iulia»,
+// «Dinastia Giulio-Claudia». Il resto del nome resta com'è.
+public static class DynastyNames
+{
+    private static readonly System.Globalization.CultureInfo Italian = System.Globalization.CultureInfo.GetCultureInfo("it-IT");
+
+    public static string Capitalize(string? name)
+    {
+        var text = (name ?? string.Empty).Trim();
+        return text.Length == 0 ? text : char.ToUpper(text[0], Italian) + text[1..];
+    }
+
+    // Ogni nome di un campo con più dinastie («gens Giulia; Iulii Caesares»).
+    public static string CapitalizeAll(string? names)
+        => PeopleGrouping.JoinFamilyNames(PeopleGrouping.FamilyNames(names).Select(Capitalize));
+}
+
 public static class TipiDinastia
 {
     public const string Dinastia = "";

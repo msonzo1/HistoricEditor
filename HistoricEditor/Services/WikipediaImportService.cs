@@ -596,10 +596,17 @@ public sealed partial class WikipediaImportService
             CognomeRomano = italianParts.Cognome,
             Agnome = italianParts.Agnome,
             NomiNelTempo = romanNamesOverTime,
-            Family = string.Join("; ", familyNames),
-            Gens = string.Join("; ", gensNames),
-            GensAdozione = string.Join("; ", adoptiveGensNames),
-            Dynasties = [.. dynasties.Where(d => d.Gens || keptFamilyIds.Contains(d.WikidataId))],
+            // Nomi con la maiuscola iniziale, anche in latino (2026-11-15): «Gens Giulia», «Gens Iulia».
+            Family = DynastyNames.CapitalizeAll(string.Join("; ", familyNames)),
+            Gens = DynastyNames.CapitalizeAll(string.Join("; ", gensNames)),
+            GensAdozione = DynastyNames.CapitalizeAll(string.Join("; ", adoptiveGensNames)),
+            Dynasties = [.. dynasties.Where(d => d.Gens || keptFamilyIds.Contains(d.WikidataId)).Select(d => d with
+            {
+                Nome = DynastyNames.Capitalize(d.Nome),
+                NomeLatino = DynastyNames.Capitalize(d.NomeLatino),
+                ParentNome = DynastyNames.Capitalize(d.ParentNome),
+                ParentNomeLatino = DynastyNames.Capitalize(d.ParentNomeLatino),
+            })],
             ArticleTitle = title,
             ArticleUrl = articleUrl,
             WikidataId = wikidataId,
@@ -1437,17 +1444,17 @@ public sealed partial class WikipediaImportService
             {
                 if (Regex.Match(label, @"^gens\s+(\p{L}+)$", RegexOptions.IgnoreCase) is { Success: true } prefixed)
                 {
-                    return $"gens {prefixed.Groups[1].Value}";
+                    return $"Gens {prefixed.Groups[1].Value}";
                 }
 
                 if (Regex.Match(label, @"^(\p{L}+)\s+gens$", RegexOptions.IgnoreCase) is { Success: true } suffixed)
                 {
-                    return $"gens {suffixed.Groups[1].Value}";
+                    return $"Gens {suffixed.Groups[1].Value}";
                 }
 
                 if (Regex.Match(label, @"^(\p{Lu}\p{L}+?)ii$") is { Success: true } plural)
                 {
-                    return $"gens {plural.Groups[1].Value}ia";
+                    return $"Gens {plural.Groups[1].Value}ia";
                 }
 
                 // Un'etichetta di altra forma (inglese «Julio-Claudian…») non è un nome latino: si prova la lingua seguente.

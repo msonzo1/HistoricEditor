@@ -8,7 +8,7 @@ Nome / Cognome / Suffisso / Soprannome: Gaio Giulio Cesare /  /  /
 Sesso: M
 Titolo principale: Dittatore romano
 Famiglia: 
-Gens: gens Giulia; Iulii Caesares
+Gens: Gens Giulia; Iulii Caesares
 Gens d'adozione: 
 Nascita: 13/07/100 a.C.; 12/07/100 a.C. [calendario: giuliano]
 Morte: 15/03/44 a.C. [calendario: giuliano]
@@ -28,8 +28,8 @@ es: Julio César | suffisso  | soprannome  | titolo dictador romano | parti Gayo
 nl: Julius Caesar | suffisso  | soprannome  | titolo dictator | parti Gaius / Julius / Caesar / 
 
 ## Dinastie
-Q3268376: Iulii Caesares (gens) [la: Iulii Caesares] ← gens Giulia [la: gens Iulia] Q510193
-Q510193: gens Giulia (gens) [la: gens Iulia] ←  [la: ]
+Q3268376: Iulii Caesares (gens) [la: Iulii Caesares] ← Gens Giulia [la: Gens Iulia] Q510193
+Q510193: Gens Giulia (gens) [la: Gens Iulia] ←  [la: ]
 
 ## Date di nascita
 13/07/100 a.C.: giorno | normal | giuliano | -0100-07-13T00:00:00Z | qualificatori  | fonti Riferimento Wikidata, Q50358336, Q206033, Q24963317, Q57255702, Q237227, Q193563, Q2664168, Q746368, Q100166489, Wikipedia in italiano, Wikipedia in inglese, Wikipedia in tedesco, Wikipedia in francese, Wikipedia in spagnolo, Wikipedia in olandese

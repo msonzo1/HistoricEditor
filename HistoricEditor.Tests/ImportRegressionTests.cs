@@ -126,12 +126,12 @@ public class ImportRegressionTests
         Assert.Contains(r.Dynasties, d => d.Gens && d.WikidataId == "Q12297672");
 
         // La «Dinastia flavia» è «parte di» un elenco di Wikipedia (list of Roman dynasties): non è una dinastia superiore.
-        // Gens e dinastia sono campi separati (2026-11-12): gens Flavia e il suo ramo Flavii Sabini nel campo Gens, la
+        // Gens e dinastia sono campi separati (2026-11-12): Gens Flavia e il suo ramo Flavii Sabini nel campo Gens, la
         // Dinastia flavia, senza superiore, nel campo Famiglia. Nell'elenco Tito compare solo sotto la dinastia.
         var flavian = r.Dynasties.Single(d => d.WikidataId == "Q200565");
         Assert.Equal((string.Empty, false), (flavian.ParentWikidataId, flavian.Gens));
         Assert.Equal("Dinastia flavia", r.Family);
-        Assert.Equal("gens Flavia; Flavii Sabini", r.Gens);
+        Assert.Equal("Gens Flavia; Flavii Sabini", r.Gens);
 
         ImportFixtures.AssertMatchesSnapshot(page, r);
     }
@@ -247,9 +247,9 @@ public class ImportRegressionTests
         var selinus = Assert.Single(r.DeathPlaces);
         Assert.Equal(("Q1424724", "Selinunte", "Sito archeologico di Selinunte"), (selinus.WikidataId, selinus.HistoricName, selinus.HistoricBuildingName));
 
-        // Gens e dinastia separate: gens Ulpia e il ramo Ulpii Traiani nel campo Gens, la dinastia Nerva-Antonina (senza
+        // Gens e dinastia separate: Gens Ulpia e il ramo Ulpii Traiani nel campo Gens, la dinastia Nerva-Antonina (senza
         // etichetta né voce italiana su Wikidata) nel campo Famiglia, senza dinastia superiore.
-        Assert.Equal("gens Ulpia; Ulpii Traiani", r.Gens);
+        Assert.Equal("Gens Ulpia; Ulpii Traiani", r.Gens);
         Assert.Equal("Nerva–Antonine dynasty", r.Family);
         var dynasty = r.Dynasties.Single(d => d.WikidataId == "Q3202662");
         Assert.Equal((false, string.Empty), (dynasty.Gens, dynasty.ParentWikidataId));
@@ -281,11 +281,11 @@ public class ImportRegressionTests
         Assert.Equal(("Marcus", "Aelius Aurelius", "Antoninus"), (r.Praenomen, r.Nomen, r.Cognomen));
         Assert.Equal(("Marco", "Elio Aurelio", "Antonino"), (r.Prenome, r.Gentilizio, r.CognomeRomano));
 
-        // Nato nella gens Annia (gens di nascita «sconosciuta» su Wikidata, ricavata dal nomen Annius), adottato nella gens
+        // Nato nella Gens Annia (gens di nascita «sconosciuta» su Wikidata, ricavata dal nomen Annius), adottato nella gens
         // Aurelia (P5025 con causa «adozione»): due campi separati (2026-11-14); entrambe registrate come gens.
-        Assert.Equal(("gens Annia", "gens Aurelia"), (r.Gens, r.GensAdozione));
+        Assert.Equal(("Gens Annia", "Gens Aurelia"), (r.Gens, r.GensAdozione));
         Assert.Contains(r.Dynasties, d => d.WikidataId == "Q906810" && d.Gens);
-        Assert.Equal(("gens Annia", "gens Aurelia"), (person.Gens, person.GensAdozione));
+        Assert.Equal(("Gens Annia", "Gens Aurelia"), (person.Gens, person.GensAdozione));
 
         // Nomi nel tempo dal campo «nome completo» dell'infobox italiana (2026-11-14): Marcus Annius Catilius Severus alla
         // nascita, Marcus Annius Verus dopo il matrimonio, Marcus Aurelius Caesar Augusti filius dopo l'adozione, Imperator
@@ -313,7 +313,7 @@ public class ImportRegressionTests
 
         Assert.Equal("Q1405", r.WikidataId);
 
-        // Nato nella gens Octavia (ramo Octavii Rufi), adottato per testamento da Cesare nella gens Iulia: su Wikidata il
+        // Nato nella Gens Octavia (ramo Octavii Rufi), adottato per testamento da Cesare nella Gens Iulia: su Wikidata il
         // ramo «Julii Caesares» ha la causa «adozione» e va con la gens d'adozione, non con quella di nascita (2026-11-14).
         Assert.DoesNotContain("Caesares", r.Gens);
         Assert.Contains("Ottavia", r.Gens);
@@ -321,10 +321,10 @@ public class ImportRegressionTests
         Assert.Contains("Giulia", r.GensAdozione);
         Assert.Equal((r.Gens, r.GensAdozione), (person.Gens, person.GensAdozione));
 
-        // Nomi latini delle gens e dei rami (2026-11-14), dalle etichette incoerenti di Wikidata: «Iulii» → «gens Iulia»,
+        // Nomi latini delle gens e dei rami (2026-11-14), dalle etichette incoerenti di Wikidata: «Iulii» → «Gens Iulia»,
         // «Julii Caesares» → «Iulii Caesares», che è anche il nome italiano (manca l'etichetta italiana).
-        Assert.Equal("gens Giulia; Iulii Caesares", r.GensAdozione);
-        Assert.Equal(("gens Iulia", "Iulii Caesares", "gens Octavia"),
+        Assert.Equal("Gens Giulia; Iulii Caesares", r.GensAdozione);
+        Assert.Equal(("Gens Iulia", "Iulii Caesares", "Gens Octavia"),
             (r.Dynasties.Single(d => d.WikidataId == "Q510193").NomeLatino, r.Dynasties.Single(d => d.WikidataId == "Q3268376").NomeLatino, r.Dynasties.Single(d => d.WikidataId == "Q1759265").NomeLatino));
         Assert.Equal("Domus Iulio-Claudia", r.Dynasties.Single(d => d.WikidataId == "Q192841").NomeLatino);
 
