@@ -342,6 +342,39 @@ public class ImportRegressionTests
         ImportFixtures.AssertMatchesSnapshot(page, r);
     }
 
+    [Fact]
+    public async Task GneoPompeoMagno()
+    {
+        const string page = "Gneo Pompeo Magno";
+        var r = await ImportFixtures.ImportAsync(page);
+
+        Assert.Equal("Q125414", r.WikidataId);
+
+        // Nomi nel tempo dal campo «nome completo» (2026-11-14): la nota dopo «Gnaeus Pompeius», con il titolo in corsivo
+        // «Guerre mitridatiche» di Appiano, non diventa un nome.
+        Assert.Equal(["Gnaeus Pompeius", "Gnaeus Pompeius Magnus"], r.NomiNelTempo.Select(n => n.LatinName));
+        Assert.Equal("Gnaeus Pompeius Magnus", r.NomiNelTempo.Single(n => n.Principale).LatinName);
+
+        // Nascita nella Regio V Picenum, regione dell'Italia augustea: luogo storico sotto lo Stato di oggi, da confermare.
+        var picenum = Assert.Single(r.BirthPlaces);
+        Assert.Equal(("Q510990", "Regio V Picenum", "Regione dell'Italia augustea"), (picenum.WikidataId, picenum.HistoricName, picenum.TypeLabel));
+        Assert.Equal(string.Empty, picenum.HistoricBuildingName);
+        var picenumLevels = ImportSnapshot.DerivePlace(picenum);
+        Assert.Equal(["Stato Italia"], picenumLevels.Levels.Select(l => $"{l.Tipo} {l.Nome}"));
+        Assert.False(picenumLevels.Confident);
+
+        // Morte a Pelusio, sito archeologico egizio: luogo storico nel governatorato di Porto Said, non nella città
+        // (a 30 km), con i resti come luogo specifico in rovina.
+        var pelusium = Assert.Single(r.DeathPlaces);
+        Assert.Equal(("Q1145715", "Pelusio"), (pelusium.WikidataId, pelusium.HistoricName));
+        Assert.Equal(("Sito archeologico di Pelusio", "Sito archeologico", CondizioniLuogo.InRovina), (pelusium.HistoricBuildingName, pelusium.HistoricBuildingType, pelusium.SpecificCondition));
+        var pelusiumLevels = ImportSnapshot.DerivePlace(pelusium);
+        Assert.Equal(["Stato Egitto", "Governatorato Governatorato di Porto Said"], pelusiumLevels.Levels.Select(l => $"{l.Tipo} {l.Nome}"));
+        Assert.True(pelusiumLevels.Confident);
+
+        ImportFixtures.AssertMatchesSnapshot(page, r);
+    }
+
     private static (string, string, string) RomanParts(WikipediaImportResult r, string language)
         => r.LocalizedNames.Single(n => n.Lingua == language) is var n ? (n.Prenome, n.Gentilizio, n.CognomeRomano) : default;
 

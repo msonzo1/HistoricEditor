@@ -118,6 +118,8 @@ public static class GeoSchemas
         ["Ucraina"] = ["Stato", "Oblast", "Distretto", "Comunità", "Comune"],
         ["Bielorussia"] = ["Stato", "Regione", "Comune"],
         ["Russia"] = ["Stato", "Soggetto federale", "Comune"],
+        // Egitto (2026-11-14, da Pelusio): governatorati e città.
+        ["Egitto"] = ["Stato", "Governatorato", "Città"],
     };
 
     // Paesi con catene P131 di profondità variabile (città statutarie austriache, regioni/contee/distretti
@@ -126,6 +128,13 @@ public static class GeoSchemas
 
     public static bool HasFlexibleDepth(string country)
         => !string.IsNullOrWhiteSpace(country) && FlexibleCountries.Contains(country.Trim());
+
+    // Paesi in cui un luogo storico sta nella suddivisione sopra la città (2026-11-14, da Pelusio): la città indicata da
+    // Wikidata come unità amministrativa non contiene il territorio circostante.
+    private static readonly HashSet<string> HistoricInDivisionCountries = new(StringComparer.OrdinalIgnoreCase) { "Egitto" };
+
+    public static bool HistoricPlacesInDivision(string country)
+        => !string.IsNullOrWhiteSpace(country) && HistoricInDivisionCountries.Contains(country.Trim());
 
     public static readonly string[] Fallback = ["Stato", "Divisione", "Comune"];
 
@@ -537,6 +546,13 @@ public static class GeoSchemas
             ["Soggetto federale"] = new(StringComparer.Ordinal) { "Q43263", "Q41162", "Q183342", "Q184122", "Q309166", "Q831740", "Q835714" },
             // Città o paese, città, grande città, town, villaggio, città federale.
             ["Comune"] = new(StringComparer.Ordinal) { "Q7930989", "Q515", "Q1549591", "Q3957", "Q532", "Q183342" },
+        },
+        ["Egitto"] = new(StringComparer.OrdinalIgnoreCase)
+        {
+            // Governatorato d'Egitto.
+            ["Governatorato"] = new(StringComparer.Ordinal) { "Q204910" },
+            // Grande città, città con milioni di abitanti; non «città» (Q515), che hanno anche le città antiche (Pelusio).
+            ["Città"] = new(StringComparer.Ordinal) { "Q1549591", "Q1637706" },
         },
     };
 

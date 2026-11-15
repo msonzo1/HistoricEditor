@@ -1,0 +1,94 @@
+
+## Scheda
+Pagina: Gneo Pompeo Magno (https://it.wikipedia.org/wiki/Gneo_Pompeo_Magno)
+Wikidata: Q125414
+WikiTree: 
+Nome visualizzato: Gneo Pompeo Magno
+Nome / Cognome / Suffisso / Soprannome: Gneo Pompeo Magno /  /  / 
+Sesso: M
+Titolo principale: Senatore romano
+Famiglia: 
+Gens: gens Pompeia
+Gens d'adozione: 
+Nascita: 29/09/106 a.C. [calendario: giuliano]
+Morte: 28/09/48 a.C. [calendario: giuliano]
+Edizioni non lette: 
+
+## Nome romano
+Latino (praenomen / nomen / cognomen / agnomen): Gnaeus / Pompeius / Magnus / 
+Nome latino: Cn. Pompeius Cn.f.Sex.n. Clu. Magnus
+Italiano (prenome / gentilizio / cognome / agnome): Gneo / Pompeo / Magno / 
+Nome nel tempo: Gneo Pompeo | Gnaeus Pompeius | filiazione  | dal  |  | Praenomen:Gnaeus Nomen:Pompeius
+Nome nel tempo ★: Gneo Pompeo Magno | Gnaeus Pompeius Magnus | filiazione  | dal  |  | Praenomen:Gnaeus Nomen:Pompeius Cognomen:Magnus
+
+## Nomi nelle lingue
+it: Gneo Pompeo Magno | suffisso  | soprannome  | titolo senatore romano | parti  /  /  / 
+en: Pompey | suffisso  | soprannome  | titolo ancient Roman senator | parti Gnaeus / Pompeius / Magnus / 
+de: Gnaeus Pompeius Magnus | suffisso  | soprannome  | titolo römischer Senator | parti Gnaeus / Pompeius / Magnus / 
+fr: Pompée | suffisso  | soprannome  | titolo sénateur romain | parti Gnaeus / Pompeius / Magnus / 
+es: Pompeyo | suffisso  | soprannome  | titolo senador romano | parti Gneo / Pompeyo / Magno / 
+nl: Pompeius | suffisso  | soprannome  | titolo Romeins senator | parti Gnaeus / Pompeius / Magnus / 
+
+## Dinastie
+Q1507713: gens Pompeia (gens) [la: gens Pompeia] ←  [la: ]
+
+## Date di nascita
+29/09/106 a.C.: giorno | preferred | giuliano | -0106-09-29T00:00:00Z | qualificatori P1319=-0106-09-29T00:00:00Z, P1326=-0106-09-30T00:00:00Z | fonti Q45258177, Q5375741, Q746368, Q100166489, Wikipedia in italiano, Wikipedia in inglese, Wikipedia in tedesco, Wikipedia in francese, Wikipedia in spagnolo, Wikipedia in olandese
+
+## Date di morte
+28/09/48 a.C.: giorno | preferred | giuliano | -0048-09-28T00:00:00Z | qualificatori  | fonti Q5375741, Q746368, Q100166489, Wikipedia in italiano, Wikipedia in inglese, Wikipedia in tedesco, Wikipedia in francese, Wikipedia in olandese
+
+## Date scartate (una sola fonte)
+Date discordanti: 
+
+## Luoghi
+nascita: Q510990 Regio V Picenum | Italia | tipo Regione dell'Italia augustea | , 
+    divisione: Unità amministrativa (P131) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    in archivio: Stato Italia > luogo storico Regio V Picenum [da confermare]
+morte: Q1145715 Pelusio | Egitto | tipo Città | 31.05, 32.6
+    divisione: Unità amministrativa (P131) Porto Said Q134509
+    divisione: Paese (P17) Egitto Q79
+    divisione: Unità amministrativa (P131) Governatorato di Porto Said Q31079
+    divisione: Paese (P17) Egitto Q79
+    divisione: Paese (P17) Egitto Q79
+    divisione: Unità amministrativa (P131) Egitto Q79
+    divisione: Paese (P17) Egitto Q79
+    in archivio: Stato Egitto > Governatorato Governatorato di Porto Said > luogo storico Pelusio > luogo specifico Sito archeologico di Pelusio (Sito archeologico, In rovina) [automatico]
+
+## Titoli
+Senatore romano: n.  |  () –  () | Q20056508 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39):  – 
+Console: n.  | 70 a.C. () – 70 a.C. () | Q40779 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39): 70 a.C. – 70 a.C.
+    fonte: Wikipedia es · infobox: 70 a.C. – 70 a.C.
+Magistrato monetario: n. 1 | 71 a.C. () – 71 a.C. () | Q1861571 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39): 71 a.C. – 71 a.C.
+Magistrato monetario: n. 2 | 49 a.C. () – 49 a.C. () | Q1861571 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39) n. 2: 49 a.C. – 49 a.C.
+
+## Introduzioni di Wikipedia
+it: Gneo Pompeo Magno | nato 29/9/-106 a Firmum Picenum [Q510990] | morto 28/9/-48 a Pelusio [Q1145715]
+en: Pompey | nato 29/9/-106 a Picenum, Italy [Q510990] | morto 28/9/-48 a Pelusium, Egypt [Q1145715]
+de: Gnaeus Pompeius Magnus | nato 29/9/-106 a  [] | morto 28/9/-48 a Pelusium [Q1145715]
+fr: Pompée | nato 29/9/-106 a Picénum, en Italie [Q510990] | morto 28/9/-48 a Péluse [Q1145715]
+es: Pompeyo | nato 29/9/-106 a Piceno [Q510990] | morto // a Pelusio, Egipto Lágida [Q1145715]
+nl: Pompeius | nato 29/9/-106 a Picenum [Q510990] | morto 28/9/-48 a Pelusium [Q1145715]
+wikidata: Q125414 | nato 29/9/-106 a Regio V Picenum [Q510990] | morto 28/9/-48 a Pelusio [Q1145715]
+Concordanza: Green: Le edizioni di Wikipedia concordano su date e luoghi di nascita e morte.
+    italiano: 29 settembre 106 a.C., Firmum Picenum – 28 settembre 48 a.C., Pelusio | Concorda con la maggioranza.
+    inglese: 29 settembre 106 a.C., Picenum, Italy – 28 settembre 48 a.C., Pelusium, Egypt | Concorda con la maggioranza.
+    tedesco: 29 settembre 106 a.C., luogo non indicato – 28 settembre 48 a.C., Pelusium | Concorda con la maggioranza.
+    francese: 29 settembre 106 a.C., Picénum, en Italie – 28 settembre 48 a.C., Péluse | Concorda con la maggioranza.
+    spagnolo: 29 settembre 106 a.C., Piceno – —, Pelusio, Egipto Lágida | Concorda con la maggioranza.
+    olandese: 29 settembre 106 a.C., Picenum – 28 settembre 48 a.C., Pelusium | Concorda con la maggioranza.
+    Wikidata: 29 settembre 106 a.C., Regio V Picenum – 28 settembre 48 a.C., Pelusio | Concorda con la maggioranza.
+
+## Parenti e relazioni
+Padre: Q336538
+Madre: Q56259966
+Coniugi: Q518068, Q380857, Q273616, Q235087, Q270384
+Figli: Q473280, Q295228, Q442503, Q55832253
+Relazioni: 
+Eventi: Q1588511

@@ -36,13 +36,23 @@ public sealed partial class WikipediaImportService
         "Q15661340", // città antica
         "Q350895", // villaggio abbandonato
         "Q74047", // città fantasma
+        "Q125866553", // sito archeologico egizio (Pelusio)
+    };
+
+    // Regioni e province che non esistono più (2026-11-14, da Pompeo): luoghi storici con il tipo indicato, dentro lo Stato
+    // di oggi indicato da Wikidata (Regio V Picenum → Italia).
+    private static readonly Dictionary<string, string> HistoricRegionTypes = new(StringComparer.Ordinal)
+    {
+        ["Q15066925"] = "Regione dell'Italia augustea",
+        ["Q182547"] = "Provincia romana",
+        ["Q1620908"] = "Regione storica",
     };
 
     // Tipi che bastano da soli a dire che il luogo non esiste più come luogo abitato.
-    private static readonly HashSet<string> AncientTypes = new(StringComparer.Ordinal) { "Q839954", "Q15661340", "Q350895", "Q74047" };
+    private static readonly HashSet<string> AncientTypes = new(StringComparer.Ordinal) { "Q839954", "Q15661340", "Q350895", "Q74047", "Q125866553" };
 
     // Resti ancora visibili: sito archeologico, sito archeologico romano, rovine, rovine d'epoca romana.
-    private static readonly HashSet<string> RuinsTypes = new(StringComparer.Ordinal) { "Q839954", "Q21752084", "Q109607", "Q133444874" };
+    private static readonly HashSet<string> RuinsTypes = new(StringComparer.Ordinal) { "Q839954", "Q21752084", "Q109607", "Q133444874", "Q125866553" };
 
     // Edifici che non esistono più: «ex edificio o struttura», chiesa distrutta, sinagoga demolita, ex ponte.
     private static readonly HashSet<string> DestroyedTypes = new(StringComparer.Ordinal) { "Q19860854", "Q57644089", "Q96378286", "Q11486300" };
@@ -129,6 +139,13 @@ public sealed partial class WikipediaImportService
     {
         var claims = entity.GetPropertyOrDefault("claims");
         var types = ReadEntityIds(claims, "P31").ToHashSet(StringComparer.Ordinal);
+        if (types.Any(HistoricRegionTypes.ContainsKey) && !(GeoSchemas.LevelTypes(country) is { } regionLevels && regionLevels.Values.Any(set => set.Overlaps(types))))
+        {
+            // Regione o provincia antica (Regio V Picenum): non esiste più come unità. Una regione di oggi che Wikidata
+            // indica anche come «regione storica» resta un'unità amministrativa.
+            return true;
+        }
+
         if (types.Count == 0 || !types.IsSubsetOf(SettlementTypes)
             || (GeoSchemas.LevelTypes(country) is { } levels && levels.Values.Any(set => set.Overlaps(types))))
         {
@@ -139,6 +156,10 @@ public sealed partial class WikipediaImportService
             || ReadEntityIds(claims, "P17").Any(RomanStates.Contains)
             || claims.TryGetProperty("P576", out _);
     }
+
+    // Tipo di una regione o provincia antica («Regione dell'Italia augustea»), vuoto per gli altri luoghi.
+    internal static string HistoricRegionType(JsonElement entity)
+        => ReadEntityIds(entity.GetPropertyOrDefault("claims"), "P31").Select(t => HistoricRegionTypes.GetValueOrDefault(t, string.Empty)).FirstOrDefault(t => t.Length > 0) ?? string.Empty;
 
     internal static bool IsRomanPlace(JsonElement entity)
         => ReadEntityIds(entity.GetPropertyOrDefault("claims"), "P17").Any(RomanStates.Contains);
@@ -235,6 +256,12 @@ public sealed partial class WikipediaImportService
                 var infoboxText = i == 0 && italianLead is not null ? role switch { 0 => italianLead.InfoboxBirthPlace, 1 => italianLead.InfoboxDeathPlace, _ => string.Empty } : string.Empty;
                 var chosen = ChooseHistoricNames(labels, aliases, MainPart(introText), MainPart(infoboxText), roman, place.CurrentName);
                 (place.HistoricName, place.LatinName) = (chosen.Italian, chosen.Latin);
+                if (HistoricRegionType(entity) is { Length: > 0 } regionType)
+                {
+                    // Una regione non ha resti né un comune: solo il suo tipo.
+                    place.TypeLabel = regionType;
+                    continue;
+                }
 
                 // Resti ancora visibili: un luogo specifico (in rovina) dentro il luogo storico. Il nome è quello
                 // dell'edificio se un nome italiano lo indica («Terme di Cotilia»), altrimenti «Sito archeologico di …».

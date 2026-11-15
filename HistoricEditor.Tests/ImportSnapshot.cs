@@ -143,7 +143,7 @@ internal static class ImportSnapshot
     }
 
     // Luogo come lo ricava l'app dalla scheda importata, su un archivio vuoto.
-    private static DerivedPlace DerivePlace(HistoricalPlaceRecord place)
+    internal static DerivedPlace DerivePlace(HistoricalPlaceRecord place)
     {
         var path = Path.Combine(Path.GetTempPath(), $"historic-snapshot-{Guid.NewGuid():N}.db");
         try

@@ -41,9 +41,18 @@ public sealed partial class WikipediaImportService
 
     internal static string InfoboxFullNameValue(string? wikitext)
         => string.IsNullOrWhiteSpace(wikitext) ? string.Empty
-            : InfoboxFullNamePattern().Match(Regex.Replace(wikitext, @"<!--.*?-->", string.Empty, RegexOptions.Singleline)) is { Success: true } match
+            : InfoboxFullNamePattern().Match(WithoutCommentsAndNotes(wikitext)) is { Success: true } match
                 ? match.Groups["value"].Value.Trim()
                 : string.Empty;
+
+    // Senza commenti e senza note: una nota può contenere titoli in corsivo che sembrano nomi (Pompeo: «''Gnaeus
+    // Pompeius''<ref>[[Appiano di Alessandria]], ''Guerre mitridatiche'', 118.</ref>»).
+    private static string WithoutCommentsAndNotes(string wikitext)
+    {
+        var text = Regex.Replace(wikitext, @"<!--.*?-->", string.Empty, RegexOptions.Singleline);
+        text = Regex.Replace(text, @"<ref\b[^>]*/>", string.Empty, RegexOptions.IgnoreCase);
+        return Regex.Replace(text, @"<ref\b[^>]*>.*?</ref\s*>", string.Empty, RegexOptions.IgnoreCase | RegexOptions.Singleline);
+    }
 
     internal sealed record InfoboxRomanName(string Latin, string Moment);
 

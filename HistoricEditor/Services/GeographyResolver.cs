@@ -39,7 +39,12 @@ public static class GeographyResolver
         {
             if (derived.SpecificName is not null)
             {
-                return new DerivedPlace(derived.Levels, confident, null) { HistoricName = place.HistoricName.Trim(), LatinName = place.LatinName.Trim() };
+                // Nei Paesi dove la città indicata da Wikidata non contiene il territorio intorno (Egitto: Pelusio è
+                // indicata «in Porto Said», a 30 km dalla città) il luogo storico sta nella suddivisione superiore.
+                var levels = GeoSchemas.HistoricPlacesInDivision(place.CurrentCountry ?? string.Empty) && derived.Levels.Count > 2
+                    ? derived.Levels.Take(derived.Levels.Count - 1).ToList()
+                    : derived.Levels;
+                return new DerivedPlace(levels, confident, null) { HistoricName = place.HistoricName.Trim(), LatinName = place.LatinName.Trim() };
             }
 
             // Nessun comune che lo contenga (né da Wikidata né dalle coordinate): il luogo storico, messo al posto del
