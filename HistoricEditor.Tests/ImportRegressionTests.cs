@@ -99,7 +99,7 @@ public class ImportRegressionTests
         Assert.Equal(["Tito Flavio Vespasiano", "Tito Cesare Vespasiano", "Imperatore Tito Cesare Vespasiano Augusto"], r.NomiNelTempo.Select(n => n.DisplayName));
         Assert.Equal(["Nome alla nascita", "Da figlio dell'imperatore", "Assunzione del potere"], r.NomiNelTempo.Select(n => n.Motivo));
         Assert.Equal(("39", "79"), (r.NomiNelTempo[0].Dal, r.NomiNelTempo[2].Dal));
-        Assert.Equal([TipiParteNome.Titolo, TipiParteNome.Praenomen, TipiParteNome.Titolo, TipiParteNome.Cognomen, TipiParteNome.Titolo], r.NomiNelTempo[2].Parti.Select(p => p.Tipo));
+        Assert.Equal([TipiParteNome.Imperator, TipiParteNome.Praenomen, TipiParteNome.Caesar, TipiParteNome.Cognomen, TipiParteNome.Augustus], r.NomiNelTempo[2].Parti.Select(p => p.Tipo));
 
         // Date: 30 dicembre 39 – 13 settembre 81. Anni a due cifre senza «d.C.» in tutte le introduzioni;
         // le date deprecate su Wikidata (40, 41) non entrano nella scheda.
@@ -161,7 +161,7 @@ public class ImportRegressionTests
         Assert.Equal(["Tito Flavio Vespasiano", "Imperatore Cesare Vespasiano Augusto"], r.NomiNelTempo.Select(n => n.DisplayName));
         Assert.Equal(("9", "Nome alla nascita"), (r.NomiNelTempo[0].Dal, r.NomiNelTempo[0].Motivo));
         Assert.Equal(("69", "Assunzione del potere", true), (r.NomiNelTempo[1].Dal, r.NomiNelTempo[1].Motivo, r.NomiNelTempo[1].Principale));
-        Assert.Equal([TipiParteNome.Titolo, TipiParteNome.Titolo, TipiParteNome.Cognomen, TipiParteNome.Titolo], r.NomiNelTempo[1].Parti.Select(p => p.Tipo));
+        Assert.Equal([TipiParteNome.Imperator, TipiParteNome.Caesar, TipiParteNome.Cognomen, TipiParteNome.Augustus], r.NomiNelTempo[1].Parti.Select(p => p.Tipo));
 
         // Date: 17 novembre 9 – 23 giugno 79 nelle introduzioni (anni a una e due cifre).
         Assert.Equal("17/11/0009", person.Birth);
@@ -293,7 +293,7 @@ public class ImportRegressionTests
         Assert.Equal(["Marco Annio Catilio Severo", "Marco Annio Vero", "Marco Aurelio Cesare", "Imperatore Cesare Marco Aurelio Antonino Augusto"], r.NomiNelTempo.Select(n => n.DisplayName));
         Assert.Equal(["Nome alla nascita", "Dopo il matrimonio", "Adozione", "Assunzione del potere"], r.NomiNelTempo.Select(n => n.Motivo));
         Assert.Equal([TipiParteNome.Praenomen, TipiParteNome.Nomen, TipiParteNome.Nomen, TipiParteNome.Cognomen], r.NomiNelTempo[0].Parti.Select(p => p.Tipo));
-        Assert.Equal(("Augusti filius", TipiParteNome.Titolo), (r.NomiNelTempo[2].Filiazione, r.NomiNelTempo[2].Parti[2].Tipo));
+        Assert.Equal(("Augusti filius", TipiParteNome.Caesar), (r.NomiNelTempo[2].Filiazione, r.NomiNelTempo[2].Parti[2].Tipo));
         Assert.Equal(("121", "161"), (r.NomiNelTempo[0].Dal, r.NomiNelTempo[3].Dal));
 
         // Nella scheda le parti della persona sono il riassunto del nome principale.
@@ -336,7 +336,7 @@ public class ImportRegressionTests
 
         // La filiazione è una riga nel punto in cui si legge (2026-11-14): Imperator Caesar Divi filius Augustus.
         var principal = r.NomiNelTempo[^1];
-        Assert.Equal([TipiParteNome.Titolo, TipiParteNome.Titolo, TipiParteNome.Filiazione, TipiParteNome.Titolo], principal.Parti.Select(p => p.Tipo));
+        Assert.Equal([TipiParteNome.Imperator, TipiParteNome.Cognomen, TipiParteNome.Filiazione, TipiParteNome.Augustus], principal.Parti.Select(p => p.Tipo));
         Assert.Equal(("Divi filius", "Imperator Caesar Augustus"), (principal.Filiazione, principal.LatinName));
 
         ImportFixtures.AssertMatchesSnapshot(page, r);

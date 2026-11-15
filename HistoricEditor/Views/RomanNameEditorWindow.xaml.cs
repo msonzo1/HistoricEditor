@@ -197,8 +197,8 @@ public partial class RomanNameEditorWindow : Window
         var index = parts.Select((p, i) => (p, i)).LastOrDefault(x => x.p.Tipo == tipo, (null!, -1)).Item2;
         if (index < 0)
         {
-            index = parts.Select((p, i) => (p, i)).LastOrDefault(x => order.IndexOf(x.p.Tipo) < order.IndexOf(tipo) && x.p.Tipo != TipiParteNome.Titolo, (null!, -1)).Item2;
-            if (tipo == TipiParteNome.Titolo)
+            index = parts.Select((p, i) => (p, i)).LastOrDefault(x => order.IndexOf(x.p.Tipo) < order.IndexOf(tipo) && !TipiParteNome.IsTitle(x.p.Tipo), (null!, -1)).Item2;
+            if (TipiParteNome.IsTitle(tipo))
             {
                 index = parts.Count - 1;
             }

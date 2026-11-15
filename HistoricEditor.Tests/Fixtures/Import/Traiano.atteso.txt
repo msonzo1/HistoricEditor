@@ -19,8 +19,8 @@ Latino (praenomen / nomen / cognomen / agnomen): Marcus / Ulpius / Traianus Nerv
 Nome latino: Imperator Caesar Nerva Traianus Augustus
 Italiano (prenome / gentilizio / cognome / agnome): Marco / Ulpio / Nerva Traiano / 
 Nome nel tempo: Marco Ulpio Traiano | Marcus Ulpius Traianus | filiazione  | dal 53 | Nome alla nascita | Praenomen:Marcus Nomen:Ulpius Cognomen:Traianus
-Nome nel tempo: Cesare Nerva Traiano Germanico | Caesar Nerva Traianus Germanicus | filiazione Divi Nervae filius | dal  | Adozione | Titolo:Caesar Filiazione:Divi Nervae filius Cognomen:Nerva Cognomen:Traianus Agnomen:Germanicus
-Nome nel tempo ★: Imperatore Cesare Nerva Traiano Augusto Germanico | Imperator Caesar Nerva Traianus Augustus Germanicus | filiazione Divi Nervae filius | dal 98 | Assunzione del potere | Titolo:Imperator Titolo:Caesar Filiazione:Divi Nervae filius Cognomen:Nerva Cognomen:Traianus Titolo:Augustus Agnomen:Germanicus
+Nome nel tempo: Cesare Nerva Traiano Germanico | Caesar Nerva Traianus Germanicus | filiazione Divi Nervae filius | dal  | Adozione | Caesar:Caesar Filiazione:Divi Nervae filius Cognomen:Nerva Cognomen:Traianus Agnomen:Germanicus
+Nome nel tempo ★: Imperatore Cesare Nerva Traiano Augusto Germanico | Imperator Caesar Nerva Traianus Augustus Germanicus | filiazione Divi Nervae filius | dal 98 | Assunzione del potere | Imperator:Imperator Caesar:Caesar Filiazione:Divi Nervae filius Cognomen:Nerva Cognomen:Traianus Augustus:Augustus Agnomen:Germanicus
 
 ## Nomi nelle lingue
 it: Traiano | suffisso  | soprannome  | titolo imperatore romano | parti  /  /  / 

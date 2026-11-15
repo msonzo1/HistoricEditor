@@ -18,7 +18,12 @@ public static class TipiParteNome
     public const string Nomen = "Nomen";
     public const string Cognomen = "Cognomen";
     public const string Agnomen = "Agnomen";
-    // Imperator, Caesar, Augustus: titoli che fanno parte del nome (praenomen imperatoris, titolo dinastico, titolo imperiale).
+    // Titoli che fanno parte del nome, ciascuno con il suo tipo (2026-11-15): Imperator (praenomen imperatoris), Caesar
+    // (titolo dinastico, da Galba e Vespasiano; fino a Nerone è un cognomen) e Augustus (titolo imperiale). «Titolo» resta
+    // per gli altri.
+    public const string Imperator = "Imperator";
+    public const string Caesar = "Caesar";
+    public const string Augustus = "Augustus";
     public const string Titolo = "Titolo";
     // Filiazione e tribù sono righe come le altre (2026-11-14): stanno nel punto in cui si leggono («Imperator Caesar Divi
     // filius Augustus», «M. Tullius M. f. Cor. Cicero») e compaiono solo nella forma epigrafica, non nel nome latino o
@@ -29,7 +34,19 @@ public static class TipiParteNome
     // Aemilianus): non è un agnomen, anche se Wikidata lo mette fra gli agnomina (2026-11-14). Si usa di rado.
     public const string NomenOrigine = "Nomen d'origine";
 
-    public static IReadOnlyList<string> All { get; } = [Praenomen, Nomen, Filiazione, Tribu, Cognomen, NomenOrigine, Agnomen, Titolo];
+    public static IReadOnlyList<string> All { get; } = [Praenomen, Nomen, Filiazione, Tribu, Cognomen, NomenOrigine, Agnomen, Imperator, Caesar, Augustus, Titolo];
+
+    // Un titolo nel nome: Imperator, Caesar, Augustus o un altro titolo.
+    public static bool IsTitle(string tipo) => tipo is Imperator or Caesar or Augustus or Titolo;
+
+    // Le parti salvate prima dei tipi dei titoli (tutte «Titolo») prendono il tipo della parola: «Augustus» → Augustus.
+    public static string Upgrade(string tipo, string latino) => tipo != Titolo ? tipo : latino.Trim() switch
+    {
+        "Imperator" => Imperator,
+        "Caesar" => Caesar,
+        "Augustus" or "Augusta" => Augustus,
+        _ => Titolo,
+    };
 
     // Parte che fa parte del nome letto (non filiazione o tribù).
     public static bool IsNameWord(string tipo) => tipo is not (Filiazione or Tribu);
@@ -592,7 +609,7 @@ public static class RomanNaming
                 NomeLatino = n.NomeLatino.Trim().Length > 0 ? n.NomeLatino.Trim() : n.Nome.Trim(),
                 Parti = [.. n.Parti.Where(p => !p.IsEmpty()).Select(p => new RomanNamePart
                 {
-                    Tipo = p.Tipo, Latino = p.Latino.Trim(), Italiano = p.Italiano.Trim(),
+                    Tipo = TipiParteNome.Upgrade(p.Tipo, p.Latino), Latino = p.Latino.Trim(), Italiano = p.Italiano.Trim(),
                     Traduzioni = [.. p.Traduzioni.Where(t => t.Lingua.Trim().Length > 0 && t.Testo.Trim().Length > 0).Select(t => new PartTranslation { Lingua = t.Lingua.Trim(), Testo = t.Testo.Trim() })],
                 })],
             };
@@ -714,7 +731,7 @@ public static class RomanNaming
         // Un solo nome senza periodo né motivo, con le parti nell'ordine consueto e senza titoli, è già tutto nei campi
         // della persona.
         var plain = list.Count == 1 && list[0].Dal.Length == 0 && list[0].Al.Length == 0 && list[0].Motivo.Length == 0
-            && list[0].Parti.All(p => p.Tipo is not (TipiParteNome.Titolo or TipiParteNome.NomenOrigine)) && PlainOrder(list[0]);
+            && list[0].Parti.All(p => !TipiParteNome.IsTitle(p.Tipo) && p.Tipo != TipiParteNome.NomenOrigine) && PlainOrder(list[0]);
         person.NomiNelTempo = plain ? [] : list;
     }
 
@@ -815,7 +832,7 @@ public static class RomanNaming
             words.Add(part.Tipo switch
             {
                 TipiParteNome.Praenomen => AbbreviatePraenomen(part.Latino),
-                TipiParteNome.Titolo => TitleAbbreviations.GetValueOrDefault(part.Latino.Trim(), part.Latino.Trim()),
+                _ when TipiParteNome.IsTitle(part.Tipo) => TitleAbbreviations.GetValueOrDefault(part.Latino.Trim(), part.Latino.Trim()),
                 TipiParteNome.Filiazione => AbbreviateFiliation(part.Latino),
                 TipiParteNome.Tribu => AbbreviateTribe(part.Latino),
                 _ => part.Latino.Trim(),

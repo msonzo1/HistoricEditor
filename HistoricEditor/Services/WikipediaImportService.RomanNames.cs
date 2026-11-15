@@ -26,6 +26,9 @@ public sealed partial class WikipediaImportService
     private static partial Regex LatinFiliationPattern();
 
     // Titoli trionfali presi per le vittorie (agnomina): Germanicus, Dacicus, Parthicus Maximus…
+    // Primo anno in cui «Caesar» è un titolo: Galba, acclamato nel 68 dopo Nerone, l'ultimo dei Giulio-Claudi.
+    private const int FirstCaesarTitleYear = 68;
+
     private static readonly HashSet<string> TriumphalAgnomina = new(StringComparer.Ordinal)
     {
         "Germanicus", "Dacicus", "Parthicus", "Armeniacus", "Medicus", "Sarmaticus", "Britannicus", "Arabicus", "Adiabenicus",
@@ -123,7 +126,8 @@ public sealed partial class WikipediaImportService
 
     // Righe di un nome: ogni parola latina con il suo tipo (quelli noti da Wikidata, poi le regole) e la parola italiana
     // nella stessa posizione, se le parole sono tante quante; altrimenti l'italiano proposto dal latino.
-    internal static RomanNameRecord BuildIntroRomanName(string italian, string latin, IReadOnlyDictionary<string, string> knownTypes, IReadOnlyDictionary<string, string>? italianOf = null)
+    // year: anno della persona (inizio del principato o nascita), per «Caesar»: cognomen fino a Nerone, titolo da Galba.
+    internal static RomanNameRecord BuildIntroRomanName(string italian, string latin, IReadOnlyDictionary<string, string> knownTypes, IReadOnlyDictionary<string, string>? italianOf = null, int? year = null)
     {
         var name = new RomanNameRecord();
         // La filiazione resta una riga nel punto in cui è scritta (2026-11-14): «Imperator Caesar Divi filius Augustus».
@@ -153,11 +157,24 @@ public sealed partial class WikipediaImportService
         {
             var word = latinWords[i];
             var previous = i > 0 ? latinWords[i - 1] : string.Empty;
+            var next = i + 1 < latinWords.Length ? latinWords[i + 1] : string.Empty;
             string tipo;
-            if (word is "Caesar" && previous is not ("Iulius" or "Iulia"))
+            if (word is "Caesar")
             {
-                // Dopo Augusto «Caesar» è un titolo dinastico; resta cognomen solo dopo il nomen Iulius (Gaius Iulius Caesar).
-                tipo = TipiParteNome.Titolo;
+                // «Caesar» resta cognomen fino a Nerone, perché i Giulio-Claudi lo portano per adozione (2026-11-15), e dopo
+                // il nomen Iulius (Gaius Iulius Caesar); da Galba e Vespasiano è un titolo dinastico.
+                tipo = previous is "Iulius" or "Iulia" || year < FirstCaesarTitleYear ? TipiParteNome.Cognomen : TipiParteNome.Caesar;
+            }
+            else if (i == 0 && word is not ("Imperator" or "Augustus" or "Augusta" or "Divus" or "Diva")
+                && (knownTypes.GetValueOrDefault(next) == TipiParteNome.Nomen || (!knownTypes.ContainsKey(next) && next.EndsWith("ius", StringComparison.Ordinal))))
+            {
+                // La prima parola davanti al nomen è il praenomen, anche se di solito è un cognomen: «Nero Claudius Caesar».
+                tipo = TipiParteNome.Praenomen;
+            }
+            else if (i > 0 && TriumphalAgnomina.Contains(word))
+            {
+                // Germanicus, Dacicus, Parthicus…: agnomina trionfali, anche se Wikidata li indica come cognomina.
+                tipo = TipiParteNome.Agnomen;
             }
             else if (knownTypes.TryGetValue(word, out var known) && known != TipiParteNome.Agnomen)
             {
@@ -178,9 +195,13 @@ public sealed partial class WikipediaImportService
             {
                 tipo = TipiParteNome.Agnomen;
             }
-            else if (word is "Imperator" or "Augustus" or "Augusta")
+            else if (word is "Imperator")
             {
-                tipo = TipiParteNome.Titolo;
+                tipo = TipiParteNome.Imperator;
+            }
+            else if (word is "Augustus" or "Augusta")
+            {
+                tipo = TipiParteNome.Augustus;
             }
             else if (!hasPraenomen && RomanNaming.Praenomina.Contains(word, StringComparer.OrdinalIgnoreCase))
             {
@@ -253,7 +274,7 @@ public sealed partial class WikipediaImportService
                 continue;
             }
 
-            var name = BuildIntroRomanName(string.Empty, latin, knownTypes, italianOf);
+            var name = BuildIntroRomanName(string.Empty, latin, knownTypes, italianOf, principalFrom ?? birthYear);
             if (Regex.IsMatch(moment, @"\bnascita\b", RegexOptions.IgnoreCase))
             {
                 (name.Motivo, name.Dal) = ("Nome alla nascita", Year(birthYear));
@@ -291,7 +312,7 @@ public sealed partial class WikipediaImportService
                 continue;
             }
 
-            var name = BuildIntroRomanName(pair.Italian, pair.Latin, knownTypes, italianOf);
+            var name = BuildIntroRomanName(pair.Italian, pair.Latin, knownTypes, italianOf, principalFrom ?? birthYear);
             int index;
             switch (pair.Kind)
             {

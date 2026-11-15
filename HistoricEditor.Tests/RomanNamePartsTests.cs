@@ -14,18 +14,39 @@ public class RomanNamePartsTests
     {
         Parti =
         [
-            Part(TipiParteNome.Titolo, "Imperator", "Imperatore"),
-            Part(TipiParteNome.Titolo, "Caesar", "Cesare"),
+            Part(TipiParteNome.Imperator, "Imperator", "Imperatore"),
+            Part(TipiParteNome.Caesar, "Caesar", "Cesare"),
             Part(TipiParteNome.Praenomen, "Marcus", "Marco"),
             Part(TipiParteNome.Nomen, "Aurelius", "Aurelio"),
             Part(TipiParteNome.Cognomen, "Antoninus", "Antonino"),
-            Part(TipiParteNome.Titolo, "Augustus", "Augusto"),
+            Part(TipiParteNome.Augustus, "Augustus", "Augusto"),
         ],
         Filiazione = "M. f.",
         Dal = "161",
         Motivo = "Assunzione del potere",
         Principale = true,
     };
+
+    // Imperator, Caesar e Augustus hanno ciascuno il suo tipo (2026-11-15). «Caesar» è cognomen fino a Nerone e titolo da
+    // Galba; la prima parola davanti al nomen è il praenomen (Nero), Germanicus un agnomen.
+    [Fact]
+    public void Import_TypesImperialTitlesAndCaesarUntilNero()
+    {
+        var known = new Dictionary<string, string> { ["Nero"] = TipiParteNome.Cognomen, ["Germanicus"] = TipiParteNome.Cognomen };
+        var nero = WikipediaImportService.BuildIntroRomanName(string.Empty, "Nero Claudius Caesar Augustus Germanicus", known, year: 54);
+        Assert.Equal(
+            [TipiParteNome.Praenomen, TipiParteNome.Nomen, TipiParteNome.Cognomen, TipiParteNome.Augustus, TipiParteNome.Agnomen],
+            nero.Parti.Select(p => p.Tipo));
+
+        var galba = WikipediaImportService.BuildIntroRomanName(string.Empty, "Imperator Servius Sulpicius Galba Caesar Augustus", new Dictionary<string, string>(), year: 68);
+        Assert.Equal(
+            [TipiParteNome.Imperator, TipiParteNome.Praenomen, TipiParteNome.Nomen, TipiParteNome.Cognomen, TipiParteNome.Caesar, TipiParteNome.Augustus],
+            galba.Parti.Select(p => p.Tipo));
+
+        // Le parti salvate con il vecchio tipo «Titolo» prendono quello della parola.
+        var old = RomanNaming.Normalize([new RomanNameRecord { Parti = [Part(TipiParteNome.Titolo, "Augustus", "Augusto"), Part(TipiParteNome.Titolo, "Pius", "Pio")] }]);
+        Assert.Equal([TipiParteNome.Augustus, TipiParteNome.Titolo], old[0].Parti.Select(p => p.Tipo));
+    }
 
     [Fact]
     public void Record_ComposesNamesInWrittenOrder()
@@ -138,7 +159,8 @@ public class RomanNamePartsTests
             var names = RomanNaming.NamesOf(reopened.GetPerson(id)!);
             Assert.Equal(["Marco Annio Vero", "Imperatore Cesare Marco Aurelio Antonino Augusto"], names.Select(n => n.DisplayName));
             Assert.Equal([false, true], names.Select(n => n.Principale));
-            Assert.Equal(TipiParteNome.Titolo, names[1].Parti[0].Tipo);
+            // Salvato come titolo generico, si rilegge con il suo tipo.
+            Assert.Equal(TipiParteNome.Imperator, names[1].Parti[0].Tipo);
         }
         finally
         {
@@ -162,9 +184,9 @@ public class RomanNamePartsTests
             known, -63, -27, ruler: true);
         Assert.Equal(["Gaio Ottavio Turino", "Gaio Giulio Cesare Ottaviano", "Imperatore Cesare Augusto"], names.Select(n => n.DisplayName));
         Assert.Equal(("63 a.C.", "27 a.C."), (names[0].Dal, names[2].Dal));
-        // Dopo il nomen Iulius «Caesar» è un cognomen, altrove un titolo.
+        // «Caesar» è un cognomen dopo il nomen Iulius e fino a Nerone (Augusto); Imperator e Augustus hanno il loro tipo.
         Assert.Equal(TipiParteNome.Cognomen, names[1].Parti[2].Tipo);
-        Assert.Equal([TipiParteNome.Titolo, TipiParteNome.Titolo, TipiParteNome.Titolo], names[2].Parti.Select(p => p.Tipo));
+        Assert.Equal([TipiParteNome.Imperator, TipiParteNome.Cognomen, TipiParteNome.Augustus], names[2].Parti.Select(p => p.Tipo));
     }
 
     // Forme nelle altre lingue per riga (2026-11-14): ogni parte ha le sue, il nome completo si compone nell'ordine.
@@ -312,10 +334,10 @@ public class RomanNamePartsTests
         {
             Parti =
             [
-                Part(TipiParteNome.Titolo, "Imperator", "Imperatore"),
-                Part(TipiParteNome.Titolo, "Caesar", "Cesare"),
+                Part(TipiParteNome.Imperator, "Imperator", "Imperatore"),
+                Part(TipiParteNome.Caesar, "Caesar", "Cesare"),
                 Part(TipiParteNome.Filiazione, "Divi filius", "figlio del divo"),
-                Part(TipiParteNome.Titolo, "Augustus", "Augusto"),
+                Part(TipiParteNome.Augustus, "Augustus", "Augusto"),
             ],
         };
         Assert.Equal("Imperator Caesar Augustus", augustus.LatinName);
