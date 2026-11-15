@@ -171,33 +171,37 @@ public partial class PersonEditorWindow
     {
         field.ImportedRecords = records.Select(ClonePlace).ToList();
         field.SetHistoricalContext(null);
-        var (luogoId, specificoId) = ResolveOrEditPlace(records, field.Title);
-        field.SetPlace(luogoId, specificoId);
+        if (PrepareImportedPlace(records, field.Title) is { } pending)
+        {
+            field.SetPending(pending);
+        }
+        else
+        {
+            field.SetPlace(null, null);
+        }
     }
 
-    // Se la catena amministrativa importata è incompleta o incerta, apre l'editor dei luoghi e avvisa l'utente.
-    // Un errore di salvataggio lascia il campo vuoto senza interrompere il resto dell'import.
-    private (int? LuogoId, int? SpecificoId) ResolveOrEditPlace(IReadOnlyList<HistoricalPlaceRecord> places, string role)
+    // Se la catena amministrativa importata è incompleta o incerta, apre l'editor dei luoghi e avvisa l'utente. Il luogo
+    // resta in memoria e si crea al salvataggio della scheda (2026-11-15). Un errore lascia il campo vuoto senza
+    // interrompere il resto dell'import.
+    private PendingPlace? PrepareImportedPlace(IReadOnlyList<HistoricalPlaceRecord> places, string role)
     {
         var place = places.FirstOrDefault(p => !string.IsNullOrWhiteSpace(p.CurrentName));
         if (place is null)
         {
-            return (null, null);
+            return null;
         }
 
         try
         {
-            return ResolveOrEditPlace(place, role);
+            return ImportedPlaceResolver.Prepare(store, place, role, this);
         }
         catch (Exception ex) when (ex is DbUpdateException or InvalidOperationException)
         {
-            Feedback.Error(EditorMessage, $"{role}: impossibile salvare il luogo «{place.CurrentName}». Sceglilo manualmente.");
-            return (null, null);
+            Feedback.Error(EditorMessage, $"{role}: impossibile leggere il luogo «{place.CurrentName}». Sceglierlo manualmente.");
+            return null;
         }
     }
-
-    private (int? LuogoId, int? SpecificoId) ResolveOrEditPlace(HistoricalPlaceRecord place, string role)
-        => ImportedPlaceResolver.Resolve(store, place, role, this);
 
     private List<HistoricalDateEvidence> BuildDateEvidence(string dateText, string sourceText, IEnumerable<HistoricalDateEvidence>? importedEvidence)
         => DateEvidenceBuilder.Build(dateText, sourceText, importedEvidence, CreateInputCitation());

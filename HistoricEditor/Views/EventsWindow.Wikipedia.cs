@@ -296,18 +296,17 @@ public partial class EventsWindow
 
         try
         {
-            var (luogoId, specificoId) = ImportedPlaceResolver.Resolve(store, place, "Luogo dell’evento", this);
-            if (luogoId is null && specificoId is null)
+            if (ImportedPlaceResolver.Prepare(store, place, "Luogo dell’evento", this) is not { } pending)
             {
-                return $" Luogo «{place.CurrentName}» non impostato: sceglilo manualmente.";
+                return $" Luogo «{place.CurrentName}» non impostato: sceglierlo manualmente.";
             }
 
-            SetPlace(luogoId, specificoId);
+            SetPendingPlace(pending);
             return string.Empty;
         }
         catch (Exception ex) when (ex is DbUpdateException or InvalidOperationException)
         {
-            return $" Impossibile salvare il luogo «{place.CurrentName}»: sceglilo manualmente.";
+            return $" Impossibile leggere il luogo «{place.CurrentName}»: sceglierlo manualmente.";
         }
     }
 

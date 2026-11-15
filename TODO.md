@@ -111,6 +111,8 @@
 - [x] LED di concordanza cliccabile: elenco delle edizioni confrontate con i collegamenti alle pagine.
 - [x] Migliorare la barra di avanzamento dell'import: riga sotto la barra con richiesta in corso (e da quanto si attende), coda di Wikidata, attesa per 429/503 con conto alla rovescia e numero del tentativo, tempo trascorso. Attiva nell'editor dei personaggi (import e «Aggiorna da Wikipedia»), negli eventi, nelle opere e nella finestra dei parenti mancanti.
 - [x] Musei (Met, AIC, Cleveland, Europeana) e scaricamento delle immagini: stesso stato delle richieste e stessi nuovi tentativi su 429/503 di Wikipedia (`HttpRetry` condiviso).
+- [x] Luoghi importati tenuti in memoria e creati solo al salvataggio della scheda, dell'evento o dell'opera, nella stessa transazione: annullando l'import non resta nulla (2026-11-15).
+- [ ] Provare l'app: importare un personaggio con un luogo nuovo, annullare l'import (e poi chiudere senza salvare) e verificare nella sezione Luoghi che il luogo non c'è; poi reimportare e salvare. Stessa prova con un evento e un'opera.
 
 ## Luoghi
 - [ ] Cambiare il luogo contenitore di un luogo storico dopo la creazione.

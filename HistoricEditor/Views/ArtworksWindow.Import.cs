@@ -463,18 +463,17 @@ public partial class ArtworksWindow
 
         try
         {
-            var (luogoId, specificoId) = ImportedPlaceResolver.Resolve(store, place, "Collocazione dell’opera", this);
-            if (luogoId is null && specificoId is null)
+            if (ImportedPlaceResolver.Prepare(store, place, "Collocazione dell’opera", this) is not { } pending)
             {
-                return $" Collocazione «{place.CurrentName}» non impostata: sceglila manualmente.";
+                return $" Collocazione «{place.CurrentName}» non impostata: sceglierla manualmente.";
             }
 
-            SetPlace(luogoId, specificoId);
+            SetPendingPlace(pending);
             return string.Empty;
         }
         catch (Exception ex) when (ex is DbUpdateException or InvalidOperationException)
         {
-            return $" Impossibile salvare la collocazione «{place.CurrentName}»: sceglila manualmente.";
+            return $" Impossibile leggere la collocazione «{place.CurrentName}»: sceglierla manualmente.";
         }
     }
 }

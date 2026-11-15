@@ -34,6 +34,9 @@
 					 </DockPanel>
 				</Border>
 		  </DockPanel>
+		  <!-- Luogo importato non ancora nell'archivio (2026-11-15): si crea al salvataggio. -->
+		  <TextBlock x:Name="PendingNote" Visibility="Collapsed" Margin="0,4,0,0" FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource QuietBrush}"
+					 Text="Nuovo luogo: sarà creato al salvataggio della scheda." />
 		  <DockPanel x:Name="SpecificRow" Visibility="Collapsed" Margin="0,6,0,0">
 				<Button x:Name="ClearSpecificButton" DockPanel.Dock="Right" Style="{StaticResource PlaceIconButton}" Content="&#xE738;" Click="ClearSpecific_Click" ToolTip="Rimuovi il luogo specifico" />
 				<Button x:Name="SpecificButton" DockPanel.Dock="Right" Style="{StaticResource PlaceIconButton}" Content="&#xE70F;" Click="Specific_Click" ToolTip="Aggiungi o modifica il luogo specifico" />

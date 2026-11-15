@@ -30,6 +30,9 @@ public partial class EventsWindow : Window
     private int currentId;
     private int? placeId;
     private int? specificPlaceId;
+
+    // Luogo importato tenuto in memoria fino al salvataggio (2026-11-15): annullando non resta nulla nell'archivio.
+    private PendingPlace? pendingPlace;
     private bool loading;
     private string currentStyle = HistoricalCalendar.StileComune;
 
@@ -155,21 +158,43 @@ public partial class EventsWindow : Window
 
     private void SetPlace(int? luogoId, int? specificoId)
     {
+        pendingPlace = null;
         placeId = luogoId;
         specificPlaceId = specificoId;
         PlaceBox.Text = luogoId is null && specificoId is null ? string.Empty : store.DescribeRole(luogoId, specificoId).DisplayText;
         ClearPlaceButton.IsEnabled = luogoId is not null || specificoId is not null;
     }
 
+    // Un luogo in attesa che esiste già tutto si mostra come gli altri; altrimenti con la nota.
+    private void SetPendingPlace(PendingPlace pending)
+    {
+        var existing = ImportedPlaceResolver.FindExisting(store, pending);
+        var exists = existing.LuogoId is not null || existing.SpecificoId is not null;
+        SetPlace(null, null);
+        pendingPlace = pending;
+        PlaceBox.Text = exists
+            ? store.DescribeRole(existing.LuogoId, existing.SpecificoId).DisplayText
+            : $"{pending.Description.DisplayText} (nuovo luogo: sarà creato al salvataggio dell’evento)";
+        ClearPlaceButton.IsEnabled = true;
+    }
+
     private void ChoosePlace_Click(object sender, RoutedEventArgs e)
     {
-        var picker = new PlacePickerWindow(store, "Luogo dell’evento", allowSpecific: true, placeId, specificPlaceId, allowClear: true) { Owner = this };
+        // Un luogo in attesa apre il selettore sul luogo esistente più vicino.
+        var (selectedId, selectedSpecificId) = (placeId, specificPlaceId);
+        if (pendingPlace is not null)
+        {
+            var existing = ImportedPlaceResolver.FindExisting(store, pendingPlace);
+            (selectedId, selectedSpecificId) = existing.SpecificoId is not null || existing.LuogoId is not null ? (existing.LuogoId, existing.SpecificoId) : (existing.Nearest, null);
+        }
+
+        var picker = new PlacePickerWindow(store, "Luogo dell’evento", allowSpecific: true, selectedId, selectedSpecificId, allowClear: true) { Owner = this };
         if (picker.ShowDialog() == true)
         {
             SetPlace(picker.ResultLuogoId, picker.ResultSpecificoId);
             PlaceBox.Focus();
         }
-        else if (picker.PlacesEdited)
+        else if (picker.PlacesEdited && pendingPlace is null)
         {
             SetPlace(placeId, specificPlaceId);
         }
@@ -348,7 +373,25 @@ public partial class EventsWindow : Window
 
         try
         {
-            var id = store.SaveEvent(data);
+            // Il luogo importato si crea insieme all’evento: se il salvataggio fallisce non resta nessuno dei due.
+            var id = 0;
+            (int? LuogoId, int? SpecificoId)? created = null;
+            store.SaveTogether(() =>
+            {
+                if (pendingPlace is not null)
+                {
+                    var ids = ImportedPlaceResolver.Create(store, pendingPlace);
+                    created = ids;
+                    (data.LuogoId, data.LuogoSpecificoId) = (ids.SpecificoId is null ? ids.LuogoId : null, ids.SpecificoId);
+                }
+
+                id = store.SaveEvent(data);
+            });
+            if (created is { } placeIds)
+            {
+                SetPlace(placeIds.LuogoId, placeIds.SpecificoId);
+            }
+
             currentId = id;
             Reload(id);
             if (EventList.SelectedItem is null)

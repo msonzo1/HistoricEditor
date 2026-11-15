@@ -76,7 +76,7 @@ public partial class PersonEditorWindow : Window
         static string Place(PlaceFieldControl field)
         {
             var context = field.GetHistoricalContext();
-            return $"{field.LuogoId}|{field.LuogoSpecificoId}|{context?.NameAtTime}|{context?.PoliticalEntity}|{context?.AdministrativeUnit}|{context?.Period}";
+            return $"{field.LuogoId}|{field.LuogoSpecificoId}|{field.Pending?.Description.DisplayText}|{context?.NameAtTime}|{context?.PoliticalEntity}|{context?.AdministrativeUnit}|{context?.Period}";
         }
 
         // Se è mostrata un'altra lingua, il confronto usa i valori modificabili della scheda.
@@ -321,16 +321,44 @@ public partial class PersonEditorWindow : Window
             return false;
         }
 
+        // I luoghi importati si creano adesso, insieme alla scheda: se il salvataggio fallisce non resta nessuno dei due e i
+        // campi restano in attesa (2026-11-15).
+        var placeFields = new[] { BirthPlaceField, DeathPlaceField, BurialPlaceField };
+        var created = new (int? LuogoId, int? SpecificoId)?[placeFields.Length];
         try
         {
+            store.SaveTogether(() =>
+            {
+                for (var i = 0; i < placeFields.Length; i++)
+                {
+                    created[i] = placeFields[i].Pending is null ? null : placeFields[i].CreatePending();
+                }
+
+                SetCreatedPlaces(person, created);
+                if (editingPerson is null)
+                {
+                    store.Add(person);
+                }
+                else
+                {
+                    store.Update(person);
+                }
+            });
+
+            for (var i = 0; i < placeFields.Length; i++)
+            {
+                if (created[i] is { } ids)
+                {
+                    placeFields[i].SetPlace(ids.LuogoId, ids.SpecificoId);
+                }
+            }
+
             if (editingPerson is null)
             {
-                store.Add(person);
                 editingPerson = person;
             }
             else
             {
-                store.Update(person);
                 FillPersonFromForm(editingPerson);
             }
         }
@@ -377,6 +405,26 @@ public partial class PersonEditorWindow : Window
         UpdateFamilyAccess();
         UpdateWikipediaAccess();
         return true;
+    }
+
+    // Luoghi appena creati per i campi in attesa (nascita, morte, sepoltura): id e testo come per un luogo scelto.
+    private void SetCreatedPlaces(HistoricalPerson person, (int? LuogoId, int? SpecificoId)?[] created)
+    {
+        string Text((int? LuogoId, int? SpecificoId) ids) => store.DescribeRole(ids.LuogoId, ids.SpecificoId).DisplayText;
+        if (created[0] is { } birth)
+        {
+            (person.BirthLuogoId, person.BirthLuogoSpecificoId, person.BirthPlace) = (birth.LuogoId, birth.SpecificoId, Text(birth));
+        }
+
+        if (created[1] is { } death)
+        {
+            (person.DeathLuogoId, person.DeathLuogoSpecificoId, person.DeathPlace) = (death.LuogoId, death.SpecificoId, Text(death));
+        }
+
+        if (created[2] is { } burial)
+        {
+            (person.BurialLuogoId, person.BurialLuogoSpecificoId, person.BurialPlace) = (burial.LuogoId, burial.SpecificoId, Text(burial));
+        }
     }
 
     private void LoadDynastyChoices()

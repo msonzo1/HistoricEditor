@@ -740,6 +740,43 @@ public sealed partial class PeopleStore : IDisposable
     public int? FindPlace(int? parentId, string tipo, string nome)
         => GeographyResolver.FindChild(context, parentId, tipo.Trim(), nome.Trim())?.Id;
 
+    // Il luogo storico che EnsureHistoricPlace riuserebbe, senza crearlo.
+    public int? FindHistoricPlace(string nome, string tipo, int? parentId, string wikidataId)
+    {
+        nome = nome.Trim();
+        tipo = tipo.Trim().Length > 0 ? tipo.Trim() : "Luogo storico";
+        wikidataId = wikidataId.Trim();
+        var places = context.Luoghi.AsNoTracking();
+        return (wikidataId.Length > 0 ? places.Where(l => l.Storico && l.WikidataId == wikidataId).Select(l => (int?)l.Id).FirstOrDefault() : null)
+            ?? places.Where(l => l.ParentId == parentId && l.Nome == nome && (l.Storico || l.Tipo == tipo)).Select(l => (int?)l.Id).FirstOrDefault();
+    }
+
+    // Il luogo specifico che EnsureSpecificPlace riuserebbe, senza crearlo.
+    public int? FindSpecificPlace(string nome, int luogoId, string wikidataId)
+    {
+        nome = nome.Trim();
+        var places = context.LuoghiSpecifici.AsNoTracking();
+        return (wikidataId.Length > 0 ? places.Where(s => s.WikidataId == wikidataId).Select(s => (int?)s.Id).FirstOrDefault() : null)
+            ?? places.Where(s => s.LuogoId == luogoId && s.Nome == nome).Select(s => (int?)s.Id).FirstOrDefault();
+    }
+
+    // Più salvataggi insieme (luoghi importati e scheda, 2026-11-15): se uno fallisce, nell'archivio non resta nessuno.
+    public void SaveTogether(Action action)
+    {
+        using var transaction = context.Database.BeginTransaction();
+        try
+        {
+            action();
+            transaction.Commit();
+        }
+        catch
+        {
+            transaction.Rollback();
+            context.ChangeTracker.Clear();
+            throw;
+        }
+    }
+
     // Livelli della catena fino al luogo indicato, per proporre un nuovo luogo accanto o sotto di esso.
     public List<GeoLevel> GetChainLevels(int luogoId)
     {

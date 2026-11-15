@@ -5,15 +5,17 @@ namespace HistoricEditor;
 // Trasforma un luogo letto da Wikidata in un luogo dell'archivio. Se la gerarchia è incerta la propone
 // nell'editor dei luoghi; i luoghi non amministrativi (castelli, monasteri, campi di battaglia…) diventano luoghi specifici,
 // le località antiche o scomparse (Falacrine, Aquae Cutiliae) luoghi storici contenuti nel comune attuale.
+// Nelle schede, negli eventi e nelle opere il luogo importato resta in memoria (PendingPlace) e si crea solo al salvataggio
+// (2026-11-15): annullando l'import non resta nulla nell'archivio.
 internal static class ImportedPlaceResolver
 {
-    public static (int? LuogoId, int? SpecificoId) Resolve(PeopleStore store, HistoricalPlaceRecord place, string role, Window owner)
+    // Prepara il luogo senza scrivere nell'archivio; se la gerarchia è incerta la fa confermare. Null se l'utente annulla.
+    public static PendingPlace? Prepare(PeopleStore store, HistoricalPlaceRecord place, string role, Window owner)
     {
         var derived = store.DerivePlace(place);
-        int? classicId;
         if (derived.Confident)
         {
-            classicId = store.EnsurePlace(derived.Levels, null, null);
+            return new PendingPlace(place, derived, derived.Levels, null, null);
         }
         else
         {
@@ -25,18 +27,69 @@ internal static class ImportedPlaceResolver
                     ? $"{role}: la gerarchia di «{place.CurrentName}» è incompleta o incerta. Verificarla prima di salvare."
                     : $"{role}: «{place.CurrentName}» non è un’unità amministrativa e sarà salvato come luogo specifico. Verificare il luogo che lo contiene.";
             var editor = new PlacesEditorWindow(derived.Levels, notice: notice, store: store, allowPartial: derived.HistoricName is { Length: > 0 }) { Owner = owner };
-            classicId = editor.ShowDialog() == true
-                ? store.EnsurePlace(editor.ResultLevels, editor.ResultLatitude, editor.ResultLongitude)
+            return editor.ShowDialog() == true
+                ? new PendingPlace(place, derived, editor.ResultLevels, editor.ResultLatitude, editor.ResultLongitude)
                 : null;
         }
+    }
 
-        if (classicId is not int luogoId)
+    // Crea nell'archivio il luogo preparato (o riusa quello che esiste già), al salvataggio.
+    public static (int? LuogoId, int? SpecificoId) Create(PeopleStore store, PendingPlace pending)
+        => store.EnsurePlace(pending.Levels, pending.Latitude, pending.Longitude) is int luogoId
+            ? ToArchiveIds(store, pending.Place, pending.Derived, luogoId)
+            : (null, null);
+
+    // Senza scrivere: il luogo che il salvataggio userebbe, se esiste già tutto, e il luogo esistente più vicino della
+    // catena (per aprire lì il selettore).
+    public static (int? LuogoId, int? SpecificoId, int? Nearest) FindExisting(PeopleStore store, PendingPlace pending)
+    {
+        int? parentId = null;
+        foreach (var level in pending.Levels)
         {
-            return (null, null);
+            if (level.Assente || level.Nome.Trim().Length == 0)
+            {
+                continue;
+            }
+
+            if (store.FindPlace(parentId, level.Tipo, level.Nome) is not int id)
+            {
+                return (null, null, parentId);
+            }
+
+            parentId = id;
         }
 
-        return ToArchiveIds(store, place, derived, luogoId);
+        if (parentId is not int luogoId)
+        {
+            return (null, null, null);
+        }
+
+        var place = pending.Place;
+        if (pending.Derived.HistoricName is { Length: > 0 } historicName)
+        {
+            if (store.FindHistoricPlace(historicName, HistoricType(place), luogoId, place.WikidataId) is not int historicId)
+            {
+                return (null, null, luogoId);
+            }
+
+            if (place.HistoricBuildingName.Trim() is { Length: > 0 } buildingName)
+            {
+                return store.FindSpecificPlace(buildingName, historicId, place.WikidataId) is int buildingId ? (null, buildingId, historicId) : (null, null, historicId);
+            }
+
+            return (historicId, null, historicId);
+        }
+
+        if (pending.Derived.SpecificName is { Length: > 0 } specificName)
+        {
+            return store.FindSpecificPlace(specificName, luogoId, place.WikidataId) is int specificId ? (null, specificId, luogoId) : (null, null, luogoId);
+        }
+
+        return (luogoId, null, luogoId);
     }
+
+    private static string HistoricType(HistoricalPlaceRecord place)
+        => place.TypeLabel.Length > 0 ? place.TypeLabel : SpecificPlaceTypes.Describe(place.TypeIds);
 
     // Senza finestre: il luogo si crea solo se la gerarchia è certa, altrimenti resta da scegliere nella scheda.
     public static (int? LuogoId, int? SpecificoId) ResolveIfConfident(PeopleStore store, HistoricalPlaceRecord place)
@@ -51,8 +104,7 @@ internal static class ImportedPlaceResolver
     {
         if (derived.HistoricName is { Length: > 0 } historicName)
         {
-            var tipo = place.TypeLabel.Length > 0 ? place.TypeLabel : SpecificPlaceTypes.Describe(place.TypeIds);
-            var historicId = store.EnsureHistoricPlace(historicName, derived.LatinName, tipo, luogoId, place.WikidataId, place.Latitudine, place.Longitudine,
+            var historicId = store.EnsureHistoricPlace(historicName, derived.LatinName, HistoricType(place), luogoId, place.WikidataId, place.Latitudine, place.Longitudine,
                 formerName: place.HistoricBuildingName);
             store.MergePlaceHistoricNames(historicId, place.HistoricalNames, place.WikidataId);
             // L'edificio che dà il nome alla località (Terme di Cotilia) è un luogo specifico dentro il luogo storico.
