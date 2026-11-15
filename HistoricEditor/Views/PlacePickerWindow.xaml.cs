@@ -7,24 +7,32 @@ public partial class PlacePickerWindow : Window
 {
     private readonly PeopleStore store;
     private readonly bool allowSpecific;
+    private readonly PendingPlace? pending;
     private bool confirmed;
 
     public int? ResultLuogoId { get; private set; }
     public int? ResultSpecificoId { get; private set; }
 
-    public PlacePickerWindow(PeopleStore store, string title, bool allowSpecific, int? luogoId, int? specificoId, bool allowClear, bool startHistoric = false)
+    // Vero se è stato scelto il luogo in attesa (2026-11-15): resta in memoria e si crea al salvataggio.
+    public bool ResultPending { get; private set; }
+
+    // Con un luogo importato non ancora nell'archivio (pending), le parti che mancano compaiono come luoghi nuovi e il
+    // selettore si apre su di esse.
+    public PlacePickerWindow(PeopleStore store, string title, bool allowSpecific, int? luogoId, int? specificoId, bool allowClear, bool startHistoric = false, PendingPlace? pending = null)
     {
         InitializeComponent();
         this.store = store;
         this.allowSpecific = allowSpecific;
+        this.pending = pending;
         Title = title;
         HeaderText.Text = title;
         ClearButton.Visibility = allowClear ? Visibility.Visible : Visibility.Collapsed;
 
         PlacesTree.IncludeSpecific = allowSpecific;
+        PlacesTree.Pending = pending;
         PlacesTree.SelectedNodeChanged += (_, _) => UpdateSelection();
         PlacesTree.NodeActivated += (_, _) => Confirm();
-        PlacesTree.Initialize(store, specificoId ?? luogoId, specificoId is not null, startHistoric);
+        PlacesTree.Initialize(store, specificoId ?? luogoId, specificoId is not null, startHistoric, selectPending: pending is not null);
         Loaded += (_, _) => PlacesTree.FocusSearch();
         PreviewKeyDown += (_, e) =>
         {
@@ -39,7 +47,9 @@ public partial class PlacePickerWindow : Window
     private void UpdateSelection()
     {
         var node = PlacesTree.SelectedNode;
-        SelectionText.Text = node is null ? "Nessun luogo selezionato." : $"Selezionato: {node.Path}";
+        SelectionText.Text = node is null ? "Nessun luogo selezionato."
+            : node.IsPending ? $"Selezionato: {node.Path} (nuovo luogo: sarà creato al salvataggio)"
+            : $"Selezionato: {node.Path}";
         EditButton.IsEnabled = node is not null;
         PickerMessage.Text = string.Empty;
     }
@@ -48,15 +58,34 @@ public partial class PlacePickerWindow : Window
     // il selettore si chiude con «Annulla».
     public bool PlacesEdited { get; private set; }
 
+    // Vero se è stato corretto il luogo in attesa (livelli o luogo specifico), anche se il selettore si chiude con «Annulla».
+    public bool PendingEdited { get; private set; }
+
     private void EditPlace_Click(object sender, RoutedEventArgs e) => EditSelected();
 
     // Modifica del luogo selezionato (2026-11-15): un luogo specifico nella sua finestra, gli altri con i campi della
-    // sezione Luoghi. Dopo il salvataggio l'albero si ricarica con lo stesso luogo selezionato.
+    // sezione Luoghi. Dopo il salvataggio l'albero si ricarica con lo stesso luogo selezionato. Una parte del luogo in
+    // attesa si corregge senza scrivere nell'archivio: i livelli nella finestra della conferma dell'import, il luogo
+    // specifico nella sua finestra.
     private void EditSelected()
     {
         if (PlacesTree.SelectedNode is not { } node)
         {
             PickerMessage.Text = "Selezionare un luogo.";
+            return;
+        }
+
+        if (node.IsPending && pending is not null)
+        {
+            var edited = node.IsSpecific
+                ? PendingPlaceEditing.EditSpecific(store, pending, this)
+                : PendingPlaceEditing.EditLevels(store, pending, this);
+            if (edited)
+            {
+                PendingEdited = true;
+                PlacesTree.Reload(selectPending: true);
+            }
+
             return;
         }
 
@@ -81,8 +110,16 @@ public partial class PlacePickerWindow : Window
 
     private void NewPlace_Click(object sender, RoutedEventArgs e)
     {
-        if (PlaceCreation.Create(store, this, PlacesTree.SelectedNode, allowSpecific) is { } created)
+        // Un luogo nuovo non può stare dentro una parte del luogo in attesa: si parte dal primo luogo esistente sopra di essa.
+        var context = PlacesTree.SelectedNode;
+        while (context is { IsPending: true })
         {
+            context = context.Parent;
+        }
+
+        if (PlaceCreation.Create(store, this, context, allowSpecific) is { } created)
+        {
+            PlacesEdited = true;
             PlacesTree.Reload(created.Id, created.IsSpecific);
         }
     }
@@ -107,6 +144,20 @@ public partial class PlacePickerWindow : Window
         if (PlacesTree.SelectedNode is not { } node)
         {
             PickerMessage.Text = "Selezionare un luogo.";
+            return;
+        }
+
+        if (pending is not null && ReferenceEquals(node, PlacesTree.PendingTarget))
+        {
+            ResultPending = true;
+            confirmed = true;
+            DialogResult = true;
+            return;
+        }
+
+        if (node.IsPending)
+        {
+            PickerMessage.Text = $"«{node.Nome}» sarà creato insieme al luogo nuovo: selezionare il luogo nuovo o un luogo già nell’archivio.";
             return;
         }
 

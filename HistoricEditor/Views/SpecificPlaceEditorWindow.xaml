@@ -23,7 +23,7 @@
 
                 <Label Content="Luogo amministrativo *" Target="{Binding ElementName=ClassicText}" />
                 <DockPanel>
-                    <Button DockPanel.Dock="Right" Content="Cambia…" Click="ChangeClassic_Click" Margin="8,0,0,0" Padding="10,6" AutomationProperties.Name="Cambia luogo amministrativo" />
+                    <Button x:Name="ChangeClassicButton" DockPanel.Dock="Right" Content="Cambia…" Click="ChangeClassic_Click" Margin="8,0,0,0" Padding="10,6" AutomationProperties.Name="Cambia luogo amministrativo" />
                     <TextBox x:Name="ClassicText" IsReadOnly="True" Padding="8,6" AutomationProperties.Name="Luogo amministrativo" />
                 </DockPanel>
                 <TextBlock x:Name="UsageText" Foreground="{DynamicResource QuietBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,10" />

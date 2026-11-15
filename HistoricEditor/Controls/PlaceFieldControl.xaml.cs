@@ -46,9 +46,17 @@ public partial class PlaceFieldControl : UserControl
     // Luogo importato tenuto in memoria fino al salvataggio della scheda (2026-11-15); LuogoId e LuogoSpecificoId restano vuoti.
     public PendingPlace? Pending { get; private set; }
 
+    // Luogo importato che esiste già tutto nell'archivio: il campo lo mostra come gli altri, ma al salvataggio passa ancora
+    // dall'import (coordinate e nomi storici letti da Wikidata). Si scarta se si sceglie un altro luogo.
+    private PendingPlace? existingImport;
+
+    // Vero se al salvataggio c'è un luogo importato da creare o da completare.
+    public bool HasImportedPlace => Pending is not null || existingImport is not null;
+
     public void SetPlace(int? luogoId, int? specificoId)
     {
         Pending = null;
+        existingImport = null;
         LuogoSpecificoId = specificoId;
         LuogoId = specificoId is null ? luogoId : null;
         Refresh();
@@ -69,9 +77,18 @@ public partial class PlaceFieldControl : UserControl
             return;
         }
 
-        if (Pending is not null)
+        if (Pending is { } pending)
         {
-            ShowPending(Pending);
+            // Un luogo in attesa che esiste già tutto (anche dopo una correzione) diventa un luogo come gli altri.
+            var existing = ImportedPlaceResolver.FindExisting(Store, pending);
+            if (existing.LuogoId is not null || existing.SpecificoId is not null)
+            {
+                SetPlace(existing.LuogoId, existing.SpecificoId);
+                existingImport = pending;
+                return;
+            }
+
+            ShowPending(pending);
             return;
         }
 
@@ -100,22 +117,18 @@ public partial class PlaceFieldControl : UserControl
         DisplayText = description.DisplayText;
     }
 
-    // Un luogo in attesa che esiste già tutto si mostra come gli altri; altrimenti con le parti lette dall'import e la nota.
+    // Luogo in attesa: le parti lette dall'import e la nota. Il luogo specifico si aggiunge, si corregge o si toglie come
+    // negli altri luoghi, ma resta in memoria fino al salvataggio.
     private void ShowPending(PendingPlace pending)
     {
-        var existing = ImportedPlaceResolver.FindExisting(Store!, pending);
-        var exists = existing.LuogoId is not null || existing.SpecificoId is not null;
-        var description = exists ? Store!.DescribeRole(existing.LuogoId, existing.SpecificoId) : pending.Description;
-        var parts = exists
-            ? Store!.DescribePlaceParts(existing.SpecificoId is int s ? Store.GetSpecificPlace(s)?.LuogoId : existing.LuogoId).Select(p => (p.Nome, p.Storico)).ToList()
-            : pending.Parts;
-        ShowParts(description.Classic, parts);
-        PendingNote.Visibility = exists ? Visibility.Collapsed : Visibility.Visible;
-        SpecificText.Text = description.Specific;
+        var description = pending.Description;
+        ShowParts(description.Classic, pending.Parts);
+        PendingNote.Visibility = Visibility.Visible;
+        SpecificText.Text = description.Specific.Length > 0 ? description.Specific : "Nessun luogo specifico";
         SpecificText.ToolTip = SpecificText.Text;
-        SpecificRow.Visibility = description.Specific.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
-        SpecificButton.Visibility = Visibility.Collapsed;
-        ClearSpecificButton.Visibility = Visibility.Collapsed;
+        SpecificRow.Visibility = Visibility.Visible;
+        SpecificButton.Visibility = Visibility.Visible;
+        ClearSpecificButton.Visibility = description.Specific.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
         ClearButton.Visibility = Visibility.Visible;
         DisplayText = description.DisplayText;
     }
@@ -204,6 +217,16 @@ public partial class PlaceFieldControl : UserControl
             return;
         }
 
+        if (Pending is not null)
+        {
+            if (PendingPlaceEditing.EditSpecific(Store, Pending, Window.GetWindow(this)))
+            {
+                Refresh();
+            }
+
+            return;
+        }
+
         var editor = new SpecificPlaceEditorWindow(Store, LuogoSpecificoId, LuogoId) { Owner = Window.GetWindow(this) };
         if (editor.ShowDialog() == true && editor.ResultId is int id)
         {
@@ -217,18 +240,25 @@ public partial class PlaceFieldControl : UserControl
     // campo, che si aggiorna con ApplyCreated solo se il salvataggio riesce.
     public (int? LuogoId, int? SpecificoId) CreatePending()
     {
-        if (Store is null || Pending is null)
+        if (Store is null || (Pending ?? existingImport) is not { } imported)
         {
             return (LuogoId, LuogoSpecificoId);
         }
 
-        var (luogoId, specificoId) = ImportedPlaceResolver.Create(Store, Pending);
+        var (luogoId, specificoId) = ImportedPlaceResolver.Create(Store, imported);
         return (specificoId is null ? luogoId : null, specificoId);
     }
 
     // Toglie solo il luogo specifico, mantenendo il luogo che lo contiene.
     private void ClearSpecific_Click(object sender, RoutedEventArgs e)
     {
+        if (Pending is not null)
+        {
+            Pending.SetSpecific(null);
+            Refresh();
+            return;
+        }
+
         int? parentId = LuogoSpecificoId is int id ? Store?.GetSpecificPlace(id)?.LuogoId : LuogoId;
         SetPlace(parentId, null);
     }
@@ -240,22 +270,25 @@ public partial class PlaceFieldControl : UserControl
             return;
         }
 
-        // Un luogo in attesa apre il selettore sul luogo esistente più vicino (l'Italia per la Regio V Picenum da creare).
-        var (selectedId, selectedSpecificId) = (LuogoId, LuogoSpecificoId);
-        if (Pending is not null)
+        // Un luogo in attesa compare nel selettore come luogo nuovo, al suo posto nell'albero (2026-11-15), e lì si
+        // corregge; un luogo storico (Falacrine) si mostra tra i luoghi storici, che il selettore apre per primi.
+        var historic = LuogoSpecificoId is null && LuogoId is int luogoId && Store.GetPlace(luogoId)?.Storico == true;
+        var dialog = new PlacePickerWindow(Store, Title, allowSpecific: true, LuogoId, LuogoSpecificoId, allowClear: true, startHistoric: historic, pending: Pending)
         {
-            var existing = ImportedPlaceResolver.FindExisting(Store, Pending);
-            (selectedId, selectedSpecificId) = existing.SpecificoId is not null || existing.LuogoId is not null ? (existing.LuogoId, existing.SpecificoId) : (existing.Nearest, null);
-        }
-
-        // Un luogo storico (Falacrine) si mostra tra i luoghi storici, che il selettore apre per primi.
-        var historic = selectedSpecificId is null && selectedId is int luogoId && Store.GetPlace(luogoId)?.Storico == true;
-        var dialog = new PlacePickerWindow(Store, Title, allowSpecific: true, selectedId, selectedSpecificId, allowClear: true, startHistoric: historic) { Owner = Window.GetWindow(this) };
+            Owner = Window.GetWindow(this),
+        };
         if (dialog.ShowDialog() == true)
         {
-            SetPlace(dialog.ResultLuogoId, dialog.ResultSpecificoId);
+            if (dialog.ResultPending)
+            {
+                Refresh();
+            }
+            else
+            {
+                SetPlace(dialog.ResultLuogoId, dialog.ResultSpecificoId);
+            }
         }
-        else if (dialog.PlacesEdited)
+        else if (dialog.PlacesEdited || dialog.PendingEdited)
         {
             Refresh();
         }

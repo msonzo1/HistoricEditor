@@ -16,6 +16,7 @@ public partial class PlaceTreeControl : UserControl
     private PeopleStore? store;
     private IReadOnlyList<Luogo> places = [];
     private IReadOnlyList<LuogoSpecifico> specifics = [];
+    private IReadOnlyList<PendingStep> pendingSteps = [];
     private bool suppressFilter;
 
     public PlaceTreeControl()
@@ -32,18 +33,25 @@ public partial class PlaceTreeControl : UserControl
 
     public PlaceNode? SelectedNode => Tree.SelectedItem as PlaceNode;
 
+    // Luogo importato non ancora nell'archivio (2026-11-15): le parti che mancano compaiono come luoghi nuovi, al loro
+    // posto nell'albero, così il luogo si vede e si corregge prima del salvataggio.
+    public PendingPlace? Pending { get; set; }
+
+    // Il nodo del luogo in attesa (l'ultima parte della sua catena), dopo l'ultima ricostruzione dell'albero.
+    public PlaceNode? PendingTarget { get; private set; }
+
     public event EventHandler? SelectedNodeChanged;
 
     public event EventHandler? NodeActivated;
 
-    public void Initialize(PeopleStore store, int? selectId = null, bool selectSpecific = false, bool showHistoric = false)
+    public void Initialize(PeopleStore store, int? selectId = null, bool selectSpecific = false, bool showHistoric = false, bool selectPending = false)
     {
         this.store = store;
         SetMode(showHistoric);
-        Reload(selectId, selectSpecific);
+        Reload(selectId, selectSpecific, selectPending);
     }
 
-    public void Reload(int? selectId = null, bool selectSpecific = false)
+    public void Reload(int? selectId = null, bool selectSpecific = false, bool selectPending = false)
     {
         if (store is null)
         {
@@ -52,6 +60,21 @@ public partial class PlaceTreeControl : UserControl
 
         places = store.GetAllPlaces();
         specifics = IncludeSpecific ? store.GetSpecificPlaces() : [];
+        pendingSteps = Pending is null ? [] : ImportedPlaceResolver.Steps(store, Pending).Where(s => IncludeSpecific || s.Kind != PendingStepKind.Specific).ToList();
+
+        // Il luogo in attesa da selezionare: si apre la vista che lo contiene, poi la selezione passa dal nodo.
+        if (selectPending && pendingSteps.Count > 0)
+        {
+            var last = pendingSteps[^1];
+            SetMode(last.Kind switch
+            {
+                PendingStepKind.Historic => true,
+                PendingStepKind.Specific => last.ExistingId is int s ? specifics.FirstOrDefault(x => x.Id == s) is { } x && PlaceNode.IsHistoricSpecific(x) : last.Distrutto,
+                _ => false,
+            });
+            Rebuild(null, false, selectPending: true);
+            return;
+        }
 
         // Passa alla vista (attuali/storici) che contiene il luogo da selezionare.
         if (selectId is int id)
@@ -80,17 +103,24 @@ public partial class PlaceTreeControl : UserControl
         suppressFilter = false;
     }
 
-    private void Rebuild(int? selectId, bool selectSpecific)
+    private void Rebuild(int? selectId, bool selectSpecific, bool selectPending = false)
     {
         if (store is null)
         {
             return;
         }
 
-        if (selectId is null && SelectedNode is { } current)
+        if (selectId is null && !selectPending && SelectedNode is { } current)
         {
-            selectId = current.Id;
-            selectSpecific = current.IsSpecific;
+            if (current.IsPending)
+            {
+                selectPending = true;
+            }
+            else
+            {
+                selectId = current.Id;
+                selectSpecific = current.IsSpecific;
+            }
         }
 
         var query = SearchBox.Text.Trim();
@@ -120,10 +150,36 @@ public partial class PlaceTreeControl : UserControl
             }
         }
 
+        // Le parti del luogo in attesa che non sono ancora nell'archivio, appese all'ultima che c'è già.
+        var pendingNodes = new List<PlaceNode>();
+        PlaceNode? chain = null;
+        PendingTarget = null;
+        foreach (var step in pendingSteps)
+        {
+            PlaceNode? node;
+            if (step.ExistingId is int existingId)
+            {
+                node = step.Kind == PendingStepKind.Specific ? specificNodes.GetValueOrDefault(existingId) : classic.GetValueOrDefault(existingId);
+                if (node is null)
+                {
+                    break;
+                }
+            }
+            else
+            {
+                node = PlaceNode.ForPending(-1 - pendingNodes.Count, step);
+                node.Parent = chain;
+                pendingNodes.Add(node);
+            }
+
+            chain = node;
+            PendingTarget = node;
+        }
+
         // Ogni risultato porta con sé i suoi contenitori, così resta visibile il contesto.
         var included = new HashSet<PlaceNode>();
         var matches = 0;
-        foreach (var node in classic.Values.Concat(specificNodes.Values).Where(Matches))
+        foreach (var node in classic.Values.Concat(specificNodes.Values).Concat(pendingNodes).Where(Matches))
         {
             matches++;
             included.Add(node);
@@ -156,7 +212,17 @@ public partial class PlaceTreeControl : UserControl
             : $"{matches} {(matches == 1 ? "luogo" : "luoghi")}";
 
         var lookup = selectSpecific ? specificNodes : classic;
-        if (selectId is int id && lookup.TryGetValue(id, out var target) && included.Contains(target))
+        PlaceNode? target = null;
+        if (selectPending)
+        {
+            target = PendingTarget;
+        }
+        else if (selectId is int id)
+        {
+            lookup.TryGetValue(id, out target);
+        }
+
+        if (target is not null && included.Contains(target))
         {
             for (var ancestor = target.Parent; ancestor is not null; ancestor = ancestor.Parent)
             {
@@ -210,25 +276,38 @@ public sealed class PlaceNode : INotifyPropertyChanged
     private bool isExpanded;
     private bool isSelected;
 
-    private PlaceNode(int id, string nome, string tipo, bool isHistoric, Luogo? source)
+    private PlaceNode(int id, string nome, string tipo, bool isHistoric, Luogo? source, bool isSpecific, bool isPending = false)
     {
         Id = id;
         Nome = nome;
         Tipo = tipo;
         IsHistoric = isHistoric;
         Source = source;
+        IsSpecific = isSpecific;
+        IsPending = isPending;
     }
 
-    public static PlaceNode Classic(Luogo luogo) => new(luogo.Id, luogo.Nome, luogo.Tipo, luogo.Storico, luogo);
+    public static PlaceNode Classic(Luogo luogo) => new(luogo.Id, luogo.Nome, luogo.Tipo, luogo.Storico, luogo, false);
 
     public static PlaceNode Specific(LuogoSpecifico specifico)
-        => new(specifico.Id, specifico.Nome, specifico.Tipo.Length > 0 ? specifico.Tipo : "luogo specifico", IsHistoricSpecific(specifico), null);
+        => new(specifico.Id, specifico.Nome, specifico.Tipo.Length > 0 ? specifico.Tipo : "luogo specifico", IsHistoricSpecific(specifico), null, true);
+
+    // Parte di un luogo importato non ancora nell'archivio: id negativo, mai uguale a quello di un luogo salvato.
+    internal static PlaceNode ForPending(int id, PendingStep step)
+    {
+        var tipo = step.Tipo.Length > 0 ? step.Tipo : step.Kind == PendingStepKind.Specific ? "luogo specifico" : "luogo storico";
+        return new(id, step.Nome, $"{tipo} · nuovo, sarà creato al salvataggio", step.Kind == PendingStepKind.Historic || step.Distrutto, null,
+            step.Kind == PendingStepKind.Specific, isPending: true);
+    }
 
     public static bool IsHistoricSpecific(LuogoSpecifico specifico) => specifico.Condizione == CondizioniLuogo.Distrutto;
 
     // Valorizzato solo per i luoghi amministrativi o storici.
     public Luogo? Source { get; }
-    public bool IsSpecific => Source is null;
+    public bool IsSpecific { get; }
+
+    // Parte di un luogo importato che si creerà al salvataggio della scheda, dell'evento o dell'opera.
+    public bool IsPending { get; }
     public bool IsHistoric { get; }
     public int Id { get; }
     public string Nome { get; }

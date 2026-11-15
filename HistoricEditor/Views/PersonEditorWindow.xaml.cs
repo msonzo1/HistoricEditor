@@ -76,7 +76,7 @@ public partial class PersonEditorWindow : Window
         static string Place(PlaceFieldControl field)
         {
             var context = field.GetHistoricalContext();
-            return $"{field.LuogoId}|{field.LuogoSpecificoId}|{field.Pending?.Description.DisplayText}|{context?.NameAtTime}|{context?.PoliticalEntity}|{context?.AdministrativeUnit}|{context?.Period}";
+            return $"{field.LuogoId}|{field.LuogoSpecificoId}|{field.Pending?.ChangeKey}|{context?.NameAtTime}|{context?.PoliticalEntity}|{context?.AdministrativeUnit}|{context?.Period}";
         }
 
         // Se è mostrata un'altra lingua, il confronto usa i valori modificabili della scheda.
@@ -331,7 +331,7 @@ public partial class PersonEditorWindow : Window
             {
                 for (var i = 0; i < placeFields.Length; i++)
                 {
-                    created[i] = placeFields[i].Pending is null ? null : placeFields[i].CreatePending();
+                    created[i] = placeFields[i].HasImportedPlace ? placeFields[i].CreatePending() : null;
                 }
 
                 SetCreatedPlaces(person, created);

@@ -96,6 +96,7 @@
 - [ ] Periodo, capostipite e luogo d'origine della dinastia.
 
 ## Import da Wikipedia / Wikidata
+- [ ] Reimportare Nerone e verificare insieme le cose che non andavano nell'import precedente (segnalato il 2026-11-15).
 - [x] Leggere anche le Wikipedia tedesca/inglese/francese/spagnola/olandese: date discordanti tra lingue/fonti segnalate nella scheda (avviso + dettagli) e salvate.
 - [x] Nomi dei luoghi multilingua (it/en/de/fr/es/nl) per ogni livello, salvati sul luogo e consultabili dalla scheda.
 - [~] Importare padre (P22), madre (P25), coniugi (P26) e figli (P40): oggi vengono collegati solo se già in archivio (match per WikidataId). Manca la creazione automatica delle schede mancanti.
@@ -112,6 +113,7 @@
 - [x] Migliorare la barra di avanzamento dell'import: riga sotto la barra con richiesta in corso (e da quanto si attende), coda di Wikidata, attesa per 429/503 con conto alla rovescia e numero del tentativo, tempo trascorso. Attiva nell'editor dei personaggi (import e «Aggiorna da Wikipedia»), negli eventi, nelle opere e nella finestra dei parenti mancanti.
 - [x] Musei (Met, AIC, Cleveland, Europeana) e scaricamento delle immagini: stesso stato delle richieste e stessi nuovi tentativi su 429/503 di Wikipedia (`HttpRetry` condiviso).
 - [x] Luoghi importati tenuti in memoria e creati solo al salvataggio della scheda, dell'evento o dell'opera, nella stessa transazione: annullando l'import non resta nulla (2026-11-15).
+- [x] Luogo in attesa visibile e modificabile nel selettore dei luoghi, come luogo nuovo al suo posto nell'albero; luogo specifico modificabile anche prima del salvataggio (2026-11-15).
 - [ ] Provare l'app: importare un personaggio con un luogo nuovo, annullare l'import (e poi chiudere senza salvare) e verificare nella sezione Luoghi che il luogo non c'è; poi reimportare e salvare. Stessa prova con un evento e un'opera.
 
 ## Luoghi

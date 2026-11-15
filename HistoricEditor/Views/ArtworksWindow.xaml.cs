@@ -54,6 +54,10 @@ public partial class ArtworksWindow : Window
 
     // Luogo importato tenuto in memoria fino al salvataggio (2026-11-15): annullando non resta nulla nell'archivio.
     private PendingPlace? pendingPlace;
+
+    // Luogo importato che esiste già tutto: si mostra come gli altri, ma al salvataggio passa ancora dall'import
+    // (coordinate e nomi storici letti da Wikidata). Si scarta se si sceglie un altro luogo.
+    private PendingPlace? existingImport;
     private string image = string.Empty;
     private string wikidataId = string.Empty;
 
@@ -180,6 +184,7 @@ public partial class ArtworksWindow : Window
     private void SetPlace(int? luogoId, int? specificoId)
     {
         pendingPlace = null;
+        existingImport = null;
         placeId = luogoId;
         specificPlaceId = specificoId;
         PlaceBox.Text = luogoId is null && specificoId is null ? string.Empty : store.DescribeRole(luogoId, specificoId).DisplayText;
@@ -190,34 +195,45 @@ public partial class ArtworksWindow : Window
     private void SetPendingPlace(PendingPlace pending)
     {
         var existing = ImportedPlaceResolver.FindExisting(store, pending);
-        var exists = existing.LuogoId is not null || existing.SpecificoId is not null;
+        if (existing.LuogoId is not null || existing.SpecificoId is not null)
+        {
+            SetPlace(existing.LuogoId, existing.SpecificoId);
+            existingImport = pending;
+            return;
+        }
+
         SetPlace(null, null);
         pendingPlace = pending;
-        PlaceBox.Text = exists
-            ? store.DescribeRole(existing.LuogoId, existing.SpecificoId).DisplayText
-            : $"{pending.Description.DisplayText} (nuovo luogo: sarà creato al salvataggio dell’opera)";
+        PlaceBox.Text = $"{pending.Description.DisplayText} (nuovo luogo: sarà creato al salvataggio dell’opera)";
         ClearPlaceButton.IsEnabled = true;
     }
 
     private void ChoosePlace_Click(object sender, RoutedEventArgs e)
     {
-        // Un luogo in attesa apre il selettore sul luogo esistente più vicino.
-        var (selectedId, selectedSpecificId) = (placeId, specificPlaceId);
-        if (pendingPlace is not null)
-        {
-            var existing = ImportedPlaceResolver.FindExisting(store, pendingPlace);
-            (selectedId, selectedSpecificId) = existing.SpecificoId is not null || existing.LuogoId is not null ? (existing.LuogoId, existing.SpecificoId) : (existing.Nearest, null);
-        }
-
-        var picker = new PlacePickerWindow(store, "Collocazione dell’opera", allowSpecific: true, selectedId, selectedSpecificId, allowClear: true) { Owner = this };
+        // Un luogo in attesa compare nel selettore come luogo nuovo, al suo posto nell'albero, e lì si corregge (2026-11-15).
+        var picker = new PlacePickerWindow(store, "Collocazione dell’opera", allowSpecific: true, placeId, specificPlaceId, allowClear: true, pending: pendingPlace) { Owner = this };
         if (picker.ShowDialog() == true)
         {
-            SetPlace(picker.ResultLuogoId, picker.ResultSpecificoId);
+            if (picker.ResultPending && pendingPlace is not null)
+            {
+                SetPendingPlace(pendingPlace);
+            }
+            else
+            {
+                SetPlace(picker.ResultLuogoId, picker.ResultSpecificoId);
+            }
+
             PlaceBox.Focus();
         }
-        else if (picker.PlacesEdited && pendingPlace is null)
+        else if (pendingPlace is not null && (picker.PendingEdited || picker.PlacesEdited))
         {
+            SetPendingPlace(pendingPlace);
+        }
+        else if (picker.PlacesEdited)
+        {
+            var imported = existingImport;
             SetPlace(placeId, specificPlaceId);
+            existingImport = imported;
         }
     }
 
@@ -413,9 +429,9 @@ public partial class ArtworksWindow : Window
             (int? LuogoId, int? SpecificoId)? created = null;
             store.SaveTogether(() =>
             {
-                if (pendingPlace is not null)
+                if ((pendingPlace ?? existingImport) is { } imported)
                 {
-                    var ids = ImportedPlaceResolver.Create(store, pendingPlace);
+                    var ids = ImportedPlaceResolver.Create(store, imported);
                     created = ids;
                     (data.LuogoId, data.LuogoSpecificoId) = (ids.SpecificoId is null ? ids.LuogoId : null, ids.SpecificoId);
                 }
