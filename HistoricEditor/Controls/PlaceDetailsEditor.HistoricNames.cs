@@ -24,7 +24,7 @@ public sealed class HistoricNameRow
     };
 }
 
-public partial class PlacesView
+public partial class PlaceDetailsEditor
 {
     private readonly ObservableCollection<HistoricNameRow> historicNames = [];
     private readonly WikipediaImportService wikipediaService = new();
@@ -51,13 +51,13 @@ public partial class PlacesView
         {
             if (!HistoricalPlaceNames.TryParseYear(row.Dal, out var dal) || !HistoricalPlaceNames.TryParseYear(row.Al, out var al))
             {
-                Feedback.Error(ManagerMessage, $"Anno non valido per «{row.Nome.Trim()}»: scrivi ad esempio 330, 667 a.C. o -667.");
+                Feedback.Error(Message, $"Anno non valido per «{row.Nome.Trim()}»: indicare ad esempio 330, 667 a.C. o -667.");
                 return null;
             }
 
             if (dal is int from && al is int to && from > to)
             {
-                Feedback.Error(ManagerMessage, $"Per «{row.Nome.Trim()}» l’anno iniziale viene dopo quello finale.");
+                Feedback.Error(Message, $"Per «{row.Nome.Trim()}» l’anno iniziale viene dopo quello finale.");
                 return null;
             }
 
@@ -89,7 +89,7 @@ public partial class PlacesView
 
     private async void WikidataNames_Click(object sender, RoutedEventArgs e)
     {
-        if (store is null || PlacesTree.SelectedNode is not { Source: not null } selected || store.GetPlace(selected.Id) is not { } luogo)
+        if (store is null || node is not { Source: not null } selected || store.GetPlace(selected.Id) is not { } luogo)
         {
             return;
         }
@@ -97,29 +97,29 @@ public partial class PlacesView
         wikidataCancellation?.Cancel();
         var cancellation = wikidataCancellation = new CancellationTokenSource();
         WikidataNamesButton.IsEnabled = false;
-        Feedback.Info(ManagerMessage, $"Ricerca su Wikidata dei nomi storici di «{luogo.Nome}»…");
+        Feedback.Info(Message, $"Ricerca su Wikidata dei nomi storici di «{luogo.Nome}»…");
         try
         {
             var found = await wikipediaService.ReadPlaceHistoricalNamesAsync(luogo.WikidataId, luogo.Nome, cancellation.Token);
-            if (cancellation.IsCancellationRequested || PlacesTree.SelectedNode?.Id != selected.Id)
+            if (cancellation.IsCancellationRequested || node?.Id != selected.Id)
             {
                 return;
             }
 
             if (found is null)
             {
-                Feedback.Error(ManagerMessage, $"Nessun luogo «{luogo.Nome}» trovato su Wikidata.");
+                Feedback.Error(Message, $"Nessun luogo «{luogo.Nome}» trovato su Wikidata.");
                 return;
             }
 
             if (found.Names.Count == 0)
             {
-                Feedback.Info(ManagerMessage, $"Wikidata non indica altri nomi per «{found.Label}».");
+                Feedback.Info(Message, $"Wikidata non indica altri nomi per «{found.Label}».");
                 return;
             }
 
             // Se il luogo non era già collegato, si chiede conferma che la voce trovata sia quella giusta.
-            if (luogo.WikidataId.Length == 0 && Owner is { } owner)
+            if (luogo.WikidataId.Length == 0 && Window.GetWindow(this) is { } owner)
             {
                 var description = found.Description.Length > 0 ? $" ({found.Description})" : string.Empty;
                 var list = string.Join("\n", found.Names.Select(n => $"• {n.Nome} {HistoricalPlaceNames.FormatPeriod(n)}"));
@@ -127,7 +127,7 @@ public partial class PlacesView
                     "Nomi storici da Wikidata", MessageBoxButton.YesNo, MessageBoxImage.Question);
                 if (answer != MessageBoxResult.Yes)
                 {
-                    Feedback.Info(ManagerMessage, "Nessun nome aggiunto.");
+                    Feedback.Info(Message, "Nessun nome aggiunto.");
                     return;
                 }
             }
@@ -142,15 +142,15 @@ public partial class PlacesView
             }
 
             LoadHistoricNames(merged);
-            PlacesChanged?.Invoke(this, EventArgs.Empty);
-            Feedback.Success(ManagerMessage, $"Nomi storici aggiornati da Wikidata ({found.Names.Count} trovati).");
+            Changed?.Invoke(this, EventArgs.Empty);
+            Feedback.Success(Message, $"Nomi storici aggiornati da Wikidata ({found.Names.Count} trovati).");
         }
         catch (OperationCanceledException)
         {
         }
         catch (Exception ex) when (ex is HttpRequestException or JsonException or InvalidOperationException or Microsoft.EntityFrameworkCore.DbUpdateException)
         {
-            Feedback.Error(ManagerMessage, "Impossibile leggere i nomi storici da Wikidata. Controlla la connessione.");
+            Feedback.Error(Message, "Impossibile leggere i nomi storici da Wikidata. Controllare la connessione.");
         }
         finally
         {
@@ -163,17 +163,17 @@ public partial class PlacesView
 
     private void Attachments_Click(object sender, RoutedEventArgs e)
     {
-        if (store is null || PlacesTree.SelectedNode is not { Source: not null } selected)
+        if (store is null || node is not { Source: not null } selected)
         {
             return;
         }
 
-        var window = new AttachmentsWindow(store, AmbitiAllegato.Luogo, selected.Id, selected.Nome) { Owner = Owner };
+        var window = new AttachmentsWindow(store, AmbitiAllegato.Luogo, selected.Id, selected.Nome) { Owner = Window.GetWindow(this) };
         window.ShowDialog();
         if (window.Changed)
         {
             AttachmentsView.Load(store, AmbitiAllegato.Luogo, selected.Id);
-            PlacesChanged?.Invoke(this, EventArgs.Empty);
+            Changed?.Invoke(this, EventArgs.Empty);
         }
     }
 }

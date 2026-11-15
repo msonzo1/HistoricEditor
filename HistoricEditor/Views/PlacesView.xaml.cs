@@ -17,6 +17,14 @@ public partial class PlacesView : UserControl
     {
         InitializeComponent();
         PlacesTree.SelectedNodeChanged += (_, _) => ShowSelected();
+        Details.MessageBlock = ManagerMessage;
+        Details.Saved += (_, id) =>
+        {
+            PlacesTree.Reload(id);
+            PlacesChanged?.Invoke(this, EventArgs.Empty);
+            Feedback.Success(ManagerMessage, "Modifiche salvate.");
+        };
+        Details.Changed += (_, _) => PlacesChanged?.Invoke(this, EventArgs.Empty);
         PlacesTree.NodeActivated += (_, _) =>
         {
             if (PlacesTree.SelectedNode is { IsSpecific: true })
@@ -47,105 +55,12 @@ public partial class PlacesView : UserControl
     private void ShowSelected()
     {
         var selected = PlacesTree.SelectedNode;
-        Feedback.Info(ManagerMessage, string.Empty);
         DeleteButton.IsEnabled = selected is not null;
         EditSpecificButton.IsEnabled = selected?.IsSpecific == true;
-
-        if (selected?.Source is not { } luogo)
-        {
-            EditPanel.IsEnabled = false;
-            PathText.Text = selected is null ? string.Empty : $"{selected.Path}\nLuogo specifico: usa «Modifica luogo specifico…» o fai doppio clic.";
-            return;
-        }
-
-        EditPanel.IsEnabled = true;
-        PathText.Text = selected.Path;
-        TipoText.Text = selected.Tipo;
-        NomeBox.Text = selected.Nome;
-        LatBox.Text = CoordinateText.Format(luogo.Latitudine);
-        LonBox.Text = CoordinateText.Format(luogo.Longitudine);
-        StoricoBox.IsChecked = luogo.Storico;
-        PeriodoBox.Text = luogo.Periodo;
-        var current = store?.GetPlace(luogo.Id) ?? luogo;
-        NoteEditor.Text = current.Note;
-        LoadHistoricNames(current.NomiStorici);
-        LatinBox.Text = HistoricPlaceLatin.Get(current);
-        LatinExpander.IsExpanded = false;
         if (store is not null)
         {
-            AttachmentsView.Load(store, AmbitiAllegato.Luogo, luogo.Id);
+            Details.Load(store, selected);
         }
-
-        // Il flag ha senso solo per luoghi attuali con un altro livello prima della foglia.
-        var (schema, index) = SchemaPosition(selected);
-        if (!luogo.Storico && index >= 0 && index + 2 < schema.Length)
-        {
-            SenzaLivelloBox.Content = $"{selected.Tipo} senza {schema[index + 1]}";
-            SenzaLivelloBox.IsChecked = luogo.SenzaLivelloInferiore;
-            SenzaLivelloBox.Visibility = Visibility.Visible;
-        }
-        else
-        {
-            SenzaLivelloBox.IsChecked = false;
-            SenzaLivelloBox.Visibility = Visibility.Collapsed;
-        }
-    }
-
-    // Intestazione della tendina chiusa: «Nome in latino: Vicus Phalacrinae».
-    private void LatinBox_Changed(object sender, TextChangedEventArgs e)
-        => LatinExpanderHeader.Text = LatinBox.Text.Trim().Length > 0 ? $"Nome in latino: {LatinBox.Text.Trim()}" : "Nome in latino";
-
-    private void StoricoBox_Changed(object sender, RoutedEventArgs e)
-        => PeriodoPanel.Visibility = StoricoBox.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
-
-    private void Save_Click(object sender, RoutedEventArgs e)
-    {
-        if (store is null || PlacesTree.SelectedNode is not { Source: not null } selected)
-        {
-            return;
-        }
-
-        var nome = NomeBox.Text.Trim();
-        if (nome.Length == 0)
-        {
-            Feedback.Error(ManagerMessage, "Il nome non può essere vuoto.");
-            return;
-        }
-
-        if (!CoordinateText.TryParse(LatBox.Text, out var lat))
-        {
-            Feedback.Error(ManagerMessage, "Latitudine non valida.");
-            return;
-        }
-
-        if (!CoordinateText.TryParse(LonBox.Text, out var lon))
-        {
-            Feedback.Error(ManagerMessage, "Longitudine non valida.");
-            return;
-        }
-
-        var storico = StoricoBox.IsChecked == true;
-        var senzaLivello = SenzaLivelloBox.Visibility == Visibility.Visible && SenzaLivelloBox.IsChecked == true;
-        if (ReadHistoricNames() is not { } names)
-        {
-            return;
-        }
-
-        try
-        {
-            store.UpdatePlace(selected.Id, nome, lat, lon, storico, storico ? PeriodoBox.Text : string.Empty, NoteEditor.Text, senzaLivello);
-            store.SetPlaceHistoricNames(selected.Id, names);
-            store.SetPlaceLatinName(selected.Id, storico ? LatinBox.Text : string.Empty);
-        }
-        catch (DbUpdateException)
-        {
-            Feedback.Error(ManagerMessage, "Esiste già un luogo con questo nome allo stesso livello.");
-            return;
-        }
-
-        PlacesTree.Reload(selected.Id);
-        PlacesChanged?.Invoke(this, EventArgs.Empty);
-        Feedback.Success(ManagerMessage, "Modifiche salvate.");
     }
 
     private void NewPlace_Click(object sender, RoutedEventArgs e)
@@ -213,17 +128,5 @@ public partial class PlacesView : UserControl
         PlacesTree.Reload();
         PlacesChanged?.Invoke(this, EventArgs.Empty);
         Feedback.Success(ManagerMessage, "Luogo eliminato.");
-    }
-
-    private static (string[] Schema, int Index) SchemaPosition(PlaceNode node)
-    {
-        var root = node;
-        while (root.Parent is not null)
-        {
-            root = root.Parent;
-        }
-
-        var schema = GeoSchemas.For(root.Nome);
-        return (schema, Array.FindIndex(schema, t => string.Equals(t, node.Tipo, StringComparison.OrdinalIgnoreCase)));
     }
 }

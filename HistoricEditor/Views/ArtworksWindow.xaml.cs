@@ -190,6 +190,10 @@ public partial class ArtworksWindow : Window
             SetPlace(picker.ResultLuogoId, picker.ResultSpecificoId);
             PlaceBox.Focus();
         }
+        else if (picker.PlacesEdited)
+        {
+            SetPlace(placeId, specificPlaceId);
+        }
     }
 
     private void ClearPlace_Click(object sender, RoutedEventArgs e)

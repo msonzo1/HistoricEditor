@@ -71,6 +71,10 @@ public partial class SpecificPlaceEditorWindow : Window
             classicId = picker.ResultLuogoId;
             UpdateClassic();
         }
+        else if (picker.PlacesEdited)
+        {
+            UpdateClassic();
+        }
     }
 
     private void Save_Click(object sender, RoutedEventArgs e)

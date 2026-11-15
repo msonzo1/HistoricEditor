@@ -188,5 +188,9 @@ public partial class PlaceFieldControl : UserControl
         {
             SetPlace(dialog.ResultLuogoId, dialog.ResultSpecificoId);
         }
+        else if (dialog.PlacesEdited)
+        {
+            Refresh();
+        }
     }
 }

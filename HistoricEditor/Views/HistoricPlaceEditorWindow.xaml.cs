@@ -38,6 +38,10 @@ public partial class HistoricPlaceEditorWindow : Window
             parentId = picker.ResultLuogoId;
             UpdateParent();
         }
+        else if (picker.PlacesEdited)
+        {
+            UpdateParent();
+        }
     }
 
     private void Save_Click(object sender, RoutedEventArgs e)

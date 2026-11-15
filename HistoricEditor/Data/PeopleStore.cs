@@ -904,6 +904,55 @@ public sealed partial class PeopleStore : IDisposable
         SaveOrRevert();
     }
 
+    // Personaggi con nascita, morte o sepoltura nel luogo, in un luogo che contiene o in un suo luogo specifico: il testo
+    // del loro luogo cambia se il luogo viene modificato.
+    public int CountPeopleUsingPlace(int id)
+    {
+        var places = PlaceWithDescendants(id);
+        var specifics = context.LuoghiSpecifici.AsNoTracking().Where(s => places.Contains(s.LuogoId)).Select(s => s.Id).ToList();
+        return context.People.Count(p =>
+            (p.BirthLuogoId != null && places.Contains(p.BirthLuogoId.Value)) || (p.BirthLuogoSpecificoId != null && specifics.Contains(p.BirthLuogoSpecificoId.Value))
+            || (p.DeathLuogoId != null && places.Contains(p.DeathLuogoId.Value)) || (p.DeathLuogoSpecificoId != null && specifics.Contains(p.DeathLuogoSpecificoId.Value))
+            || (p.BurialLuogoId != null && places.Contains(p.BurialLuogoId.Value)) || (p.BurialLuogoSpecificoId != null && specifics.Contains(p.BurialLuogoSpecificoId.Value)));
+    }
+
+    // Sposta un luogo storico in un altro contenitore (null: primo livello). Falso se il contenitore è il luogo stesso o un
+    // luogo che contiene.
+    public bool MovePlace(int id, int? parentId)
+    {
+        if (parentId is int target && PlaceWithDescendants(id).Contains(target))
+        {
+            return false;
+        }
+
+        var luogo = context.Luoghi.Find(id);
+        if (luogo is null || luogo.ParentId == parentId)
+        {
+            return luogo is not null;
+        }
+
+        luogo.ParentId = parentId;
+        SyncPlaceTexts();
+        SaveOrRevert();
+        return true;
+    }
+
+    private List<int> PlaceWithDescendants(int id)
+    {
+        var parents = context.Luoghi.AsNoTracking().Select(l => new { l.Id, l.ParentId }).ToList();
+        var result = new HashSet<int> { id };
+        for (var added = true; added;)
+        {
+            added = false;
+            foreach (var place in parents.Where(p => p.ParentId is int parent && result.Contains(parent)))
+            {
+                added |= result.Add(place.Id);
+            }
+        }
+
+        return [.. result];
+    }
+
     public void DeletePlace(int id)
     {
         var luogo = context.Luoghi.Find(id);
