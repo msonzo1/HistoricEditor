@@ -885,7 +885,8 @@ public sealed partial class PeopleStore : IDisposable
         return new PlaceDescription(DescribePlace(luogoId), string.Empty);
     }
 
-    public void UpdatePlace(int id, string nome, double? latitudine, double? longitudine, bool storico, string periodo, string note, bool senzaLivelloInferiore)
+    // tipo null: il tipo resta com'è (luoghi attuali, dove dipende dal livello).
+    public void UpdatePlace(int id, string nome, double? latitudine, double? longitudine, bool storico, string periodo, string note, bool senzaLivelloInferiore, string? tipo = null)
     {
         var luogo = context.Luoghi.Find(id);
         if (luogo is null)
@@ -900,6 +901,11 @@ public sealed partial class PeopleStore : IDisposable
         luogo.Periodo = periodo.Trim();
         luogo.Note = note.Trim();
         luogo.SenzaLivelloInferiore = senzaLivelloInferiore;
+        if (tipo is not null)
+        {
+            luogo.Tipo = tipo.Trim();
+        }
+
         SyncPlaceTexts();
         SaveOrRevert();
     }

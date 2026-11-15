@@ -39,14 +39,10 @@ public sealed partial class WikipediaImportService
         "Q125866553", // sito archeologico egizio (Pelusio)
     };
 
-    // Regioni e province che non esistono più (2026-11-14, da Pompeo): luoghi storici con il tipo indicato, dentro lo Stato
-    // di oggi indicato da Wikidata (Regio V Picenum → Italia).
-    private static readonly Dictionary<string, string> HistoricRegionTypes = new(StringComparer.Ordinal)
-    {
-        ["Q15066925"] = "Regione dell'Italia augustea",
-        ["Q182547"] = "Provincia romana",
-        ["Q1620908"] = "Regione storica",
-    };
+    // Regioni e province che non esistono più (2026-11-14, da Pompeo): luoghi storici dentro lo Stato di oggi indicato da
+    // Wikidata (Regio V Picenum → Italia), con il nome italiano del tipo su Wikidata («Regioni dell'Italia augustea»,
+    // 2026-11-15): il tipo si corregge poi nella sezione Luoghi. Regione dell'Italia augustea, provincia romana, regione storica.
+    internal static readonly HashSet<string> HistoricRegionTypes = new(StringComparer.Ordinal) { "Q15066925", "Q182547", "Q1620908" };
 
     // Tipi che bastano da soli a dire che il luogo non esiste più come luogo abitato.
     private static readonly HashSet<string> AncientTypes = new(StringComparer.Ordinal) { "Q839954", "Q15661340", "Q350895", "Q74047", "Q125866553" };
@@ -139,7 +135,7 @@ public sealed partial class WikipediaImportService
     {
         var claims = entity.GetPropertyOrDefault("claims");
         var types = ReadEntityIds(claims, "P31").ToHashSet(StringComparer.Ordinal);
-        if (types.Any(HistoricRegionTypes.ContainsKey) && !(GeoSchemas.LevelTypes(country) is { } regionLevels && regionLevels.Values.Any(set => set.Overlaps(types))))
+        if (types.Overlaps(HistoricRegionTypes) && !(GeoSchemas.LevelTypes(country) is { } regionLevels && regionLevels.Values.Any(set => set.Overlaps(types))))
         {
             // Regione o provincia antica (Regio V Picenum): non esiste più come unità. Una regione di oggi che Wikidata
             // indica anche come «regione storica» resta un'unità amministrativa.
@@ -157,9 +153,9 @@ public sealed partial class WikipediaImportService
             || claims.TryGetProperty("P576", out _);
     }
 
-    // Tipo di una regione o provincia antica («Regione dell'Italia augustea»), vuoto per gli altri luoghi.
-    internal static string HistoricRegionType(JsonElement entity)
-        => ReadEntityIds(entity.GetPropertyOrDefault("claims"), "P31").Select(t => HistoricRegionTypes.GetValueOrDefault(t, string.Empty)).FirstOrDefault(t => t.Length > 0) ?? string.Empty;
+    // Regione o provincia antica (Regio V Picenum).
+    internal static bool IsHistoricRegion(JsonElement entity)
+        => ReadEntityIds(entity.GetPropertyOrDefault("claims"), "P31").Any(HistoricRegionTypes.Contains);
 
     internal static bool IsRomanPlace(JsonElement entity)
         => ReadEntityIds(entity.GetPropertyOrDefault("claims"), "P17").Any(RomanStates.Contains);
@@ -256,10 +252,10 @@ public sealed partial class WikipediaImportService
                 var infoboxText = i == 0 && italianLead is not null ? role switch { 0 => italianLead.InfoboxBirthPlace, 1 => italianLead.InfoboxDeathPlace, _ => string.Empty } : string.Empty;
                 var chosen = ChooseHistoricNames(labels, aliases, MainPart(introText), MainPart(infoboxText), roman, place.CurrentName);
                 (place.HistoricName, place.LatinName) = (chosen.Italian, chosen.Latin);
-                if (HistoricRegionType(entity) is { Length: > 0 } regionType)
+                if (IsHistoricRegion(entity))
                 {
-                    // Una regione non ha resti né un comune: solo il suo tipo.
-                    place.TypeLabel = regionType;
+                    // Una regione non ha resti né un comune: solo il suo tipo, con il nome italiano di Wikidata.
+                    place.TypeLabel = SpecificPlaceTypes.Describe(place.TypeIds.Where(HistoricRegionTypes.Contains), typeLabels);
                     continue;
                 }
 

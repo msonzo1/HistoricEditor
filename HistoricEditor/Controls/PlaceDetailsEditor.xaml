@@ -8,8 +8,10 @@
         <TextBlock x:Name="PathText" Foreground="{DynamicResource InkSoftBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,12" />
         <TextBlock x:Name="UsageText" Foreground="{DynamicResource QuietBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,-6,0,12" Visibility="Collapsed" />
 
-        <Label Content="Tipo" />
+        <!-- Il tipo di un luogo attuale dipende dal livello nel Paese; quello di un luogo storico si sceglie (2026-11-15). -->
+        <Label Content="Tipo" Target="{Binding ElementName=TipoBox}" />
         <TextBlock x:Name="TipoText" Margin="0,0,0,10" Foreground="{DynamicResource InkBrush}" />
+        <ComboBox x:Name="TipoBox" IsEditable="True" IsTextSearchEnabled="True" Margin="0,0,0,10" Visibility="Collapsed" AutomationProperties.Name="Tipo del luogo storico" />
 
         <Label Content="Nome" Target="{Binding ElementName=NomeBox}" />
         <TextBox x:Name="NomeBox" Margin="0,0,0,10" />

@@ -33,6 +33,10 @@ public class PlaceEditingTests
             Assert.Equal(marche, store.GetPlace(picenum)!.ParentId);
             Assert.Equal(1, store.CountPeopleUsingPlace(marche));
             Assert.Contains("Marche", store.GetPerson(person.Id)!.BirthPlace);
+
+            // Il tipo di un luogo attuale resta quello del livello.
+            store.UpdatePlace(marche, "Marche", null, null, false, string.Empty, string.Empty, false);
+            Assert.Equal("Regione", store.GetPlace(marche)!.Tipo);
         }
         finally
         {
@@ -68,6 +72,8 @@ public class PlaceEditingTests
 
                 var editor = new PlaceEditorWindow(store, node);
                 Assert.Equal("Regio V Picenum", editor.Details.NomeBox.Text);
+                Assert.Equal(Visibility.Visible, editor.Details.TipoBox.Visibility);
+                Assert.Equal("Regione dell'Italia augustea", editor.Details.TipoBox.Text);
                 Assert.Equal(Visibility.Visible, editor.Details.ParentPanel.Visibility);
                 Assert.Equal(Visibility.Visible, editor.Details.UsageText.Visibility);
                 Assert.Contains("1 personaggio", editor.Details.UsageText.Text);
@@ -81,12 +87,13 @@ public class PlaceEditingTests
                 editor.Details.NomeBox.Text = "Picenum";
                 editor.Details.PeriodoBox.Text = "7 a.C. – 297";
                 editor.Details.LatinBox.Text = "Picenum";
+                editor.Details.TipoBox.Text = "Regio augustea";
                 Assert.True(editor.Details.Save());
                 editor.Close();
                 picker.Close();
 
                 var luogo = store.GetPlace(picenum)!;
-                Assert.Equal(("Picenum", "7 a.C. – 297", true), (luogo.Nome, luogo.Periodo, luogo.Storico));
+                Assert.Equal(("Picenum", "Regio augustea", "7 a.C. – 297", true), (luogo.Nome, luogo.Tipo, luogo.Periodo, luogo.Storico));
                 Assert.Equal("Picenum", HistoricPlaceLatin.Get(luogo));
                 Assert.StartsWith("Picenum", store.GetPerson(person.Id)!.BirthPlace);
             });

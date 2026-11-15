@@ -1214,7 +1214,7 @@ public sealed partial class WikipediaImportService
     private static async Task<Dictionary<string, string>> AssignPlaceTypesAsync(List<HistoricalPlaceRecord> places, CancellationToken cancellationToken)
     {
         var unknownTypes = places
-            .Where(p => SpecificPlaceTypes.Describe(p.TypeIds).Length == 0)
+            .Where(p => SpecificPlaceTypes.Describe(p.TypeIds).Length == 0 || p.TypeIds.Any(HistoricRegionTypes.Contains))
             .SelectMany(p => p.TypeIds)
             .Distinct(StringComparer.Ordinal)
             .ToList();

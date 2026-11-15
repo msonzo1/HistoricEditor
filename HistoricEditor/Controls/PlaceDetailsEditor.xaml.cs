@@ -55,6 +55,10 @@ public partial class PlaceDetailsEditor : UserControl
         EditPanel.IsEnabled = true;
         PathText.Text = selected.Path;
         TipoText.Text = selected.Tipo;
+        TipoText.Visibility = luogo.Storico ? Visibility.Collapsed : Visibility.Visible;
+        TipoBox.Visibility = luogo.Storico ? Visibility.Visible : Visibility.Collapsed;
+        TipoBox.ItemsSource = luogo.Storico ? store.GetHistoricPlaceTypes() : null;
+        TipoBox.Text = luogo.Tipo;
         NomeBox.Text = selected.Nome;
         LatBox.Text = CoordinateText.Format(luogo.Latitudine);
         LonBox.Text = CoordinateText.Format(luogo.Longitudine);
@@ -142,7 +146,9 @@ public partial class PlaceDetailsEditor : UserControl
                 return false;
             }
 
-            store.UpdatePlace(selected.Id, nome, lat, lon, storico, storico ? PeriodoBox.Text : string.Empty, NoteEditor.Text, senzaLivello);
+            // Il tipo cambia solo per un luogo che era già storico: quello di un luogo attuale segue il livello.
+            var tipo = TipoBox.Visibility == Visibility.Visible ? TipoBox.Text.Trim() : null;
+            store.UpdatePlace(selected.Id, nome, lat, lon, storico, storico ? PeriodoBox.Text : string.Empty, NoteEditor.Text, senzaLivello, tipo);
             store.SetPlaceHistoricNames(selected.Id, names);
             store.SetPlaceLatinName(selected.Id, storico ? LatinBox.Text : string.Empty);
         }

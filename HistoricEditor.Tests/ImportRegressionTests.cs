@@ -355,9 +355,9 @@ public class ImportRegressionTests
         Assert.Equal(["Gnaeus Pompeius", "Gnaeus Pompeius Magnus"], r.NomiNelTempo.Select(n => n.LatinName));
         Assert.Equal("Gnaeus Pompeius Magnus", r.NomiNelTempo.Single(n => n.Principale).LatinName);
 
-        // Nascita nella Regio V Picenum, regione dell'Italia augustea: luogo storico sotto lo Stato di oggi, da confermare.
+        // Nascita nella Regio V Picenum, regione dell'Italia augustea («Regioni dell'Italia augustea», il nome del tipo su Wikidata): luogo storico sotto lo Stato di oggi, da confermare.
         var picenum = Assert.Single(r.BirthPlaces);
-        Assert.Equal(("Q510990", "Regio V Picenum", "Regione dell'Italia augustea"), (picenum.WikidataId, picenum.HistoricName, picenum.TypeLabel));
+        Assert.Equal(("Q510990", "Regio V Picenum", "Regioni dell'Italia augustea"), (picenum.WikidataId, picenum.HistoricName, picenum.TypeLabel));
         Assert.Equal(string.Empty, picenum.HistoricBuildingName);
         var picenumLevels = ImportSnapshot.DerivePlace(picenum);
         Assert.Equal(["Stato Italia"], picenumLevels.Levels.Select(l => $"{l.Tipo} {l.Nome}"));

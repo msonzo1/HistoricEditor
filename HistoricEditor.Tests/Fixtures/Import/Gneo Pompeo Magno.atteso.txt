@@ -42,7 +42,7 @@ Q1507713: gens Pompeia (gens) [la: gens Pompeia] ←  [la: ]
 Date discordanti: 
 
 ## Luoghi
-nascita: Q510990 Regio V Picenum | Italia | tipo Regione dell'Italia augustea | , 
+nascita: Q510990 Regio V Picenum | Italia | tipo Regioni dell'Italia augustea | , 
     divisione: Unità amministrativa (P131) Italia Q38
     divisione: Paese (P17) Italia Q38
     divisione: Paese (P17) Italia Q38
