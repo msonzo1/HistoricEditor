@@ -69,6 +69,8 @@
 - [x] Barra del titolo scura ridisegnata subito all'apertura della scheda.
 - [x] Test di non regressione di Traiano; test su introduzioni, date scartate, luogo storico sotto la regione, raggruppamento gens/dinastia.
 - [x] Test di non regressione di Gneo Pompeo Magno: nota dell'infobox esclusa dai nomi, Regio V Picenum luogo storico sotto l'Italia, Pelusio luogo storico nel governatorato di Porto Said (2026-11-14).
+- [x] Finestra di conferma del luogo: un luogo storico si salva anche sotto il solo Stato (Regio V Picenum → Italia), con il test della finestra (2026-11-15).
+- [ ] Provare l'app: import di Pompeo, Regio V Picenum salvata sotto l'Italia con regione, provincia e comune vuoti.
 - [ ] Nome latino epigrafico da Wikidata (P1559, «Cn. Pompeius Cn.f.Sex.n. Clu. Magnus») da scomporre in righe (filiazione, nepos, tribù); motivo e periodo del nome con Magnus (da Silla, 81 a.C.).
 - [x] Tema scuro: barra del titolo della scheda personaggio bianca all'apertura su Windows 10 (il ridisegno della cornice non bastava): la finestra si allarga di un pixel e torna com'era; verificato con una foto dello schermo (2026-11-13).
 - [ ] Provare l'app: import di Cesare, Vespasiano, Tito e Traiano (date discordanti nella riga Fonti e nel LED, icona del luogo storico, campi Gens e Dinastia, una sola riga per persona nell'elenco).

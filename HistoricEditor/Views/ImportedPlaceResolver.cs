@@ -19,11 +19,11 @@ internal static class ImportedPlaceResolver
         {
             var notice = derived.HistoricName is { Length: > 0 } historic
                 ? place.HistoricBuildingName.Trim() is { Length: > 0 } building
-                    ? $"{role}: «{historic}» non esiste più e sarà salvato come luogo storico, con «{building}» (ancora visibile) come luogo specifico al suo interno. Verifica il luogo che lo contiene."
-                    : $"{role}: «{historic}» non esiste più e sarà salvato come luogo storico. Verifica il luogo attuale che lo contiene (comune, o provincia o regione se il comune non si conosce)."
+                    ? $"{role}: «{historic}» non esiste più e sarà salvato come luogo storico, con «{building}» (ancora visibile) come luogo specifico al suo interno. Verificare il luogo che lo contiene."
+                    : $"{role}: «{historic}» non esiste più e sarà salvato come luogo storico. Verificare il luogo attuale che lo contiene: il comune, oppure la provincia, la regione o soltanto lo Stato se non è noto un luogo più preciso (i livelli più bassi si possono lasciare vuoti)."
                 : derived.SpecificName is null
-                    ? $"{role}: la gerarchia di «{place.CurrentName}» è incompleta o incerta. Verificala prima di salvare."
-                    : $"{role}: «{place.CurrentName}» non è un’unità amministrativa e sarà salvato come luogo specifico. Verifica il luogo che lo contiene.";
+                    ? $"{role}: la gerarchia di «{place.CurrentName}» è incompleta o incerta. Verificarla prima di salvare."
+                    : $"{role}: «{place.CurrentName}» non è un’unità amministrativa e sarà salvato come luogo specifico. Verificare il luogo che lo contiene.";
             var editor = new PlacesEditorWindow(derived.Levels, notice: notice, store: store, allowPartial: derived.HistoricName is { Length: > 0 }) { Owner = owner };
             classicId = editor.ShowDialog() == true
                 ? store.EnsurePlace(editor.ResultLevels, editor.ResultLatitude, editor.ResultLongitude)

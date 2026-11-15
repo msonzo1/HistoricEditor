@@ -206,10 +206,11 @@ public partial class PlacesEditorWindow : Window
             else
             {
                 var nome = row.Box.Text.Trim();
-                if (nome.Length == 0 && allowPartial && levels.Count > 1
+                if (nome.Length == 0 && allowPartial
                     && rows.Skip(index).All(r => r.Box.Text.Trim().Length == 0 && r.Absent?.IsChecked != true))
                 {
-                    // Luogo storico sotto una provincia o una regione: i livelli vuoti in fondo si tralasciano.
+                    // Luogo storico sotto una provincia, una regione o direttamente sotto lo Stato (Regio V Picenum →
+                    // Italia, 2026-11-15): i livelli vuoti in fondo si tralasciano.
                     while (levels.Count > 1 && levels[^1].Assente)
                     {
                         levels.RemoveAt(levels.Count - 1);
