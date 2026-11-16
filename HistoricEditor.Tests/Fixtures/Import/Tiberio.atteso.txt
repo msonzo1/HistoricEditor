@@ -1,0 +1,135 @@
+
+## Scheda
+Pagina: Tiberio (https://it.wikipedia.org/wiki/Tiberio)
+Wikidata: Q1407
+WikiTree: 
+Nome visualizzato: Tiberio
+Nome / Cognome / Suffisso / Soprannome: Tiberio /  /  / 
+Sesso: M
+Titolo principale: Imperatore romano
+Famiglia: Dinastia Giulio-Claudia
+Gens: Gens Claudia › Claudii Nerones
+Gens d'adozione: Gens Giulia › Iulii Caesares
+Gens (forme): Q385338 nome Claudia | nomen Claudius | plurale Claudii | it  | plurale it  || ramo Q102259474 plurale Nerones | it  | cognomen 
+Gens d'adozione (forme): Q510193 nome Iulia | nomen Iulius | plurale Iulii | it Giulia | plurale it  || ramo Q3268376 plurale Caesares | it  | cognomen 
+Nascita: 16/11/42 a.C. [calendario: giuliano]
+Morte: 16/03/0037 [calendario: giuliano]
+Edizioni non lette: 
+
+## Nome romano
+Latino (praenomen / nomen / cognomen / agnomen): Tiberius / Iūlius / Nero Caesar / 
+Nome latino: Tiberius Claudius Nero
+Italiano (prenome / gentilizio / cognome / agnome): Tiberio / Giulio / Cesare Augusto / 
+Nome nel tempo: Tiberio Claudio Nerone | Tiberius Claudius Nero | filiazione  | dal 42 a.C. | Nome alla nascita | Praenomen:Tiberius Nomen:Claudius Cognomen:Nero
+Nome nel tempo: Tiberio Giulio Cesare | Tiberius Iulius Caesar | filiazione  | dal  | Adozione | Praenomen:Tiberius Nomen:Iulius Cognomen:Caesar
+Nome nel tempo ★: Tiberio Giulio Cesare Augusto | Tiberius Iulius Caesar Augustus | filiazione  | dal 14 | Assunzione del potere | Praenomen:Tiberius Nomen:Iulius Cognomen:Caesar Augustus:Augustus
+
+## Nomi nelle lingue
+it: Tiberio | suffisso  | soprannome  | titolo imperatore romano | parti  /  /  / 
+en: Tiberius | suffisso  | soprannome  | titolo Roman emperor | parti Tiberius / Julius / Caesar Augustus / 
+de: Tiberius | suffisso  | soprannome  | titolo römischer Kaiser | parti Tiberius / Iulius / Caesar Augustus / 
+fr: Tibère | suffisso  | soprannome  | titolo empereur romain | parti Tiberius / Julius / Nero Caesar / 
+es: Tiberio | suffisso  | soprannome  | titolo emperador romano | parti Tiberius / Iulius / Nero Caesar / 
+nl: Tiberius Claudius Nero | suffisso  | soprannome  | titolo Romeinse keizer | parti Tiberius / Julius / Caesar Augustus / 
+
+## Dinastie
+Q192841: Dinastia Giulio-Claudia [la: Domus Iulio-Claudia] ←  [la: ]
+
+## Date di nascita
+16/11/42 a.C.: giorno | preferred | giuliano | -0042-11-16T00:00:00Z | qualificatori  | fonti Riferimento Wikidata, Riferimento Wikidata, Q45256519, Q746368, Wikipedia in italiano, Wikipedia in inglese, Wikipedia in tedesco, Wikipedia in francese, Wikipedia in spagnolo, Wikipedia in olandese
+
+## Date di morte
+16/03/0037: giorno | normal | giuliano | +0037-03-16T00:00:00Z | qualificatori  | fonti Q45256519, Q746368, Wikipedia in italiano, Wikipedia in inglese, Wikipedia in tedesco, Wikipedia in francese, Wikipedia in olandese
+
+## Date scartate (una sola fonte)
+17/11/42 a.C.: giorno | normal | giuliano | -0042-11-17T00:00:00Z | qualificatori  | fonti Q45256519
+Date discordanti: Nascita: 16/11/42 a.C. (10 fonti); scartata perché indicata da una sola fonte: 17/11/42 a.C. (Fonte Wikidata Q45256519).
+
+## Luoghi
+nascita: Q220 Roma | Italia | tipo Città di confine | 41.893055555556, 12.482777777778
+    divisione: Unità amministrativa (P131) città metropolitana di Roma Capitale Q18288160
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Lazio Q1282
+    divisione: Paese (P17) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    nome storico: Colonia Lucia Annia Commodiana (la, 191 – 193)
+    in archivio: Stato Italia > Regione Lazio > Provincia Città metropolitana di Roma Capitale > Comune Roma [automatico]
+morte: Q401231 Miseno | Italia | tipo Frazione | 40.786389, 14.086389
+    divisione: Unità amministrativa (P131) Bacoli Q71832
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) città metropolitana di Napoli Q18241891
+    divisione: Paese (P17) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Campania Q1438
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    in archivio: Stato Italia > Regione Campania > Provincia Città metropolitana di Napoli > Comune Bacoli > luogo specifico Miseno [automatico]
+sepoltura: Q770847 Mausoleo di Augusto | Italia | tipo Sito archeologico | 41.90611, 12.47639
+    divisione: Unità amministrativa (P131) Campo Marzio Q1031426
+    divisione: Unità amministrativa (P131) Municipio Roma I Q550592
+    divisione: Unità amministrativa (P131) Lazio Q1282
+    divisione: Unità amministrativa (P131) Roma Q220
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Roma Capitale Q3940419
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Roma Capitale Q3940419
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) città metropolitana di Roma Capitale Q18288160
+    divisione: Paese (P17) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) città metropolitana di Roma Capitale Q18288160
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Lazio Q1282
+    divisione: Paese (P17) Italia Q38
+    in archivio: Stato Italia > Regione Lazio > Provincia Città metropolitana di Roma Capitale > Comune Roma > luogo specifico Mausoleo di Augusto [automatico]
+
+## Titoli
+Imperatore romano: n. 2 | 18/09/0014 () – 16/03/0037 () | Q842606 | prima Augusto Q1405 | dopo Caligola Q1409
+    fonte: Wikidata · carica ricoperta (P39): 18/09/0014 – 16/03/0037
+    fonte: Wikipedia it · infobox: 17/09/0014 – 16/03/0037
+    fonte: Wikipedia en · infobox: 17/09/0014 – 16/03/0037
+    fonte: Wikipedia es · infobox: 17/09/0014 – 16/03/0037
+Senatore romano: n.  |  () – 0037 () | Q20056508 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39):  – 0037
+Console: n.  | 13 a.C. () – 13 a.C. () | Q40779 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39): 13 a.C. – 13 a.C.
+Console: n.  | 7 a.C. () – 7 a.C. () | Q40779 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39) n. 2: 7 a.C. – 7 a.C.
+Console: n.  | 0018 () – 0018 () | Q40779 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39) n. 3: 0018 – 0018
+Console: n.  | 0021 () – 0021 () | Q40779 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39) n. 4: 0021 – 0021
+Console: n.  | 0031 () – 0031 () | Q40779 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39) n. 5: 0031 – 0031
+Augusto: n.  |  () –  () | Q211804 | prima   | dopo  
+    fonte: Wikidata · titolo nobiliare (P97):  – 
+
+## Introduzioni di Wikipedia
+it: Tiberio | nato 16/11/-42 a Roma [Q220] | morto 16/3/37 a Miseno [Q401231]
+en: Tiberius | nato 16/11/-42 a Rome, Roman Republic [Q220] | morto 16/3/37 a Misenum, Roman Empire [Q401231]
+de: Tiberius | nato 16/11/-42 a Rom [Q220] | morto 16/3/37 a  []
+fr: Tibère | nato 16/11/-42 a Misène le [Q401231] | morto 16/3/37 a Misène (Italie) [Q401231]
+es: Tiberio | nato 16/11/-42 a Roma [Q220] | morto // a Miseno, Italia, Imperio romano [Q401231]
+nl: Tiberius | nato 16/11/-42 a Rome [Q220] | morto 16/3/37 a Miseno [Q401231]
+wikidata: Q1407 | nato 16/11/-42 a Roma [Q220] | morto 16/3/37 a Miseno [Q401231]
+Concordanza: Orange: 1 edizione di Wikipedia ha date o luoghi diversi dalla maggioranza.
+    italiano: 16 novembre 42 a.C., Roma – 16 marzo 37, Miseno | Concorda con la maggioranza.
+    inglese: 16 novembre 42 a.C., Rome, Roman Republic – 16 marzo 37, Misenum, Roman Empire | Concorda con la maggioranza.
+    tedesco: 16 novembre 42 a.C., Rom – 16 marzo 37, luogo non indicato | Concorda con la maggioranza.
+    francese: 16 novembre 42 a.C., Misène le – 16 marzo 37, Misène (Italie) | Diverso: luogo di nascita.
+    spagnolo: 16 novembre 42 a.C., Roma – —, Miseno, Italia, Imperio romano | Concorda con la maggioranza.
+    olandese: 16 novembre 42 a.C., Rome – 16 marzo 37, Miseno | Concorda con la maggioranza.
+    Wikidata: 16 novembre 42 a.C., Roma – 16 marzo 37, Miseno | Concorda con la maggioranza.
+
+## Parenti e relazioni
+Padre: Q342512, Q2165262, Q1405
+Madre: Q469701
+Coniugi: Q232090, Q2259
+Figli: Q313737, Q118275074, Q4222774, Q191039
+Relazioni: 
+Eventi: Q188468

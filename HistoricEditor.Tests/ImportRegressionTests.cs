@@ -345,6 +345,25 @@ public class ImportRegressionTests
     }
 
     [Fact]
+    public async Task Tiberio()
+    {
+        const string page = "Tiberio";
+        var r = await ImportFixtures.ImportAsync(page);
+
+        Assert.Equal("Q1407", r.WikidataId);
+
+        // Nato nella Gens Claudia, ramo dei Claudii Nerones. Su Wikidata ha due gens d'adozione: la Gallia (adozione
+        // testamentaria del senatore Marco Gallio, nome mai usato) e la Iulia (adozione di Augusto nel 4 d.C.). Vale quella
+        // del ramo Iulii Caesares, la Iulia; prima il ramo finiva sotto la Gallia (2026-11-16).
+        Assert.Equal("Gens Claudia › Claudii Nerones", r.Gens);
+        Assert.Equal("Gens Giulia › Iulii Caesares", r.GensAdozione);
+        Assert.Equal(("Q510193", "Iulia", "Iulii", "Q3268376"), (r.GensAdottiva!.WikidataId, r.GensAdottiva.Nome, r.GensAdottiva.Plurale, r.GensAdottiva.Ramo?.WikidataId));
+        Assert.Equal("Dinastia Giulio-Claudia", r.Family);
+
+        ImportFixtures.AssertMatchesSnapshot(page, r);
+    }
+
+    [Fact]
     public async Task GneoPompeoMagno()
     {
         const string page = "Gneo Pompeo Magno";

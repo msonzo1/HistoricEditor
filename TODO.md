@@ -99,7 +99,8 @@
 - [x] Tipi Imperator, Caesar e Augustus nelle parti del nome; «Caesar» cognomen fino a Nerone, titolo da Galba; Nero praenomen e Germanicus agnomen (2026-11-15).
 - [x] Dinastie e gens con la maiuscola iniziale, anche in latino (2026-11-15).
 - [x] Gentes e rami separati dalle dinastie (migrazione `GentesRami`): forme latine e italiane salvate, etichette ricavate, finestra «Gentes…», scelta dalla scheda, gens importata creata solo al salvataggio, conversione dei vecchi backup (2026-11-16).
-- [ ] Provare l'app: finestra «Gentes…» (nuova gens, nuovo ramo, elimina), «Dinastia e gens…» con «Scegli…»/«Nessuna», import di Augusto (gens in attesa correggibile prima del salvataggio).
+- [x] Tiberio: con due gens d'adozione su Wikidata (Gallia e Iulia) vale quella del ramo (Iulii Caesares → Gens Iulia), e un ramo non si attacca a una gens diversa dalla sua; test di non regressione di Tiberio (2026-11-16).
+- [ ] Archivio: togliere dalle Dinastie le vecchie gens e i loro rami rimasti da prima della separazione, e dare la maiuscola alle dinastie già salvate («dinastia Giulio-Claudia») (2026-11-16).
 - [ ] Reimportare Nerone e verificare insieme le cose che non andavano nell'import precedente (segnalato il 2026-11-15).
 - [x] Leggere anche le Wikipedia tedesca/inglese/francese/spagnola/olandese: date discordanti tra lingue/fonti segnalate nella scheda (avviso + dettagli) e salvate.
 - [x] Nomi dei luoghi multilingua (it/en/de/fr/es/nl) per ogni livello, salvati sul luogo e consultabili dalla scheda.
@@ -119,6 +120,9 @@
 - [x] Luoghi importati tenuti in memoria e creati solo al salvataggio della scheda, dell'evento o dell'opera, nella stessa transazione: annullando l'import non resta nulla (2026-11-15).
 - [x] Luogo in attesa visibile e modificabile nel selettore dei luoghi, come luogo nuovo al suo posto nell'albero; luogo specifico modificabile anche prima del salvataggio (2026-11-15).
 - [ ] Provare l'app: importare un personaggio con un luogo nuovo, annullare l'import (e poi chiudere senza salvare) e verificare nella sezione Luoghi che il luogo non c'è; poi reimportare e salvare. Stessa prova con un evento e un'opera.
+
+## Interfaccia comune
+- [ ] Pulsanti piccoli a icona accanto ai campi al posto di «Scegli…» e «Nessuna»/«Rimuovi», con il suggerimento, uguali in tutta l'app come quello del calendario (2026-11-16).
 
 ## Luoghi
 - [ ] Cambiare il luogo contenitore di un luogo storico dopo la creazione.

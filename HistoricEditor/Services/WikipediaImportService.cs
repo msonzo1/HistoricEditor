@@ -623,10 +623,22 @@ public sealed partial class WikipediaImportService
                 branch);
         }
 
+        // Con più gens nello stesso campo vale quella del ramo: Tiberio ha due gens d'adozione su Wikidata, la Gallia
+        // (adozione testamentaria del senatore Marco Gallio, nome mai usato) e la Iulia (adozione di Augusto), e il ramo
+        // Iulii Caesares indica la Iulia (2026-11-16). Un ramo di un'altra gens non si attacca alla gens scelta.
         ImportedGens? SlotGens(IEnumerable<string> slotGensIds, IEnumerable<string> slotBranchIds)
         {
-            var branchId = slotBranchIds.FirstOrDefault();
-            var gensId = slotGensIds.FirstOrDefault() ?? (branchId is null ? null : familyParents.GetValueOrDefault(branchId));
+            var gensList = slotGensIds.ToList();
+            var branches = slotBranchIds.ToList();
+            var branchId = branches.FirstOrDefault(b => familyParents.GetValueOrDefault(b) is { } parent && gensList.Contains(parent))
+                ?? branches.FirstOrDefault();
+            var branchGens = branchId is null ? null : familyParents.GetValueOrDefault(branchId);
+            var gensId = (branchGens is not null && gensList.Contains(branchGens) ? branchGens : null) ?? gensList.FirstOrDefault() ?? branchGens;
+            if (branchId is not null && branchGens is not null && branchGens != gensId)
+            {
+                branchId = null;
+            }
+
             return gensId is null ? null : GensFor(gensId, branchId);
         }
 
