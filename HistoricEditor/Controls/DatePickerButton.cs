@@ -55,9 +55,10 @@ public sealed class DatePickerButton : Button
 
     public DatePickerButton()
     {
+        // Stesso aspetto degli altri pulsanti a icona accanto ai campi (2026-11-16): lo stile implicito dei Button non vale
+        // per le sottoclassi, e prima il pulsante restava chiaro anche nel tema scuro.
+        SetResourceReference(StyleProperty, "IconButton");
         Content = new TextBlock { Text = "\uE787", FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 14 };
-        Padding = new Thickness(7, 4, 7, 4);
-        Margin = new Thickness(6, 0, 0, 0);
         ToolTip = "Scegli la data: una data, più date, un intervallo, prima o dopo; giorno, mese, anno o secolo";
         AutomationProperties.SetName(this, "Scegli la data dal calendario");
         Focusable = true;

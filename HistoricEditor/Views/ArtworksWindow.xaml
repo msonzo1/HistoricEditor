@@ -172,8 +172,8 @@
                 <StackPanel Grid.Row="4" Grid.ColumnSpan="3" Margin="0,0,0,10">
                     <Label Content="Collocazione _attuale" Target="{Binding ElementName=PlaceBox}" />
                     <DockPanel>
-                        <Button x:Name="ClearPlaceButton" DockPanel.Dock="Right" Content="Rimuovi" Click="ClearPlace_Click" Padding="12,6" Margin="6,0,0,0" IsEnabled="False" AutomationProperties.Name="Rimuovi la collocazione" />
-                        <Button DockPanel.Dock="Right" Content="Scegli luo_go…" Click="ChoosePlace_Click" Padding="12,6" Margin="6,0,0,0" AutomationProperties.Name="Scegli la collocazione attuale dell’opera" />
+                        <Button x:Name="ClearPlaceButton" DockPanel.Dock="Right" Style="{StaticResource IconButton}" Content="&#xE711;" Click="ClearPlace_Click" IsEnabled="False" ToolTip="Rimuovi la collocazione" AutomationProperties.Name="Rimuovi la collocazione" />
+                        <Button DockPanel.Dock="Right" Style="{StaticResource IconButton}" Content="&#xE70F;" Click="ChoosePlace_Click" ToolTip="Scegli la collocazione attuale dell’opera" AutomationProperties.Name="Scegli la collocazione attuale dell’opera" />
                         <TextBox x:Name="PlaceBox" IsReadOnly="True" Padding="8,6" AutomationProperties.Name="Collocazione attuale" ToolTip="Museo, chiesa, palazzo… (luogo specifico) o città" />
                     </DockPanel>
                 </StackPanel>

@@ -10,20 +10,12 @@
 				<Setter Property="BorderBrush" Value="{DynamicResource AppBorder}" />
 				<Setter Property="Background" Value="{DynamicResource AppSurfaceAlt}" />
 		  </Style>
-		  <Style x:Key="PlaceIconButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
-				<Setter Property="Width" Value="34" />
-				<Setter Property="Height" Value="34" />
-				<Setter Property="Margin" Value="6,0,0,0" />
-				<Setter Property="Padding" Value="0" />
-				<Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
-				<Setter Property="FontSize" Value="13" />
-		  </Style>
 	 </UserControl.Resources>
 	 <StackPanel>
         <Label x:Name="TitleLabel" Target="{Binding ElementName=EditButton}" />
 		  <DockPanel>
-				<Button x:Name="ClearButton" DockPanel.Dock="Right" Style="{StaticResource PlaceIconButton}" Content="&#xE738;" Click="Clear_Click" ToolTip="Rimuovi il luogo da questo personaggio" />
-				<Button x:Name="EditButton" DockPanel.Dock="Right" Style="{StaticResource PlaceIconButton}" Content="&#xE70F;" Click="Edit_Click" ToolTip="Modifica il luogo" />
+				<Button x:Name="ClearButton" DockPanel.Dock="Right" Style="{StaticResource IconButton}" Content="&#xE711;" Click="Clear_Click" ToolTip="Rimuovi il luogo da questo personaggio" />
+				<Button x:Name="EditButton" DockPanel.Dock="Right" Style="{StaticResource IconButton}" Content="&#xE70F;" Click="Edit_Click" ToolTip="Modifica il luogo" />
 				<Border Style="{StaticResource PlaceValueBox}">
 					 <DockPanel>
 						  <!-- Luogo storico (non esiste più): icona della storia e nome in corsivo, come nell'albero dei luoghi. -->
@@ -38,8 +30,8 @@
 		  <TextBlock x:Name="PendingNote" Visibility="Collapsed" Margin="0,4,0,0" FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource QuietBrush}"
 					 Text="Nuovo luogo: sarà creato al salvataggio della scheda." />
 		  <DockPanel x:Name="SpecificRow" Visibility="Collapsed" Margin="0,6,0,0">
-				<Button x:Name="ClearSpecificButton" DockPanel.Dock="Right" Style="{StaticResource PlaceIconButton}" Content="&#xE738;" Click="ClearSpecific_Click" ToolTip="Rimuovi il luogo specifico" />
-				<Button x:Name="SpecificButton" DockPanel.Dock="Right" Style="{StaticResource PlaceIconButton}" Content="&#xE70F;" Click="Specific_Click" ToolTip="Aggiungi o modifica il luogo specifico" />
+				<Button x:Name="ClearSpecificButton" DockPanel.Dock="Right" Style="{StaticResource IconButton}" Content="&#xE711;" Click="ClearSpecific_Click" ToolTip="Rimuovi il luogo specifico" />
+				<Button x:Name="SpecificButton" DockPanel.Dock="Right" Style="{StaticResource IconButton}" Content="&#xE70F;" Click="Specific_Click" ToolTip="Aggiungi o modifica il luogo specifico" />
 				<Border Style="{StaticResource PlaceValueBox}">
 					 <TextBlock x:Name="SpecificText" Foreground="{DynamicResource InkBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
 				</Border>

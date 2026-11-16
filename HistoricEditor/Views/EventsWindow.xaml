@@ -143,8 +143,8 @@
                 <StackPanel Grid.Row="3" Grid.ColumnSpan="3" Margin="0,0,0,10">
                     <Label Content="L_uogo" Target="{Binding ElementName=PlaceBox}" />
                     <DockPanel>
-                        <Button x:Name="ClearPlaceButton" DockPanel.Dock="Right" Content="Rimuo_vi luogo" Click="ClearPlace_Click" Padding="12,6" Margin="6,0,0,0" IsEnabled="False" AutomationProperties.Name="Rimuovi il luogo dell’evento" />
-                        <Button DockPanel.Dock="Right" Content="Scegli luo_go…" Click="ChoosePlace_Click" Padding="12,6" Margin="6,0,0,0" AutomationProperties.Name="Scegli il luogo dell’evento" />
+                        <Button x:Name="ClearPlaceButton" DockPanel.Dock="Right" Style="{StaticResource IconButton}" Content="&#xE711;" Click="ClearPlace_Click" IsEnabled="False" ToolTip="Rimuovi il luogo dell’evento" AutomationProperties.Name="Rimuovi il luogo dell’evento" />
+                        <Button DockPanel.Dock="Right" Style="{StaticResource IconButton}" Content="&#xE70F;" Click="ChoosePlace_Click" ToolTip="Scegli il luogo dell’evento" AutomationProperties.Name="Scegli il luogo dell’evento" />
                         <TextBox x:Name="PlaceBox" IsReadOnly="True" Padding="8,6" AutomationProperties.Name="Luogo dell’evento" ToolTip="Il luogo compare sulla mappa storica" />
                     </DockPanel>
                 </StackPanel>

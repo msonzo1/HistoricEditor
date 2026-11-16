@@ -39,7 +39,7 @@
             <StackPanel x:Name="ParentPanel" Visibility="Collapsed">
                 <Label Content="Contenuto in" Target="{Binding ElementName=ParentText}" />
                 <DockPanel Margin="0,0,0,10">
-                    <Button DockPanel.Dock="Right" Content="Scegli…" Click="ChooseParent_Click" Margin="8,0,0,0" Padding="10,4" AutomationProperties.Name="Scegli il luogo che contiene il luogo storico" />
+                    <Button DockPanel.Dock="Right" Style="{StaticResource IconButton}" Content="&#xE70F;" Click="ChooseParent_Click" ToolTip="Scegli il luogo che contiene il luogo storico" AutomationProperties.Name="Scegli il luogo che contiene il luogo storico" />
                     <TextBox x:Name="ParentText" IsReadOnly="True" AutomationProperties.Name="Luogo che contiene il luogo storico" />
                 </DockPanel>
             </StackPanel>

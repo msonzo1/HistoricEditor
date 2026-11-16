@@ -110,7 +110,7 @@
 - [x] Luogo in attesa visibile e modificabile nel selettore dei luoghi, come luogo nuovo al suo posto nell'albero; luogo specifico modificabile anche prima del salvataggio (2026-11-15).
 
 ## Interfaccia comune
-- [ ] Pulsanti piccoli a icona accanto ai campi al posto di «Scegli…» e «Nessuna»/«Rimuovi», con il suggerimento, uguali in tutta l'app come quello del calendario (2026-11-16).
+- [x] Pulsanti a icona accanto ai campi (matita per scegliere, ✕ per togliere) al posto di «Scegli…» e «Nessuna»/«Rimuovi», con il suggerimento, uguali in tutta l'app; stesso stile anche per il pulsante del calendario (2026-11-16).
 
 ## Luoghi
 - [ ] Cambiare il luogo contenitore di un luogo storico dopo la creazione.

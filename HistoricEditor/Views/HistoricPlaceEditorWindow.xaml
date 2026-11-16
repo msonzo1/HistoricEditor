@@ -25,7 +25,7 @@
 
         <Label Content="Contenuto in" Target="{Binding ElementName=ParentText}" />
         <DockPanel Margin="0,0,0,10">
-            <Button DockPanel.Dock="Right" Content="Scegli…" Click="ChooseParent_Click" Margin="8,0,0,0" Padding="10,6" AutomationProperties.Name="Scegli il luogo che lo contiene" />
+            <Button DockPanel.Dock="Right" Style="{StaticResource IconButton}" Content="&#xE70F;" Click="ChooseParent_Click" ToolTip="Scegli il luogo che lo contiene" AutomationProperties.Name="Scegli il luogo che lo contiene" />
             <TextBox x:Name="ParentText" IsReadOnly="True" Padding="8,6" AutomationProperties.Name="Luogo che lo contiene" />
         </DockPanel>
 

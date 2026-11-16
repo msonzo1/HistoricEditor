@@ -8,7 +8,7 @@
         Background="{DynamicResource AppBackground}" Foreground="{DynamicResource InkBrush}"
         FontFamily="Segoe UI" FontSize="13">
     <StackPanel Margin="18">
-        <TextBlock Text="La gens di nascita è quella in cui il personaggio è nato, con l'eventuale ramo (es. Gens Ulpia, ramo Ulpii Traiani), ed è quasi sempre nota; la gens d'adozione, facoltativa, è quella in cui è entrato con un'adozione (Marco Aurelio, nato nella Gens Annia, adottato nella Gens Aurelia). Gens e rami si scelgono dall'elenco «Gentes e rami», dove si possono anche creare e correggere. La dinastia è la casata regnante, che può comprendere più gentes (es. «Dinastia Nerva-Antonina»): più dinastie si separano con «;», e una nuova viene registrata al salvataggio della scheda." FontSize="11" Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" Margin="0,0,0,12" />
+        <TextBlock Text="La gens di nascita è quella in cui il personaggio è nato, con l'eventuale ramo (es. Gens Ulpia, ramo Ulpii Traiani), ed è quasi sempre nota; la gens d'adozione, facoltativa, è quella in cui è entrato con un'adozione (Marco Aurelio, nato nella Gens Annia, adottato nella Gens Aurelia). Gens e rami si scelgono con la matita dall'elenco «Gentes e rami», dove si possono anche creare e correggere; la ✕ li toglie. La dinastia è la casata regnante, che può comprendere più gentes (es. «Dinastia Nerva-Antonina»): più dinastie si separano con «;», e una nuova viene registrata al salvataggio della scheda." FontSize="11" Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" Margin="0,0,0,12" />
         <Label Content="_Dinastia" Target="{Binding ElementName=DynastyInput}" />
         <DockPanel>
             <Button x:Name="DynastyButton" DockPanel.Dock="Right" Content="Dinastia…" Click="EditDynasty_Click" Height="34" Padding="10,0" Margin="6,0,0,0" ToolTip="Modifica la dinastia nell'archivio: nome latino, ramo di, Wikidata, note. Con più dinastie nel campo, un menu permette di scegliere quale" AutomationProperties.Name="Modifica la dinastia" />
@@ -18,8 +18,8 @@
 
         <Label Content="_Gens di nascita" Target="{Binding ElementName=GensButton}" />
         <DockPanel>
-            <Button x:Name="ClearGensButton" DockPanel.Dock="Right" Content="Nessuna" Click="ClearGens_Click" Height="34" Padding="10,0" Margin="6,0,0,0" AutomationProperties.Name="Nessuna gens di nascita" />
-            <Button x:Name="GensButton" DockPanel.Dock="Right" Content="Scegli…" Click="ChooseGens_Click" Height="34" Padding="10,0" Margin="6,0,0,0"
+            <Button x:Name="ClearGensButton" DockPanel.Dock="Right" Style="{StaticResource IconButton}" Content="&#xE711;" Click="ClearGens_Click" ToolTip="Togli la gens di nascita" AutomationProperties.Name="Togli la gens di nascita" />
+            <Button x:Name="GensButton" DockPanel.Dock="Right" Style="{StaticResource IconButton}" Content="&#xE70F;" Click="ChooseGens_Click"
                     ToolTip="Scegli la gens o il ramo, oppure creali o correggili" AutomationProperties.Name="Scegli la gens di nascita" />
             <TextBox x:Name="GensText" IsReadOnly="True" Height="34" Padding="8,0" VerticalContentAlignment="Center" AutomationProperties.Name="Gens di nascita" />
         </DockPanel>
@@ -27,8 +27,8 @@
 
         <Label Content="Gens d'_adozione (facoltativa)" Target="{Binding ElementName=AdoptiveGensButton}" />
         <DockPanel>
-            <Button x:Name="ClearAdoptiveGensButton" DockPanel.Dock="Right" Content="Nessuna" Click="ClearAdoptiveGens_Click" Height="34" Padding="10,0" Margin="6,0,0,0" AutomationProperties.Name="Nessuna gens d'adozione" />
-            <Button x:Name="AdoptiveGensButton" DockPanel.Dock="Right" Content="Scegli…" Click="ChooseAdoptiveGens_Click" Height="34" Padding="10,0" Margin="6,0,0,0"
+            <Button x:Name="ClearAdoptiveGensButton" DockPanel.Dock="Right" Style="{StaticResource IconButton}" Content="&#xE711;" Click="ClearAdoptiveGens_Click" ToolTip="Togli la gens d'adozione" AutomationProperties.Name="Togli la gens d'adozione" />
+            <Button x:Name="AdoptiveGensButton" DockPanel.Dock="Right" Style="{StaticResource IconButton}" Content="&#xE70F;" Click="ChooseAdoptiveGens_Click"
                     ToolTip="Scegli la gens o il ramo d'adozione, oppure creali o correggili" AutomationProperties.Name="Scegli la gens d'adozione" />
             <TextBox x:Name="AdoptiveGensText" IsReadOnly="True" Height="34" Padding="8,0" VerticalContentAlignment="Center" AutomationProperties.Name="Gens d'adozione" />
         </DockPanel>
