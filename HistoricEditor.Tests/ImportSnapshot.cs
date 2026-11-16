@@ -27,6 +27,12 @@ internal static class ImportSnapshot
         Line("Famiglia", r.Family);
         Line("Gens", r.Gens);
         Line("Gens d'adozione", r.GensAdozione);
+        // Forme della gens e del ramo, come sono salvate (2026-11-15).
+        static string Forms(ImportedGens? g) => g is null ? string.Empty
+            : $"{g.WikidataId} nome {g.Nome} | nomen {g.Nomen} | plurale {g.Plurale} | it {g.NomeItaliano} | plurale it {g.PluraleItaliano}"
+                + (g.Ramo is { } r ? $" || ramo {r.WikidataId} plurale {r.Plurale} | it {r.NomeItaliano} | cognomen {r.Cognomen}" : string.Empty);
+        Line("Gens (forme)", Forms(r.GensNascita));
+        Line("Gens d'adozione (forme)", Forms(r.GensAdottiva));
         Line("Nascita", $"{person.Birth} [calendario: {person.BirthCalendario}]");
         Line("Morte", $"{person.Death} [calendario: {person.DeathCalendario}]");
         Line("Edizioni non lette", string.Join(", ", r.UnreadEditions));

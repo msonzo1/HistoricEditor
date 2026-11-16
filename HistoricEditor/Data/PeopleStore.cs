@@ -205,6 +205,8 @@ public sealed partial class PeopleStore : IDisposable
     public void Add(HistoricalPerson person)
     {
         EnsureNotDuplicate(person, 0);
+        // Gens e rami si collegano per identificativo: quelli caricati altrove non vanno reinseriti.
+        (person.GensNascita, person.RamoNascita, person.GensAdottiva, person.RamoAdottivo) = (null, null, null, null);
         context.People.Add(person);
         LinkDynasties(person);
         SaveOrRevert();
@@ -225,8 +227,10 @@ public sealed partial class PeopleStore : IDisposable
         existing.Surname = person.Surname;
         existing.Suffix = person.Suffix;
         existing.Family = person.Family;
-        existing.Gens = person.Gens;
-        existing.GensAdozione = person.GensAdozione;
+        existing.GensId = person.GensId;
+        existing.RamoGensId = person.RamoGensId;
+        existing.GensAdozioneId = person.GensAdozioneId;
+        existing.RamoGensAdozioneId = person.RamoGensAdozioneId;
         existing.Sesso = person.Sesso;
         existing.Nickname = person.Nickname;
         existing.MainTitle = person.MainTitle;
@@ -339,7 +343,7 @@ public sealed partial class PeopleStore : IDisposable
     {
         var name = dynasty.Nome.Trim();
         var linked = dynasty.Id == 0 ? [] : context.PersoneDinastie.Where(l => l.DinastiaId == dynasty.Id).Select(l => l.PersonaId).ToHashSet();
-        foreach (var person in context.People.Where(p => (p.Family != null && p.Family.Length > 0) || (p.Gens != null && p.Gens.Length > 0) || (p.GensAdozione != null && p.GensAdozione.Length > 0)).AsEnumerable()
+        foreach (var person in context.People.Where(p => p.Family != null && p.Family.Length > 0).AsEnumerable()
             .Where(p => !linked.Contains(p.Id) && PeopleGrouping.AllFamilyNames(p).Contains(name, PeopleGrouping.FamilyComparer)))
         {
             context.PersoneDinastie.Add(new PersonaDinastia { PersonaId = person.Id, Dinastia = dynasty });
@@ -353,7 +357,7 @@ public sealed partial class PeopleStore : IDisposable
             .GroupBy(d => d.Nome.Trim(), PeopleGrouping.FamilyComparer)
             .ToDictionary(g => g.Key, g => g.First().Id, PeopleGrouping.FamilyComparer);
         context.PersoneDinastie.RemoveRange(context.PersoneDinastie);
-        foreach (var person in context.People.AsNoTracking().Where(p => (p.Family != null && p.Family.Length > 0) || (p.Gens != null && p.Gens.Length > 0) || (p.GensAdozione != null && p.GensAdozione.Length > 0)).AsEnumerable())
+        foreach (var person in context.People.AsNoTracking().Where(p => p.Family != null && p.Family.Length > 0).AsEnumerable())
         {
             foreach (var name in PeopleGrouping.AllFamilyNames(person))
             {
@@ -405,8 +409,6 @@ public sealed partial class PeopleStore : IDisposable
             foreach (var person in context.People.Where(p => linkedIds.Contains(p.Id)))
             {
                 person.Family = RenameFamily(person.Family, oldName, nome);
-                person.Gens = RenameFamily(person.Gens, oldName, nome);
-                person.GensAdozione = RenameFamily(person.GensAdozione, oldName, nome);
             }
         }
 
@@ -1338,7 +1340,7 @@ public sealed partial class PeopleStore : IDisposable
     {
         var person = context.People.Find(personId);
         if (person is null || person.FatherId is not int fatherId
-            || context.People.AsNoTracking().Where(p => p.Id == fatherId).Select(p => new { p.Family, p.Gens, p.GensAdozione }).FirstOrDefault() is not { } father)
+            || context.People.AsNoTracking().Where(p => p.Id == fatherId).Select(p => new { p.Family, p.GensId, p.RamoGensId, p.GensAdozioneId, p.RamoGensAdozioneId }).FirstOrDefault() is not { } father)
         {
             return false;
         }
@@ -1352,10 +1354,10 @@ public sealed partial class PeopleStore : IDisposable
 
         // Il figlio porta il nome del padre al momento della nascita: la gens d'adozione del padre, se c'è (Commodo, figlio
         // di Marco Aurelio, è della gens Aurelia, non Annia).
-        var fatherGens = !string.IsNullOrWhiteSpace(father.GensAdozione) ? father.GensAdozione : father.Gens;
-        if (string.IsNullOrWhiteSpace(person.Gens) && !string.IsNullOrWhiteSpace(fatherGens))
+        var fatherGens = father.GensAdozioneId is not null ? (father.GensAdozioneId, father.RamoGensAdozioneId) : (father.GensId, father.RamoGensId);
+        if (person.GensId is null && fatherGens.Item1 is not null)
         {
-            person.Gens = fatherGens.Trim();
+            (person.GensId, person.RamoGensId) = fatherGens;
             changed = true;
         }
 
@@ -1706,6 +1708,8 @@ public sealed partial class PeopleStore : IDisposable
             Unions = [.. context.Unioni.AsNoTracking()],
             Relations = [.. context.Relazioni.AsNoTracking()],
             Dynasties = [.. context.Dinastie.AsNoTracking()],
+            Gentes = [.. context.Gentes.AsNoTracking()],
+            RamiGens = [.. context.RamiGens.AsNoTracking().IgnoreAutoIncludes()],
             Events = [.. context.Eventi.AsNoTracking().Include(e => e.Partecipanti)],
             Artworks = [.. context.Opere.AsNoTracking().Include(o => o.Persone)],
             Places = [.. context.Luoghi.AsNoTracking()],
@@ -1723,13 +1727,14 @@ public sealed partial class PeopleStore : IDisposable
         try
         {
             var backup = DeserializeBackup(File.ReadAllText(jsonBackupPath));
+            ConvertBackupGens(backup);
             if (backup.People.Count == 0)
             {
                 // Senza persone si ripristinano comunque luoghi, dinastie ed eventi, ma solo su un archivio
                 // davvero vuoto: altrimenti a ogni avvio verrebbero duplicati.
                 var nothingToRestore = backup.Places.Count == 0 && backup.SpecificPlaces.Count == 0
-                    && backup.Dynasties.Count == 0 && backup.Events.Count == 0 && backup.Artworks.Count == 0;
-                if (nothingToRestore || context.Dinastie.Any() || context.Eventi.Any() || context.LuoghiSpecifici.Any() || context.Opere.Any())
+                    && backup.Dynasties.Count == 0 && backup.Gentes.Count == 0 && backup.Events.Count == 0 && backup.Artworks.Count == 0;
+                if (nothingToRestore || context.Dinastie.Any() || context.Gentes.Any() || context.Eventi.Any() || context.LuoghiSpecifici.Any() || context.Opere.Any())
                 {
                     return;
                 }
@@ -1796,7 +1801,9 @@ public sealed partial class PeopleStore : IDisposable
                 attachments.Add(allegato);
             }
 
-            // Le unioni riferiscono le persone: EF ordina gli inserimenti nello stesso SaveChanges.
+            // Le schede riferiscono gentes e rami, le unioni le persone: EF ordina gli inserimenti nello stesso SaveChanges.
+            context.Gentes.AddRange(backup.Gentes);
+            context.RamiGens.AddRange(backup.RamiGens);
             context.People.AddRange(backup.People);
             context.Unioni.AddRange(backup.Unions);
             context.Relazioni.AddRange(backup.Relations);
@@ -1969,6 +1976,8 @@ public sealed partial class PeopleStore : IDisposable
         public List<Unione> Unions { get; set; } = [];
         public List<Relazione> Relations { get; set; } = [];
         public List<Dinastia> Dynasties { get; set; } = [];
+        public List<GensRomana> Gentes { get; set; } = [];
+        public List<RamoGens> RamiGens { get; set; } = [];
         public List<Evento> Events { get; set; } = [];
         public List<Opera> Artworks { get; set; } = [];
         public List<Luogo> Places { get; set; } = [];

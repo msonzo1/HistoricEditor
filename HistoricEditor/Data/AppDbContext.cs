@@ -26,6 +26,8 @@ public sealed class AppDbContext : DbContext
     public DbSet<LuogoSpecifico> LuoghiSpecifici => Set<LuogoSpecifico>();
     public DbSet<Unione> Unioni => Set<Unione>();
     public DbSet<Dinastia> Dinastie => Set<Dinastia>();
+    public DbSet<GensRomana> Gentes => Set<GensRomana>();
+    public DbSet<RamoGens> RamiGens => Set<RamoGens>();
     public DbSet<Evento> Eventi => Set<Evento>();
     public DbSet<Relazione> Relazioni => Set<Relazione>();
     public DbSet<PersonaDinastia> PersoneDinastie => Set<PersonaDinastia>();
@@ -45,6 +47,8 @@ public sealed class AppDbContext : DbContext
 
         person.Ignore(p => p.DisplayName);
         person.Ignore(p => p.LifeSpan);
+        person.Ignore(p => p.GensTestoBackup);
+        person.Ignore(p => p.GensAdozioneTestoBackup);
 
         // I dati di ricerca annidati sono salvati come colonne JSON sulla riga della persona.
         person.OwnsMany(p => p.BirthDateEvidence, b =>
@@ -120,6 +124,35 @@ public sealed class AppDbContext : DbContext
             .WithMany()
             .HasForeignKey(p => p.FatherId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        // Gens e rami (2026-11-15): si caricano sempre con la scheda, che ne ricava le etichette («Gens Iulia › Iulii
+        // Caesares»). Eliminando una gens o un ramo le schede restano, senza.
+        person.HasOne(p => p.GensNascita).WithMany().HasForeignKey(p => p.GensId).OnDelete(DeleteBehavior.SetNull);
+        person.HasOne(p => p.RamoNascita).WithMany().HasForeignKey(p => p.RamoGensId).OnDelete(DeleteBehavior.SetNull);
+        person.HasOne(p => p.GensAdottiva).WithMany().HasForeignKey(p => p.GensAdozioneId).OnDelete(DeleteBehavior.SetNull);
+        person.HasOne(p => p.RamoAdottivo).WithMany().HasForeignKey(p => p.RamoGensAdozioneId).OnDelete(DeleteBehavior.SetNull);
+        person.Navigation(p => p.GensNascita).AutoInclude();
+        person.Navigation(p => p.RamoNascita).AutoInclude();
+        person.Navigation(p => p.GensAdottiva).AutoInclude();
+        person.Navigation(p => p.RamoAdottivo).AutoInclude();
+
+        modelBuilder.Entity<GensRomana>(g =>
+        {
+            g.ToTable("Gentes");
+            g.Property(x => x.Nome).UseCollation("NOCASE");
+            g.HasIndex(x => x.Nome);
+            g.HasIndex(x => x.WikidataId);
+        });
+
+        modelBuilder.Entity<RamoGens>(r =>
+        {
+            r.ToTable("RamiGens");
+            // Un ramo non esiste senza la sua gens.
+            r.HasOne(x => x.Gens).WithMany(x => x.Rami).HasForeignKey(x => x.GensId).OnDelete(DeleteBehavior.Cascade);
+            r.Navigation(x => x.Gens).AutoInclude();
+            r.Property(x => x.Plurale).UseCollation("NOCASE");
+            r.HasIndex(x => new { x.GensId, x.Plurale });
+        });
 
         person.HasOne(p => p.Mother)
             .WithMany()

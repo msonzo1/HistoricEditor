@@ -142,7 +142,6 @@ public partial class DynastiesWindow : Window
         LatinNameBox.Text = dynasty?.NomeLatino ?? string.Empty;
         WikidataBox.Text = dynasty?.WikidataId ?? string.Empty;
         NoteBox.Text = dynasty?.Note ?? string.Empty;
-        TypeBox.SelectedIndex = dynasty?.IsGens == true ? 1 : 0;
         DeleteButton.IsEnabled = dynasty is not null;
         AttachmentsButton.IsEnabled = dynasty is not null;
 
@@ -165,18 +164,6 @@ public partial class DynastiesWindow : Window
         NameBox.Focus();
     }
 
-    // Una gens senza nome latino si segnala, ma si salva lo stesso (2026-11-14).
-    private void LatinOrType_Changed(object sender, RoutedEventArgs e)
-    {
-        if (LatinNameHint is null || LatinNameBox is null || TypeBox is null)
-        {
-            return;
-        }
-
-        var gens = (TypeBox.SelectedItem as ComboBoxItem)?.Tag as string == TipiDinastia.Gens;
-        LatinNameHint.Visibility = gens && LatinNameBox.Text.Trim().Length == 0 ? Visibility.Visible : Visibility.Collapsed;
-    }
-
     private void Save_Click(object sender, RoutedEventArgs e)
     {
         var data = new Dinastia
@@ -187,7 +174,8 @@ public partial class DynastiesWindow : Window
             ParentId = (ParentBox.SelectedItem as DynastyItem)?.Dinastia?.Id,
             WikidataId = WikidataBox.Text,
             Note = NoteBox.Text,
-            Tipo = (TypeBox.SelectedItem as ComboBoxItem)?.Tag as string ?? TipiDinastia.Dinastia,
+            // Le gens sono a parte dal 2026-11-15: una dinastia salvata qui è sempre una dinastia.
+            Tipo = TipiDinastia.Dinastia,
         };
 
         try

@@ -335,6 +335,9 @@ public partial class PersonEditorWindow : Window
                 }
 
                 SetCreatedPlaces(person, created);
+                // Gens e rami letti dall'import si creano adesso, insieme alla scheda (2026-11-15).
+                (person.GensId, person.RamoGensId) = GensChoices.Resolve(store, birthGens);
+                (person.GensAdozioneId, person.RamoGensAdozioneId) = GensChoices.Resolve(store, adoptiveGens);
                 if (editingPerson is null)
                 {
                     store.Add(person);
@@ -352,6 +355,9 @@ public partial class PersonEditorWindow : Window
                     placeFields[i].SetPlace(ids.LuogoId, ids.SpecificoId);
                 }
             }
+
+            birthGens = new GensChoice(person.GensId, person.RamoGensId, null);
+            adoptiveGens = new GensChoice(person.GensAdozioneId, person.RamoGensAdozioneId, null);
 
             if (editingPerson is null)
             {
@@ -382,12 +388,10 @@ public partial class PersonEditorWindow : Window
         }
 
         RegisterFamilyAsDynasty(person.Family, TipiDinastia.Dinastia);
-        RegisterFamilyAsDynasty(person.Gens, TipiDinastia.Gens);
-        RegisterFamilyAsDynasty(person.GensAdozione, TipiDinastia.Gens);
         savedSnapshot = FormSnapshot();
         HeaderText.Text = person.DisplayName;
         // La gens di nascita è quasi sempre nota: se manca in una scheda romana si salva lo stesso, ma lo si segnala.
-        if (romanForm && person.Gens.Trim().Length == 0)
+        if (romanForm && person.GensId is null)
         {
             Feedback.Error(EditorMessage, "Scheda salvata, ma manca la gens di nascita (pulsante «Dinastia e gens…»).");
         }
@@ -433,6 +437,7 @@ public partial class PersonEditorWindow : Window
         {
             var text = FamilyInput.Text;
             dynasties = store.GetDynasties();
+            gentes = store.GetGentes();
             // Nel campo Famiglia le dinastie; le gens si scelgono nel modulo «Dinastia e gens».
             FamilyInput.ItemsSource = dynasties.Where(d => !d.IsGens).Select(d => d.Nome).ToList();
             FamilyInput.Text = text;
@@ -534,10 +539,10 @@ public partial class PersonEditorWindow : Window
             changed = true;
         }
 
-        if (gensText.Trim().Length == 0 && saved.Gens.Length > 0)
+        if (birthGens.IsEmpty && saved.GensId is not null)
         {
-            SetGens(saved.Gens, adoptiveGensText);
-            person.Gens = saved.Gens;
+            SetGens(new GensChoice(saved.GensId, saved.RamoGensId, null), adoptiveGens);
+            (person.GensId, person.RamoGensId) = (saved.GensId, saved.RamoGensId);
             changed = true;
         }
 

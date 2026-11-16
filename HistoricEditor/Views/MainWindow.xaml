@@ -295,6 +295,9 @@
 									 <Button x:Name="DynastiesButton" Style="{StaticResource ToolButton}" Click="EditDynasties_Click" ToolTip="Dinastie e loro rami (es. Asburgo di Spagna sotto Asburgo)" AutomationProperties.Name="Gestisci dinastie">
 										  <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8B7;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" VerticalAlignment="Center" /><TextBlock Text="Dinastie…" /></StackPanel>
 									 </Button>
+									 <Button x:Name="GentesButton" Style="{StaticResource ToolButton}" Click="EditGentes_Click" ToolTip="Gentes romane e loro rami (es. Caesares della Gens Iulia)" AutomationProperties.Name="Gestisci gentes e rami">
+										  <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE716;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" VerticalAlignment="Center" /><TextBlock Text="Gentes…" /></StackPanel>
+									 </Button>
 									 <Button x:Name="EventsButton" Style="{StaticResource ToolButton}" Click="EditEvents_Click" ToolTip="Battaglie, trattati, incontri, scoperte e altri eventi con i loro partecipanti" AutomationProperties.Name="Gestisci eventi">
 										  <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE787;" FontFamily="Segoe MDL2 Assets" Margin="0,0,6,0" VerticalAlignment="Center" /><TextBlock Text="Eventi…" /></StackPanel>
 									 </Button>

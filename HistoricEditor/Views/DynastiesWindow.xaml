@@ -19,7 +19,7 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Grid.ColumnSpan="3" Text="Una dinastia può essere ramo di un’altra (es. «Asburgo di Spagna» ramo di «Asburgo»). Lo stesso vale per le gentes romane (es. «Cornelii Scipiones» ramo della «gens Cornelia»). Nella vista Famiglie i rami compaiono dentro la dinastia principale; le persone si collegano tramite il campo Famiglia (o Gens)." Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" Margin="0,0,0,12" />
+        <TextBlock Grid.Row="0" Grid.ColumnSpan="3" Text="Una dinastia può essere ramo di un’altra (es. «Asburgo di Spagna» ramo di «Asburgo»). Nella vista Famiglie i rami compaiono dentro la dinastia principale; le persone si collegano tramite il campo Famiglia. Le gentes romane e i loro rami sono a parte, in «Gentes e rami»." Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" Margin="0,0,0,12" />
 
         <DockPanel Grid.Row="1" Grid.Column="0">
             <Label DockPanel.Dock="Top" Content="_Dinastie registrate" Target="{Binding ElementName=DynastyList}" />
@@ -45,16 +45,8 @@
             <ComboBox x:Name="NameBox" IsEditable="True" Margin="0,0,0,10" AutomationProperties.Name="Nome della dinastia" ToolTip="Puoi scegliere una famiglia già usata nelle schede" />
 
             <Label Content="Nome _latino" Target="{Binding ElementName=LatinNameBox}" />
-            <TextBox x:Name="LatinNameBox" Padding="8,6" Margin="0,0,0,10" TextChanged="LatinOrType_Changed" AutomationProperties.Name="Nome latino della dinastia"
-                     ToolTip="Per esempio «gens Iulia», «Iulii Caesares», «Domus Iulio-Claudia». Atteso per le gens romane e i loro rami" />
-            <TextBlock x:Name="LatinNameHint" FontSize="11" Foreground="{DynamicResource DangerBrush}" TextWrapping="Wrap" Margin="2,-6,0,10" Visibility="Collapsed" Text="Nome latino da completare: per una gens è atteso (la dinastia si salva comunque)." />
-
-            <Label Content="_Tipo" Target="{Binding ElementName=TypeBox}" />
-            <ComboBox x:Name="TypeBox" Margin="0,0,0,10" SelectedIndex="0" SelectionChanged="LatinOrType_Changed" AutomationProperties.Name="Tipo: dinastia o gens romana"
-                      ToolTip="Una gens romana (es. gens Iulia) raccoglie le persone con lo stesso nomen; i suoi rami (es. Cornelii Scipiones) si indicano con «Ramo di»">
-                <ComboBoxItem Content="Dinastia o casata" Tag="" />
-                <ComboBoxItem Content="Gens romana" Tag="gens" />
-            </ComboBox>
+            <TextBox x:Name="LatinNameBox" Padding="8,6" Margin="0,0,0,10" AutomationProperties.Name="Nome latino della dinastia"
+                     ToolTip="Per esempio «Domus Iulio-Claudia»" />
 
             <Label Content="_Ramo di" Target="{Binding ElementName=ParentBox}" />
             <ComboBox x:Name="ParentBox" Margin="0,0,0,10" AutomationProperties.Name="Dinastia principale di cui è ramo" />

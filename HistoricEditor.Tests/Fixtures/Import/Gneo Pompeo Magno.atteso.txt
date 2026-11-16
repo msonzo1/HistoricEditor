@@ -10,6 +10,8 @@ Titolo principale: Senatore romano
 Famiglia: 
 Gens: Gens Pompeia
 Gens d'adozione: 
+Gens (forme): Q1507713 nome Pompeia | nomen Pompeius | plurale  | it  | plurale it 
+Gens d'adozione (forme): 
 Nascita: 29/09/106 a.C. [calendario: giuliano]
 Morte: 28/09/48 a.C. [calendario: giuliano]
 Edizioni non lette: 
@@ -30,7 +32,6 @@ es: Pompeyo | suffisso  | soprannome  | titolo senador romano | parti Gneo / Pom
 nl: Pompeius | suffisso  | soprannome  | titolo Romeins senator | parti Gnaeus / Pompeius / Magnus / 
 
 ## Dinastie
-Q1507713: Gens Pompeia (gens) [la: Gens Pompeia] ←  [la: ]
 
 ## Date di nascita
 29/09/106 a.C.: giorno | preferred | giuliano | -0106-09-29T00:00:00Z | qualificatori P1319=-0106-09-29T00:00:00Z, P1326=-0106-09-30T00:00:00Z | fonti Q45258177, Q5375741, Q746368, Q100166489, Wikipedia in italiano, Wikipedia in inglese, Wikipedia in tedesco, Wikipedia in francese, Wikipedia in spagnolo, Wikipedia in olandese

@@ -26,7 +26,7 @@ public static class PersonSheet
     };
 
     // Per i personaggi romani: nome italiano, nome latino, forma epigrafica, parti del nome e «Gens» al posto di «Famiglia».
-    // Gens e dinastie con il nome latino di quelle registrate («gens Giulia (gens Iulia)»).
+    // Gens e dinastie con il nome latino: «Gens Giulia (Gens Iulia) › Giulii Cesari (Iulii Caesares)».
     public static IReadOnlyList<SheetField> MainFields(HistoricalPerson person, IReadOnlyList<Dinastia>? dynasties = null)
     {
         if (!RomanNaming.IsRoman(person))
@@ -38,8 +38,8 @@ public static class PersonSheet
                 ("Soprannome", person.Nickname),
                 ("Titolo principale", person.MainTitle),
                 ("Famiglia", Dinastia.WithLatinNames(person.Family, dynasties ?? [])),
-                ("Gens", Dinastia.WithLatinNames(person.Gens, dynasties ?? [])),
-                ("Gens d'adozione", Dinastia.WithLatinNames(person.GensAdozione, dynasties ?? [])),
+                ("Gens", GensLabels.PathWithLatin(person.GensNascita, person.RamoNascita)),
+                ("Gens d'adozione", GensLabels.PathWithLatin(person.GensAdottiva, person.RamoAdottivo)),
                 ("Sesso", DescribeSex(person.Sesso)));
         }
 
@@ -63,8 +63,8 @@ public static class PersonSheet
             ("Suffisso", person.Suffix),
             ("Soprannome", person.Nickname),
             ("Titolo principale", person.MainTitle),
-            ("Gens di nascita", Dinastia.WithLatinNames(person.Gens, dynasties ?? [])),
-            ("Gens d'adozione", Dinastia.WithLatinNames(person.GensAdozione, dynasties ?? [])),
+            ("Gens di nascita", GensLabels.PathWithLatin(person.GensNascita, person.RamoNascita)),
+            ("Gens d'adozione", GensLabels.PathWithLatin(person.GensAdottiva, person.RamoAdottivo)),
             ("Dinastia", Dinastia.WithLatinNames(person.Family, dynasties ?? [])),
             ("Sesso", DescribeSex(person.Sesso)));
     }

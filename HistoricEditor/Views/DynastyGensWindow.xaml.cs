@@ -4,98 +4,134 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HistoricEditor;
 
-// Dinastia, gens di nascita e gens d'adozione di un personaggio romano: si modificano solo qui, non nella scheda.
+// Dinastia, gens di nascita e gens d'adozione di un personaggio romano: si modificano solo qui, non nella scheda. Gens e
+// rami si scelgono dall'elenco «Gentes e rami» (2026-11-15).
 public partial class DynastyGensWindow : Window
 {
     private readonly PeopleStore store;
     private IReadOnlyList<Dinastia> dynasties = [];
+    private IReadOnlyList<GensRomana> gentes = [];
+    private GensChoice birth;
+    private GensChoice adoptive;
 
     public string ResultFamily { get; private set; } = string.Empty;
-    public string ResultGens { get; private set; } = string.Empty;
-    public string ResultAdoptiveGens { get; private set; } = string.Empty;
+    public GensChoice ResultGens { get; private set; } = GensChoice.None;
+    public GensChoice ResultAdoptiveGens { get; private set; } = GensChoice.None;
 
-    public DynastyGensWindow(PeopleStore store, string family, string gens, string adoptiveGens)
+    public DynastyGensWindow(PeopleStore store, string family, GensChoice gens, GensChoice adoptiveGens)
     {
         InitializeComponent();
         this.store = store;
+        birth = gens;
+        adoptive = adoptiveGens;
         DynastyInput.Text = family;
-        GensInput.Text = gens;
-        AdoptiveGensInput.Text = adoptiveGens;
         LoadChoices();
         Loaded += (_, _) => DynastyInput.Focus();
     }
 
     private void LoadChoices()
     {
-        var (family, gens, adoptive) = (DynastyInput.Text, GensInput.Text, AdoptiveGensInput.Text);
+        var family = DynastyInput.Text;
         try
         {
             dynasties = store.GetDynasties();
+            gentes = store.GetGentes();
         }
         catch (Exception ex) when (ex is DbUpdateException or InvalidOperationException)
         {
             dynasties = [];
+            gentes = [];
         }
 
         DynastyInput.ItemsSource = dynasties.Where(d => !d.IsGens).Select(d => d.Nome).ToList();
-        var gentes = dynasties.Where(d => d.IsGens).Select(d => d.Nome).ToList();
-        GensInput.ItemsSource = gentes;
-        AdoptiveGensInput.ItemsSource = gentes;
         DynastyInput.Text = family;
-        GensInput.Text = gens;
-        AdoptiveGensInput.Text = adoptive;
         UpdatePaths();
     }
 
     private void UpdatePaths()
     {
         DynastyPathText.Text = DynastyDescriptions.Hint(dynasties, DynastyInput.Text, gens: false);
-        GensPathText.Text = GensInput.Text.Trim().Length == 0
-            ? "Non indicata: è quasi sempre nota (la scheda si salva comunque)."
-            : DynastyDescriptions.Hint(dynasties, GensInput.Text, gens: true);
-        AdoptiveGensPathText.Text = DynastyDescriptions.Hint(dynasties, AdoptiveGensInput.Text, gens: true);
         DynastyButton.Content = DynastyMenu.ButtonText("Dinastia…", DynastyInput.Text);
-        GensButton.Content = DynastyMenu.ButtonText("Gens…", GensInput.Text);
-        AdoptiveGensButton.Content = DynastyMenu.ButtonText("Gens…", AdoptiveGensInput.Text);
+        Show(GensText, GensPathText, ClearGensButton, birth, "Non indicata: è quasi sempre nota (la scheda si salva comunque).");
+        Show(AdoptiveGensText, AdoptiveGensPathText, ClearAdoptiveGensButton, adoptive, string.Empty);
+    }
+
+    private void Show(TextBox value, TextBlock note, Button clear, GensChoice choice, string empty)
+    {
+        var (path, text, missing) = GensChoices.Describe(store, gentes, choice);
+        value.Text = path.Length > 0 ? path : "Nessuna";
+        note.Text = path.Length > 0 ? text : empty;
+        note.SetResourceReference(TextBlock.ForegroundProperty, missing ? "DangerBrush" : "QuietBrush");
+        note.Visibility = note.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+        clear.IsEnabled = !choice.IsEmpty;
     }
 
     private void Input_TextChanged(object sender, TextChangedEventArgs e)
     {
-        if (DynastyPathText is not null && GensPathText is not null && AdoptiveGensPathText is not null)
+        if (DynastyPathText is not null && GensText is not null)
         {
             UpdatePaths();
         }
     }
 
-    private void EditDynasty_Click(object sender, RoutedEventArgs e) => EditDynasties(DynastyInput, DynastyButton);
-
-    private void EditGens_Click(object sender, RoutedEventArgs e) => EditDynasties(GensInput, GensButton);
-
-    private void EditAdoptiveGens_Click(object sender, RoutedEventArgs e) => EditDynasties(AdoptiveGensInput, AdoptiveGensButton);
-
     // Apre l'archivio delle dinastie su quella scelta (con più nomi nel campo, da un menu); se una viene rinominata, il
     // campo segue il nuovo nome.
-    private void EditDynasties(ComboBox input, Button button)
-        => DynastyMenu.Choose(button, dynasties, input.Text, name => OpenArchive(input, name));
+    private void EditDynasty_Click(object sender, RoutedEventArgs e)
+        => DynastyMenu.Choose(DynastyButton, dynasties, DynastyInput.Text, OpenArchive);
 
-    private void OpenArchive(ComboBox input, string? name)
+    private void OpenArchive(string? name)
     {
-        var names = PeopleGrouping.FamilyNames(input.Text);
+        var names = PeopleGrouping.FamilyNames(DynastyInput.Text);
         var window = new DynastiesWindow(store, name) { Owner = this };
         window.ShowDialog();
         if (names.Count > 0)
         {
-            input.Text = PeopleGrouping.JoinFamilyNames(names.Select(window.ResolveRename).Distinct(PeopleGrouping.FamilyComparer));
+            DynastyInput.Text = PeopleGrouping.JoinFamilyNames(names.Select(window.ResolveRename).Distinct(PeopleGrouping.FamilyComparer));
         }
 
         LoadChoices();
     }
 
+    private void ChooseGens_Click(object sender, RoutedEventArgs e)
+    {
+        birth = Choose(birth);
+        UpdatePaths();
+    }
+
+    private void ChooseAdoptiveGens_Click(object sender, RoutedEventArgs e)
+    {
+        adoptive = Choose(adoptive);
+        UpdatePaths();
+    }
+
+    // L'elenco delle gentes si apre sulla scelta attuale; le gentes lette dall'import e non ancora salvate compaiono come
+    // nuove e si possono correggere.
+    private GensChoice Choose(GensChoice choice)
+    {
+        var pending = new[] { birth.Pending, adoptive.Pending }.OfType<PendingGens>().Distinct();
+        var window = new GentesWindow(store, choice, pending, pick: true) { Owner = this };
+        var result = window.ShowDialog() == true && window.Result is { } chosen ? chosen : choice;
+        LoadChoices();
+        return result;
+    }
+
+    private void ClearGens_Click(object sender, RoutedEventArgs e)
+    {
+        birth = GensChoice.None;
+        UpdatePaths();
+    }
+
+    private void ClearAdoptiveGens_Click(object sender, RoutedEventArgs e)
+    {
+        adoptive = GensChoice.None;
+        UpdatePaths();
+    }
+
     private void Save_Click(object sender, RoutedEventArgs e)
     {
         ResultFamily = PeopleGrouping.JoinFamilyNames(PeopleGrouping.FamilyNames(DynastyInput.Text));
-        ResultGens = PeopleGrouping.JoinFamilyNames(PeopleGrouping.FamilyNames(GensInput.Text));
-        ResultAdoptiveGens = PeopleGrouping.JoinFamilyNames(PeopleGrouping.FamilyNames(AdoptiveGensInput.Text));
+        ResultGens = birth;
+        ResultAdoptiveGens = adoptive;
         DialogResult = true;
     }
 }

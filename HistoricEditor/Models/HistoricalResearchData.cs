@@ -144,6 +144,32 @@ public sealed class WikipediaSearchResult
 // ParentNomeLatino: nomi latini (etichetta latina, altrimenti inglese con J → I), vuoti se non si trovano.
 public sealed record ImportedDynasty(string Nome, string WikidataId, string ParentNome, string ParentWikidataId, bool Gens = false, string NomeLatino = "", string ParentNomeLatino = "");
 
+// Gens letta da Wikidata (2026-11-15): forme latine come sono scritte (nome «Iulia», nomen «Iulius», plurale «Iulii»),
+// italiane se diverse, ed eventuale ramo. Le forme che non si trovano restano vuote, da completare a mano.
+public sealed record ImportedGens(string WikidataId, string Nome, string Nomen = "", string Plurale = "", string NomeItaliano = "", string PluraleItaliano = "", ImportedGensBranch? Ramo = null)
+{
+    // Come gens e ramo dell'archivio, senza salvarli, per le etichette («Gens Giulia › Giulii Cesari»).
+    public (GensRomana Gens, RamoGens? Ramo) ToEntities()
+    {
+        var gens = new GensRomana { Nome = Nome, Nomen = Nomen, Plurale = Plurale, NomeItaliano = NomeItaliano, PluraleItaliano = PluraleItaliano, WikidataId = WikidataId };
+        var ramo = Ramo is { } r ? new RamoGens { Gens = gens, Cognomen = r.Cognomen, Plurale = r.Plurale, NomeItaliano = r.NomeItaliano, WikidataId = r.WikidataId } : null;
+        return (gens, ramo);
+    }
+
+    public string Path
+    {
+        get
+        {
+            var (gens, ramo) = ToEntities();
+            return GensLabels.Path(gens, ramo);
+        }
+    }
+}
+
+// Ramo di una gens letto da Wikidata: plurale («Caesares») dall'etichetta latina del ramo («Iulii Caesares»), italiano se
+// diverso, cognomen singolare se scritto da qualche parte.
+public sealed record ImportedGensBranch(string WikidataId, string Plurale, string NomeItaliano = "", string Cognomen = "");
+
 public sealed class WikipediaImportResult
 {
     public string Name { get; init; } = string.Empty;
@@ -173,11 +199,16 @@ public sealed class WikipediaImportResult
     public List<RomanNameRecord> NomiNelTempo { get; init; } = [];
     public string Family { get; init; } = string.Empty;
 
-    // Gens e suoi rami («gens Ulpia; Ulpii Traiani»), separati dalle dinastie del campo Family.
-    public string Gens { get; init; } = string.Empty;
+    // Gens di nascita ed eventuale ramo (Gens Ulpia, ramo Traiani), separati dalle dinastie del campo Family.
+    public ImportedGens? GensNascita { get; init; }
 
     // Gens d'adozione (P5025 con causa «adozione»), separata da quella di nascita.
-    public string GensAdozione { get; init; } = string.Empty;
+    public ImportedGens? GensAdottiva { get; init; }
+
+    // Etichette ricavate: «Gens Ulpia › Ulpii Traiani».
+    public string Gens => GensNascita?.Path ?? string.Empty;
+
+    public string GensAdozione => GensAdottiva?.Path ?? string.Empty;
     public List<ImportedDynasty> Dynasties { get; init; } = [];
     public string Sesso { get; init; } = string.Empty;
     public string ArticleTitle { get; init; } = string.Empty;

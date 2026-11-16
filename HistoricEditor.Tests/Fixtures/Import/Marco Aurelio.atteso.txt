@@ -10,6 +10,8 @@ Titolo principale: Imperatore romano
 Famiglia: Antonini; Aurelies; Nerva–Antonine dynasty
 Gens: Gens Annia
 Gens d'adozione: Gens Aurelia
+Gens (forme): Q2035133 nome Annia | nomen Annius | plurale  | it  | plurale it 
+Gens d'adozione (forme): Q906810 nome Aurelia | nomen Aurelius | plurale  | it  | plurale it 
 Nascita: 26/04/0121 [calendario: giuliano]
 Morte: 17/03/0180 [calendario: giuliano]
 Edizioni non lette: 
@@ -35,8 +37,6 @@ nl: Marcus Aurelius | suffisso  | soprannome  | titolo Romeinse keizer | parti M
 Q3291176: Antonini [la: ] ← Nerva–Antonine dynasty [la: ] Q3202662
 Q11907287: Aurelies [la: ] ← Nerva–Antonine dynasty [la: ] Q3202662
 Q3202662: Nerva–Antonine dynasty [la: ] ←  [la: ]
-Q2035133: Gens Annia (gens) [la: Gens Annia] ←  [la: ]
-Q906810: Gens Aurelia (gens) [la: Gens Aurelia] ←  [la: ]
 
 ## Date di nascita
 26/04/0121: giorno | normal | giuliano | +0121-04-26T00:00:00Z | qualificatori  | fonti Q45275993, Q746368, Wikipedia in italiano, Wikipedia in inglese, Wikipedia in tedesco, Wikipedia in francese, Wikipedia in spagnolo, Wikipedia in olandese

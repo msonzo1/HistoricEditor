@@ -98,6 +98,8 @@
 ## Import da Wikipedia / Wikidata
 - [x] Tipi Imperator, Caesar e Augustus nelle parti del nome; «Caesar» cognomen fino a Nerone, titolo da Galba; Nero praenomen e Germanicus agnomen (2026-11-15).
 - [x] Dinastie e gens con la maiuscola iniziale, anche in latino (2026-11-15).
+- [x] Gentes e rami separati dalle dinastie (migrazione `GentesRami`): forme latine e italiane salvate, etichette ricavate, finestra «Gentes…», scelta dalla scheda, gens importata creata solo al salvataggio, conversione dei vecchi backup (2026-11-16).
+- [ ] Provare l'app: finestra «Gentes…» (nuova gens, nuovo ramo, elimina), «Dinastia e gens…» con «Scegli…»/«Nessuna», import di Augusto (gens in attesa correggibile prima del salvataggio).
 - [ ] Reimportare Nerone e verificare insieme le cose che non andavano nell'import precedente (segnalato il 2026-11-15).
 - [x] Leggere anche le Wikipedia tedesca/inglese/francese/spagnola/olandese: date discordanti tra lingue/fonti segnalate nella scheda (avviso + dettagli) e salvate.
 - [x] Nomi dei luoghi multilingua (it/en/de/fr/es/nl) per ogni livello, salvati sul luogo e consultabili dalla scheda.

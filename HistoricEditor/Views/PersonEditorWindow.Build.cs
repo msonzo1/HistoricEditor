@@ -60,8 +60,9 @@ public partial class PersonEditorWindow
         person.Surname = SurnameInput.Text.Trim();
         person.Suffix = SuffixInput.Text.Trim();
         person.Family = DynastyNames.CapitalizeAll(FamilyInput.Text);
-        person.Gens = DynastyNames.CapitalizeAll(gensText);
-        person.GensAdozione = DynastyNames.CapitalizeAll(adoptiveGensText);
+        // Gens e rami per identificativo; quelli letti dall'import si creano al salvataggio (EnsureSaved).
+        (person.GensId, person.RamoGensId) = birthGens.Pending is null ? (birthGens.GensId, birthGens.RamoId) : (null, null);
+        (person.GensAdozioneId, person.RamoGensAdozioneId) = adoptiveGens.Pending is null ? (adoptiveGens.GensId, adoptiveGens.RamoId) : (null, null);
         person.Sesso = SelectedSex;
         person.Nickname = NicknameInput.Text.Trim();
         person.MainTitle = MainTitleInput.Text.Trim();
@@ -101,7 +102,7 @@ public partial class PersonEditorWindow
         SurnameInput.Text = person.Surname;
         SuffixInput.Text = person.Suffix;
         FamilyInput.Text = person.Family;
-        SetGens(person.Gens, person.GensAdozione);
+        SetGens(new GensChoice(person.GensId, person.RamoGensId, null), new GensChoice(person.GensAdozioneId, person.RamoGensAdozioneId, null));
         SelectSex(person.Sesso);
         NicknameInput.Text = person.Nickname;
         MainTitleInput.Text = person.MainTitle;
@@ -135,7 +136,7 @@ public partial class PersonEditorWindow
         SetLocalizedNames(import.LocalizedNames);
         FamilyInput.Text = import.Family;
         // Una gens d'adozione scritta a mano resta se Wikidata non ne indica una.
-        SetGens(import.Gens, import.GensAdozione.Trim().Length > 0 ? import.GensAdozione : adoptiveGensText);
+        SetGens(GensChoice.FromImport(import.GensNascita), import.GensAdottiva is not null ? GensChoice.FromImport(import.GensAdottiva) : adoptiveGens);
         SelectSex(import.Sesso);
         PrefillRomanName(import);
         BirthInput.Text = FormatDateInput(import.BirthDates);

@@ -22,8 +22,6 @@ public static class ImportedPersonCreator
             Surname = import.Surname.Trim(),
             Suffix = import.Suffix.Trim(),
             Family = import.Family.Trim(),
-            Gens = import.Gens.Trim(),
-            GensAdozione = import.GensAdozione.Trim(),
             Sesso = import.Sesso,
             Nickname = import.Nickname.Trim(),
             MainTitle = import.MainTitle.Trim(),
@@ -57,6 +55,17 @@ public static class ImportedPersonCreator
             WikipediaLeads = [.. import.WikipediaLeads.Select(l => l.Clone())],
         };
 
+        // Gens e ramo importati, non ancora nell'archivio: servono alle etichette finché la scheda non si salva (Create).
+        if (import.GensNascita is { } birthGens)
+        {
+            (person.GensNascita, person.RamoNascita) = birthGens.ToEntities();
+        }
+
+        if (import.GensAdottiva is { } adoptiveGens)
+        {
+            (person.GensAdottiva, person.RamoAdottivo) = adoptiveGens.ToEntities();
+        }
+
         // Con i nomi nel tempo dall'introduzione, le parti della persona sono il riassunto del nome principale.
         if (import.NomiNelTempo.Count > 0)
         {
@@ -89,10 +98,30 @@ public static class ImportedPersonCreator
         person.DeathPlace = PlaceText(store, person.DeathLuogoId, person.DeathLuogoSpecificoId);
         person.BurialPlace = PlaceText(store, person.BurialLuogoId, person.BurialLuogoSpecificoId);
 
+        (person.GensId, person.RamoGensId, person.GensAdozioneId, person.RamoGensAdozioneId) = CreateGens(store, import);
         store.Add(person);
-        RegisterDynasties(store, person.Family, import, gens: PeopleGrouping.JoinFamilyNames(PeopleGrouping.FamilyNames(person.Gens).Concat(PeopleGrouping.FamilyNames(person.GensAdozione))));
+        RegisterDynasties(store, person.Family, import);
         LinkRelatives(store, person.Id, import);
         return (person, unresolved);
+    }
+
+    // Gens e rami importati, creati (o ritrovati) nell'archivio: nascita e adozione.
+    public static (int? GensId, int? RamoId, int? AdoptiveGensId, int? AdoptiveRamoId) CreateGens(PeopleStore store, WikipediaImportResult import)
+    {
+        (int?, int?) Ensure(ImportedGens? gens)
+        {
+            if (gens is null || gens.Nome.Trim().Length == 0)
+            {
+                return (null, null);
+            }
+
+            var (gensId, ramoId) = store.EnsureImportedGens(gens);
+            return (gensId, ramoId);
+        }
+
+        var (birthGens, birthRamo) = Ensure(import.GensNascita);
+        var (adoptiveGens, adoptiveRamo) = Ensure(import.GensAdottiva);
+        return (birthGens, birthRamo, adoptiveGens, adoptiveRamo);
     }
 
     private static (int?, int?) ResolvePlace(PeopleStore store, IEnumerable<HistoricalPlaceRecord> records, ref int unresolved)
@@ -122,11 +151,9 @@ public static class ImportedPersonCreator
     private static string PlaceText(PeopleStore store, int? luogoId, int? specificoId)
         => luogoId is null && specificoId is null ? string.Empty : store.DescribeRole(luogoId, specificoId).DisplayText;
 
-    // Ogni famiglia scritta diventa una dinastia (o una gens, secondo writtenType), ogni nome del campo Gens una gens;
-    // quelle importate si collegano alla dinastia di cui sono ramo. Le importate vanno per prime: così il loro tipo
-    // (gens da P5025) non dipende da quello dei nomi scritti. Restituisce false se la registrazione non è riuscita
-    // (la scheda resta salvata).
-    public static bool RegisterDynasties(PeopleStore store, string family, WikipediaImportResult? import, string writtenType = TipiDinastia.Dinastia, string gens = "")
+    // Ogni famiglia scritta diventa una dinastia; quelle importate si collegano alla dinastia di cui sono ramo. Gens e rami
+    // sono a parte (CreateGens). Restituisce false se la registrazione non è riuscita (la scheda resta salvata).
+    public static bool RegisterDynasties(PeopleStore store, string family, WikipediaImportResult? import, string writtenType = TipiDinastia.Dinastia)
     {
         try
         {
@@ -142,11 +169,6 @@ public static class ImportedPersonCreator
             foreach (var name in PeopleGrouping.FamilyNames(family))
             {
                 store.EnsureDynasty(name, string.Empty, null, writtenType);
-            }
-
-            foreach (var name in PeopleGrouping.FamilyNames(gens))
-            {
-                store.EnsureDynasty(name, string.Empty, null, TipiDinastia.Gens);
             }
 
             return true;

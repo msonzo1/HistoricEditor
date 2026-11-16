@@ -12,11 +12,47 @@ public sealed class HistoricalPerson
     // Dinastie o casate, separate da «;» (es. «Asburgo; Lorena»); per i Romani la dinastia, non la gens.
     public string Family { get; set; } = string.Empty;
 
-    // Gens romana di nascita e suoi rami, separati da «;» («gens Ulpia; Ulpii Traiani»), distinta dalla dinastia (Nerva-Antonina).
-    public string Gens { get; set; } = string.Empty;
+    // Gens romana di nascita ed eventuale ramo (2026-11-15), distinti dalla dinastia (Nerva-Antonina): Traiano nella gens
+    // Ulpia, ramo Traiani. Si salvano i collegamenti, non il testo: «Gens Ulpia › Ulpii Traiani» si ricava (Gens). Il ramo
+    // appartiene sempre alla gens indicata.
+    public int? GensId { get; set; }
 
-    // Gens acquisita con l'adozione (Marco Aurelio, nato nella gens Annia, adottato nella gens Aurelia); facoltativa.
-    public string GensAdozione { get; set; } = string.Empty;
+    [JsonIgnore]
+    public GensRomana? GensNascita { get; set; }
+
+    public int? RamoGensId { get; set; }
+
+    [JsonIgnore]
+    public RamoGens? RamoNascita { get; set; }
+
+    // Gens acquisita con l'adozione ed eventuale ramo (Marco Aurelio, nato nella gens Annia, adottato nella gens Aurelia);
+    // facoltativa.
+    public int? GensAdozioneId { get; set; }
+
+    [JsonIgnore]
+    public GensRomana? GensAdottiva { get; set; }
+
+    public int? RamoGensAdozioneId { get; set; }
+
+    [JsonIgnore]
+    public RamoGens? RamoAdottivo { get; set; }
+
+    // Etichette ricavate dai collegamenti caricati: «Gens Ulpia › Ulpii Traiani».
+    [JsonIgnore]
+    public string Gens => GensLabels.Path(GensNascita, RamoNascita);
+
+    [JsonIgnore]
+    public string GensAdozione => GensLabels.Path(GensAdottiva, RamoAdottivo);
+
+    // Testo della gens nei backup salvati prima del 2026-11-15 («gens Giulia; Iulii Caesares»): si legge solo per
+    // convertirlo in collegamenti al ripristino, non si scrive più.
+    [JsonPropertyName("Gens")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? GensTestoBackup { get; set; }
+
+    [JsonPropertyName("GensAdozione")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? GensAdozioneTestoBackup { get; set; }
     public string Sesso { get; set; } = string.Empty;
     public string Nickname { get; set; } = string.Empty;
     public string MainTitle { get; set; } = string.Empty;

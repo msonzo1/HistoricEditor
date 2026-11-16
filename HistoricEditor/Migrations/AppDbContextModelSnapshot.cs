@@ -187,6 +187,50 @@ namespace HistoricEditor.Migrations
                     b.ToTable("EventiPartecipanti", (string)null);
                 });
 
+            modelBuilder.Entity("HistoricEditor.GensRomana", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .UseCollation("NOCASE");
+
+                    b.Property<string>("NomeItaliano")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Nomen")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Note")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Plurale")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PluraleItaliano")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("WikidataId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Nome");
+
+                    b.HasIndex("WikidataId");
+
+                    b.ToTable("Gentes", (string)null);
+                });
+
             modelBuilder.Entity("HistoricEditor.HistoricalPerson", b =>
                 {
                     b.Property<int>("Id")
@@ -274,13 +318,11 @@ namespace HistoricEditor.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Gens")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                    b.Property<int?>("GensAdozioneId")
+                        .HasColumnType("INTEGER");
 
-                    b.Property<string>("GensAdozione")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                    b.Property<int?>("GensId")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Gentilizio")
                         .IsRequired()
@@ -324,6 +366,12 @@ namespace HistoricEditor.Migrations
                     b.Property<string>("Prenome")
                         .IsRequired()
                         .HasColumnType("TEXT");
+
+                    b.Property<int?>("RamoGensAdozioneId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("RamoGensId")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Sesso")
                         .IsRequired()
@@ -383,9 +431,17 @@ namespace HistoricEditor.Migrations
 
                     b.HasIndex("FatherId");
 
+                    b.HasIndex("GensAdozioneId");
+
+                    b.HasIndex("GensId");
+
                     b.HasIndex("MotherId");
 
                     b.HasIndex("Name");
+
+                    b.HasIndex("RamoGensAdozioneId");
+
+                    b.HasIndex("RamoGensId");
 
                     b.ToTable("People", (string)null);
                 });
@@ -588,6 +644,43 @@ namespace HistoricEditor.Migrations
                     b.ToTable("PersoneDinastie", (string)null);
                 });
 
+            modelBuilder.Entity("HistoricEditor.RamoGens", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Cognomen")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("GensId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("NomeItaliano")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Note")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Plurale")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .UseCollation("NOCASE");
+
+                    b.Property<string>("WikidataId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GensId", "Plurale");
+
+                    b.ToTable("RamiGens", (string)null);
+                });
+
             modelBuilder.Entity("HistoricEditor.Relazione", b =>
                 {
                     b.Property<int>("Id")
@@ -747,9 +840,29 @@ namespace HistoricEditor.Migrations
                         .HasForeignKey("FatherId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("HistoricEditor.GensRomana", "GensAdottiva")
+                        .WithMany()
+                        .HasForeignKey("GensAdozioneId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("HistoricEditor.GensRomana", "GensNascita")
+                        .WithMany()
+                        .HasForeignKey("GensId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("HistoricEditor.HistoricalPerson", "Mother")
                         .WithMany()
                         .HasForeignKey("MotherId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("HistoricEditor.RamoGens", "RamoAdottivo")
+                        .WithMany()
+                        .HasForeignKey("RamoGensAdozioneId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("HistoricEditor.RamoGens", "RamoNascita")
+                        .WithMany()
+                        .HasForeignKey("RamoGensId")
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.OwnsMany("HistoricEditor.HistoricalDateEvidence", "BirthDateEvidence", b1 =>
@@ -1921,11 +2034,19 @@ namespace HistoricEditor.Migrations
 
                     b.Navigation("Father");
 
+                    b.Navigation("GensAdottiva");
+
+                    b.Navigation("GensNascita");
+
                     b.Navigation("LocalizedNames");
 
                     b.Navigation("Mother");
 
                     b.Navigation("NomiNelTempo");
+
+                    b.Navigation("RamoAdottivo");
+
+                    b.Navigation("RamoNascita");
 
                     b.Navigation("Titles");
 
@@ -2069,6 +2190,17 @@ namespace HistoricEditor.Migrations
                     b.Navigation("Persona");
                 });
 
+            modelBuilder.Entity("HistoricEditor.RamoGens", b =>
+                {
+                    b.HasOne("HistoricEditor.GensRomana", "Gens")
+                        .WithMany("Rami")
+                        .HasForeignKey("GensId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Gens");
+                });
+
             modelBuilder.Entity("HistoricEditor.Relazione", b =>
                 {
                     b.HasOne("HistoricEditor.HistoricalPerson", "Persona1")
@@ -2110,6 +2242,11 @@ namespace HistoricEditor.Migrations
             modelBuilder.Entity("HistoricEditor.Evento", b =>
                 {
                     b.Navigation("Partecipanti");
+                });
+
+            modelBuilder.Entity("HistoricEditor.GensRomana", b =>
+                {
+                    b.Navigation("Rami");
                 });
 
             modelBuilder.Entity("HistoricEditor.Luogo", b =>

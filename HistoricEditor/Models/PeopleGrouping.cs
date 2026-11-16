@@ -116,9 +116,9 @@ public static class PeopleGrouping
 
     public static string JoinFamilyNames(IEnumerable<string> names) => string.Join("; ", names);
 
-    // Dinastie e gens della scheda (campi Famiglia, Gens di nascita e Gens d'adozione), per i collegamenti con le dinastie registrate.
+    // Dinastie della scheda (campo Famiglia), per i collegamenti con le dinastie registrate: le gens sono a parte (2026-11-15).
     public static List<string> AllFamilyNames(HistoricalPerson person)
-        => [.. FamilyNames(person.Family).Concat(FamilyNames(person.Gens)).Concat(FamilyNames(person.GensAdozione)).Distinct(Comparer)];
+        => FamilyNames(person.Family);
 
     // Raggruppa per dinastia: le persone collegate (links) vanno sotto ciascuna delle loro dinastie,
     // quelle non collegate secondo i nomi scritti nei campi «Gens» o «Famiglia» (senza distinguere maiuscole).
@@ -132,18 +132,38 @@ public static class PeopleGrouping
 
         var byDynasty = new Dictionary<int, List<HistoricalPerson>>();
         var byFamily = new Dictionary<string, List<HistoricalPerson>>(Comparer);
+        var byGens = new Dictionary<int, (GensRomana Gens, List<HistoricalPerson> Members, Dictionary<int, (RamoGens Ramo, List<HistoricalPerson> Members)> Rami)>();
         foreach (var person in people)
         {
-            // Una persona compare sotto la sua gens di nascita; sotto le dinastie solo se non ha una gens (Traiano: nella gens
-            // Ulpia, ramo Ulpii Traiani, non anche nella Dinastia Nerva-Antonina). La gens d'adozione non conta qui: Marco
-            // Aurelio compare nella gens Annia, non anche nella gens Aurelia.
-            var gensNames = FamilyNames(person.Gens);
-            var adoptive = FamilyNames(person.GensAdozione).Where(n => !gensNames.Contains(n, Comparer)).ToHashSet(Comparer);
-            var allLinked = linksByPerson[person.Id].Distinct().Where(id => !adoptive.Contains(byId[id].Nome.Trim())).ToList();
-            var gensLinks = allLinked.Where(id => byId[id].IsGens).ToList();
-            var useGens = gensLinks.Count > 0 || gensNames.Count > 0;
-            List<int> linked = useGens ? gensLinks : [.. allLinked.Where(id => !byId[id].IsGens)];
-            var written = useGens ? gensNames : FamilyNames(person.Family);
+            // Una persona compare sotto la sua gens di nascita (e il suo ramo); sotto le dinastie solo se non ha una gens
+            // (Traiano: nella Gens Ulpia, ramo Ulpii Traiani, non anche nella Dinastia Nerva-Antonina). La gens d'adozione
+            // non conta qui: Marco Aurelio compare nella Gens Annia, non anche nella Gens Aurelia.
+            if ((person.RamoNascita?.Gens ?? person.GensNascita) is { } gens)
+            {
+                if (!byGens.TryGetValue(gens.Id, out var group))
+                {
+                    group = byGens[gens.Id] = (gens, [], []);
+                }
+
+                if (person.RamoNascita is { } ramo)
+                {
+                    if (!group.Rami.TryGetValue(ramo.Id, out var branch))
+                    {
+                        branch = group.Rami[ramo.Id] = (ramo, []);
+                    }
+
+                    branch.Members.Add(person);
+                }
+                else
+                {
+                    group.Members.Add(person);
+                }
+
+                continue;
+            }
+
+            List<int> linked = [.. linksByPerson[person.Id].Distinct().Where(id => !byId[id].IsGens)];
+            var written = FamilyNames(person.Family);
 
             foreach (var id in linked)
             {
@@ -211,6 +231,12 @@ public static class PeopleGrouping
         roots.AddRange(byFamily
             .Where(kv => kv.Key.Length > 0 && !used.Contains(kv.Key))
             .Select(kv => new PersonGroup(kv.Key, Entries(kv.Value))));
+
+        // Gentes con i loro rami: «Gens Giulia» › «Giulii Cesari».
+        roots.AddRange(byGens.Values.Select(g => new PersonGroup(
+            g.Gens.Etichetta,
+            Entries(g.Members),
+            [.. g.Rami.Values.Select(r => new PersonGroup(GensLabels.Branch(g.Gens, r.Ramo), Entries(r.Members))).OrderBy(r => r.Famiglia, Comparer)])));
 
         var result = roots.OrderBy(g => g.Famiglia, Comparer).ToList();
         if (byFamily.TryGetValue(string.Empty, out var noFamily))

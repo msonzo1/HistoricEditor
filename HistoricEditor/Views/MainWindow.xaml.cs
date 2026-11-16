@@ -577,6 +577,16 @@ public partial class MainWindow : Window
 		  ReloadAfterFamilyChange(pedigreeRootId ?? 0);
 	 }
 
+	 private void EditGentes_Click(object sender, RoutedEventArgs e)
+	 {
+		  var window = new GentesWindow(store) { Owner = this };
+		  window.ShowDialog();
+		  if (window.Changed)
+		  {
+				ReloadAfterFamilyChange(pedigreeRootId ?? 0);
+		  }
+	 }
+
 	 private void EditEvents_Click(object sender, RoutedEventArgs e) => OpenEvents(CurrentPerson?.Id);
 
 	 private void OpenMap_Click(object sender, RoutedEventArgs e) => OpenMap(null);

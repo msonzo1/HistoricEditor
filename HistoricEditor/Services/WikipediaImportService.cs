@@ -554,13 +554,90 @@ public sealed partial class WikipediaImportService
         var adoptiveFamilyIds = ReadAdoptiveFamilyIds(claims);
         var branchIds = keptFamilyIds.Where(gensLine.Contains).ToList();
         var adoptiveBranchIds = branchIds.Where(id => IsAdoptiveBranch(id, adoptiveFamilyIds, familyParents, gensIds, adoptiveGensIds)).ToHashSet(StringComparer.Ordinal);
-        var gensNames = gensIds.Concat(branchIds.Where(id => !adoptiveBranchIds.Contains(id))).Distinct(StringComparer.Ordinal).Select(id => familyLabels.GetValueOrDefault(id, id));
-        var adoptiveGensNames = adoptiveGensIds.Concat(adoptiveBranchIds).Distinct(StringComparer.Ordinal).Select(id => familyLabels.GetValueOrDefault(id, id));
         var familyNames = keptFamilyIds.Where(id => !gensLine.Contains(id)).Distinct(StringComparer.Ordinal).Select(id => familyLabels.GetValueOrDefault(id, id));
-        // Ultimo ripiego per la gens di nascita: il nomen d'origine di un adottato (Octavianus → gens Ottavia).
-        if (!gensNames.Any() && GensOfOriginNomen(romanNamesOverTime) is { Length: > 0 } originGens)
+
+        // Gens e ramo (2026-11-15): le forme latine e italiane si leggono dalle etichette, senza regole di declinazione. Il
+        // nome della gens dall'etichetta latina («gens Iulia» → Iulia), il plurale dall'etichetta latina della gens se è al
+        // plurale («Iulii») o dalla prima parola del ramo («Iulii Caesares»), il nomen dal nomen della persona che
+        // corrisponde alla gens (Iulius per Iulia). Il ramo prende il resto della sua etichetta («Caesares»).
+        var nomina = knownRomanTypes.Where(kv => kv.Value == TipiParteNome.Nomen).Select(kv => kv.Key)
+            .Concat(romanNamesOverTime.SelectMany(n => n.Parti).Where(p => p.Tipo == TipiParteNome.Nomen).Select(p => p.Latino))
+            .Append(nomen)
+            // Senza i segni delle vocali lunghe, come le altre forme latine: «Iūlius» → «Iulius».
+            .Select(n => WithoutMacrons(n.Trim()))
+            .Where(n => n.Length > 0)
+            .ToList();
+        static string WithoutMacrons(string text)
+            => new string([.. text.Normalize(System.Text.NormalizationForm.FormD).Where(c => System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c) != System.Globalization.UnicodeCategory.NonSpacingMark)])
+                .Normalize(System.Text.NormalizationForm.FormC);
+        static bool Same(string a, string b) => string.Equals(a.Trim(), b.Trim(), StringComparison.OrdinalIgnoreCase);
+        static string WithoutGens(string text) => Regex.Replace(text.Trim(), @"^gens\s+", string.Empty, RegexOptions.IgnoreCase).Trim();
+        ImportedGens GensFor(string gensId, string? branchId)
         {
-            gensNames = [originGens];
+            var italianLabel = WithoutGens(familyLabels.GetValueOrDefault(gensId, string.Empty));
+            var name = WithoutGens(LatinOf(gensId));
+            if (name.Length == 0)
+            {
+                name = italianLabel;
+            }
+
+            var labels = related.TryGetValue(gensId, out var entity) ? ReadLabels(entity) : [];
+            var plural = new[] { "la", "mul" }.Select(l => labels.GetValueOrDefault(l, string.Empty).Trim().Replace('J', 'I'))
+                .FirstOrDefault(l => Regex.IsMatch(l, @"^\p{Lu}\p{L}+ii$")) ?? string.Empty;
+            var nomenWord = name.Length > 1
+                ? nomina.FirstOrDefault(n => n.Length > 3 && n.EndsWith("us", StringComparison.Ordinal) && Same(n[..^2], name[..^1])) ?? string.Empty
+                : string.Empty;
+            var italianPlural = string.Empty;
+            ImportedGensBranch? branch = null;
+            if (branchId is not null)
+            {
+                var latinWords = LatinOf(branchId).Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                var italianWords = familyLabels.GetValueOrDefault(branchId, string.Empty).Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (latinWords.Length == 0)
+                {
+                    latinWords = italianWords;
+                }
+
+                if (latinWords.Length >= 2 && plural.Length == 0)
+                {
+                    plural = latinWords[0];
+                }
+
+                if (italianWords.Length >= 2 && latinWords.Length >= 2 && !Same(italianWords[0], latinWords[0]))
+                {
+                    italianPlural = italianWords[0];
+                }
+
+                var branchPlural = string.Join(' ', latinWords.Length >= 2 ? latinWords[1..] : latinWords);
+                var branchItalian = string.Join(' ', italianWords.Length >= 2 ? italianWords[1..] : italianWords);
+                branch = new ImportedGensBranch(branchId, DynastyNames.Capitalize(branchPlural), Same(branchItalian, branchPlural) ? string.Empty : DynastyNames.Capitalize(branchItalian));
+            }
+
+            return new ImportedGens(
+                gensId,
+                DynastyNames.Capitalize(name),
+                DynastyNames.Capitalize(nomenWord),
+                DynastyNames.Capitalize(plural),
+                Same(italianLabel, name) ? string.Empty : DynastyNames.Capitalize(italianLabel),
+                Same(italianPlural, plural) ? string.Empty : DynastyNames.Capitalize(italianPlural),
+                branch);
+        }
+
+        ImportedGens? SlotGens(IEnumerable<string> slotGensIds, IEnumerable<string> slotBranchIds)
+        {
+            var branchId = slotBranchIds.FirstOrDefault();
+            var gensId = slotGensIds.FirstOrDefault() ?? (branchId is null ? null : familyParents.GetValueOrDefault(branchId));
+            return gensId is null ? null : GensFor(gensId, branchId);
+        }
+
+        var gensNascita = SlotGens(gensIds, branchIds.Where(id => !adoptiveBranchIds.Contains(id)));
+        var gensAdottiva = SlotGens(adoptiveGensIds, adoptiveBranchIds);
+        // Ultimo ripiego per la gens di nascita: il nomen d'origine di un adottato (Octavianus → Gens Octavia, nomen Octavius).
+        if (gensNascita is null && romanNamesOverTime.SelectMany(n => n.Parti).FirstOrDefault(p => p.Tipo == TipiParteNome.NomenOrigine) is { } origin
+            && RomanNaming.OriginNomen(origin.Latino) is { Length: > 0 } originNomen)
+        {
+            gensNascita = new ImportedGens(string.Empty, RomanNaming.FeminineNomen(originNomen), originNomen,
+                NomeItaliano: RomanNaming.FeminineNomen(RomanNaming.ItalianForm(originNomen)));
         }
 
         progress.Step(8, "Composizione della scheda…");
@@ -598,9 +675,10 @@ public sealed partial class WikipediaImportService
             NomiNelTempo = romanNamesOverTime,
             // Nomi con la maiuscola iniziale, anche in latino (2026-11-15): «Gens Giulia», «Gens Iulia».
             Family = DynastyNames.CapitalizeAll(string.Join("; ", familyNames)),
-            Gens = DynastyNames.CapitalizeAll(string.Join("; ", gensNames)),
-            GensAdozione = DynastyNames.CapitalizeAll(string.Join("; ", adoptiveGensNames)),
-            Dynasties = [.. dynasties.Where(d => d.Gens || keptFamilyIds.Contains(d.WikidataId)).Select(d => d with
+            GensNascita = gensNascita,
+            GensAdottiva = gensAdottiva,
+            // Solo le dinastie: gens e rami sono a parte (GensNascita, GensAdottiva).
+            Dynasties = [.. dynasties.Where(d => !d.Gens && keptFamilyIds.Contains(d.WikidataId)).Select(d => d with
             {
                 Nome = DynastyNames.Capitalize(d.Nome),
                 NomeLatino = DynastyNames.Capitalize(d.NomeLatino),
