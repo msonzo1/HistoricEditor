@@ -69,7 +69,7 @@ nascita: Q658893 Italica | Spagna | tipo Sito archeologico | 37.44119, -6.044500
     divisione: Paese (P17) antica Roma Q1747689
     divisione: Unità amministrativa (P131) Spagna Q29
     divisione: Paese (P17) Spagna Q29
-    in archivio: Stato Spagna > Comunità autonoma Andalusia > Provincia provincia di Siviglia > Comune Santiponce > luogo storico Italica > luogo specifico Sito archeologico di Italica (Sito archeologico, In rovina) [automatico]
+    in archivio: Stato Spagna > Comunità autonoma Andalusia > Provincia provincia di Siviglia > Comune Santiponce > luogo storico Italica; resti nel luogo attuale: Sito archeologico di Italica (Sito archeologico, In rovina) [automatico]
 morte: Q1424724 Selinunte | Turchia | tipo Sito archeologico | 36.26111111, 32.28472222
     divisione: Unità amministrativa (P131) Gazipaşa Q844779
     divisione: Unità amministrativa (P131) provincia di Adalia Q40249
@@ -79,7 +79,7 @@ morte: Q1424724 Selinunte | Turchia | tipo Sito archeologico | 36.26111111, 32.2
     divisione: Unità amministrativa (P131) Turchia Q43
     divisione: Paese (P17) Turchia Q43
     divisione: Paese (P17) Turchia Q43
-    in archivio: Stato Turchia > Provincia provincia di Adalia > Comune Gazipaşa > luogo storico Selinunte > luogo specifico Sito archeologico di Selinunte (Sito archeologico, In rovina) [automatico]
+    in archivio: Stato Turchia > Regione Mar Mediterraneo > Provincia Adalia > Distretto Gazipaşa > luogo storico Selinunte; resti nel luogo attuale: Sito archeologico di Selinunte (Sito archeologico, In rovina) [automatico]
 sepoltura: Q192784 Colonna Traiana | Italia | tipo Sito archeologico | 41.895833333333, 12.484166666667
     divisione: Unità amministrativa (P131) Roma Q220
     divisione: Paese (P17) Italia Q38

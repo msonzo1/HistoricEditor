@@ -198,6 +198,7 @@ public sealed partial class PeopleStore : IDisposable
         }
 
         CleanUpDynasties();
+        MoveRemainsOutOfHistoricPlaces();
 
         return [.. context.People.AsNoTracking()];
     }
@@ -1136,7 +1137,7 @@ public sealed partial class PeopleStore : IDisposable
 
     // Riusa il luogo specifico già importato (stesso Wikidata o stesso nome nello stesso luogo). La condizione
     // («In rovina» per i resti di un luogo antico) vale solo per un luogo nuovo: quella di uno esistente può essere stata corretta.
-    public int EnsureSpecificPlace(string nome, int luogoId, string wikidataId, double? latitudine = null, double? longitudine = null, string tipo = "", string condizione = "")
+    public int EnsureSpecificPlace(string nome, int luogoId, string wikidataId, double? latitudine = null, double? longitudine = null, string tipo = "", string condizione = "", string note = "")
     {
         nome = nome.Trim();
         tipo = (tipo ?? string.Empty).Trim();
@@ -1156,7 +1157,7 @@ public sealed partial class PeopleStore : IDisposable
             return existing.Id;
         }
 
-        var created = new LuogoSpecifico { Nome = nome, Tipo = tipo, LuogoId = luogoId, WikidataId = wikidataId, Latitudine = latitudine, Longitudine = longitudine };
+        var created = new LuogoSpecifico { Nome = nome, Tipo = tipo, LuogoId = luogoId, WikidataId = wikidataId, Latitudine = latitudine, Longitudine = longitudine, Note = note };
         if (CondizioniLuogo.Tutte.Contains(condizione))
         {
             created.Condizione = condizione;

@@ -35,7 +35,11 @@ public static class GeographyResolver
     {
         var derived = DeriveLevelsCore(context, place);
         ItalianDivisions.Normalize(derived.Levels, place.AdministrativeDivisions);
-        var confident = derived.Confident && !place.AdministrativeDivisions.Any(d => d.Relation == PlaceDivision.NearbyMunicipalityRelation);
+        // In Turchia la città messa direttamente nella provincia diventa il distretto: la catena, prima incompleta per il
+        // distretto mancante, può diventare certa.
+        var turkish = TurkishDivisions.Normalize(derived.Levels, place.AdministrativeDivisions);
+        var confident = (derived.Confident || (turkish && IsComplete(derived.Levels)))
+            && !place.AdministrativeDivisions.Any(d => d.Relation == PlaceDivision.NearbyMunicipalityRelation);
         if (place.HistoricName.Trim().Length > 0)
         {
             if (derived.SpecificName is not null)

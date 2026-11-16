@@ -21,7 +21,7 @@ internal static class ImportedPlaceResolver
         {
             var notice = derived.HistoricName is { Length: > 0 } historic
                 ? place.HistoricBuildingName.Trim() is { Length: > 0 } building
-                    ? $"{role}: «{historic}» non esiste più e sarà salvato come luogo storico, con «{building}» (ancora visibile) come luogo specifico al suo interno. Verificare il luogo che lo contiene."
+                    ? $"{role}: «{historic}» non esiste più e sarà salvato come luogo storico; «{building}», ancora visibile, sarà un luogo specifico nel luogo attuale che lo contiene. Verificare il luogo che lo contiene."
                     : $"{role}: «{historic}» non esiste più e sarà salvato come luogo storico. Verificare il luogo attuale che lo contiene: il comune, oppure la provincia, la regione o soltanto lo Stato se non è noto un luogo più preciso (i livelli più bassi si possono lasciare vuoti)."
                 : derived.SpecificName is null
                     ? $"{role}: la gerarchia di «{place.CurrentName}» è incompleta o incerta. Verificarla prima di salvare."
@@ -124,8 +124,15 @@ internal static class ImportedPlaceResolver
             containerId = store.EnsureHistoricPlace(historicName, derived.LatinName, HistoricType(place), luogoId, place.WikidataId, place.Latitudine, place.Longitudine,
                 formerName: place.HistoricBuildingName);
             store.MergePlaceHistoricNames(containerId, place.HistoricalNames, place.WikidataId);
-            // L'edificio che dà il nome alla località (Terme di Cotilia) è un luogo specifico dentro il luogo storico.
-            (specificName, specificType) = (place.HistoricBuildingName.Trim(), place.HistoricBuildingType);
+            // I resti ancora visibili (Terme di Cotilia, Sito archeologico di Pelusio) sono un luogo specifico nel luogo
+            // attuale che contiene il luogo storico, con la nota «Resti di …»; resti scomparsi stanno nel luogo storico
+            // (2026-11-16). La scheda resta nel luogo storico: il personaggio è nato o morto nella città, non nel sito.
+            if (place.HistoricBuildingName.Trim() is { Length: > 0 } remains)
+            {
+                var remainsContainer = place.SpecificCondition == CondizioniLuogo.Distrutto ? containerId : luogoId;
+                store.EnsureSpecificPlace(remains, remainsContainer, place.WikidataId, place.Latitudine, place.Longitudine, place.HistoricBuildingType,
+                    place.SpecificCondition, note: $"Resti di {historicName}.");
+            }
         }
         else if (derived.SpecificName is { Length: > 0 } name)
         {

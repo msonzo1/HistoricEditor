@@ -66,11 +66,9 @@ public sealed class PendingPlace
         }
     }
 
-    // Luogo specifico letto dall'import: l'edificio che resta di una località antica o un luogo non amministrativo
-    // (castello, monastero…).
-    internal string ImportedSpecific => Place.HistoricBuildingName.Trim() is { Length: > 0 } building && IsHistoric
-        ? building
-        : IsHistoric ? string.Empty : Derived.SpecificName?.Trim() ?? string.Empty;
+    // Luogo specifico letto dall'import: un luogo non amministrativo (castello, monastero…). Per un luogo storico nessuno:
+    // i suoi resti si creano a parte, nel luogo attuale (2026-11-16).
+    internal string ImportedSpecific => IsHistoric ? string.Empty : Derived.SpecificName?.Trim() ?? string.Empty;
 
     internal string ImportedSpecificType => IsHistoric
         ? Place.HistoricBuildingType

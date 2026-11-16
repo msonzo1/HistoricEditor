@@ -56,7 +56,7 @@ morte: Q1145715 Pelusio | Egitto | tipo Città | 31.05, 32.6
     divisione: Paese (P17) Egitto Q79
     divisione: Unità amministrativa (P131) Egitto Q79
     divisione: Paese (P17) Egitto Q79
-    in archivio: Stato Egitto > Governatorato Governatorato di Porto Said > luogo storico Pelusio > luogo specifico Sito archeologico di Pelusio (Sito archeologico, In rovina) [automatico]
+    in archivio: Stato Egitto > Governatorato Governatorato di Porto Said > luogo storico Pelusio; resti nel luogo attuale: Sito archeologico di Pelusio (Sito archeologico, In rovina) [automatico]
 
 ## Titoli
 Senatore romano: n.  |  () –  () | Q20056508 | prima   | dopo  

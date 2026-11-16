@@ -64,7 +64,7 @@ morte: Q871525 Vindobona | Austria | tipo Sito archeologico | 48.210833333333, 1
     divisione: Unità amministrativa (P131) Austria Q40
     divisione: Paese (P17) Austria Q40
     divisione: Paese (P17) Austria Q40
-    in archivio: Stato Austria > Land Vienna > Distretto Vienna > Comune Vienna > luogo storico Vindobona > luogo specifico Sito archeologico di Vindobona (Sito archeologico, In rovina) [automatico]
+    in archivio: Stato Austria > Land Vienna > Distretto Vienna > Comune Vienna > luogo storico Vindobona [automatico]
 sepoltura: Q486382 Castel Sant'Angelo | Italia | tipo Museo | 41.903044, 12.466307
     divisione: Unità amministrativa (P131) Roma Q220
     divisione: Paese (P17) Italia Q38

@@ -349,6 +349,28 @@ public class ImportRegressionTests
     }
 
     [Fact]
+    public async Task Germanico()
+    {
+        const string page = "Germanico Giulio Cesare";
+        var r = await ImportFixtures.ImportAsync(page);
+
+        Assert.Equal("Q191039", r.WikidataId);
+
+        // Morto ad Antiochia di Siria, luogo storico (2026-11-16): sta nel distretto di Antiochia, con i livelli dell'infobox
+        // italiana (la regione dalla tabella delle province), e non ha un sito archeologico: Wikidata la indica «sostituita
+        // da» Antiochia moderna, la città antica è sotto quella nuova.
+        var antioch = Assert.Single(r.DeathPlaces);
+        var derived = ImportSnapshot.DerivePlace(antioch);
+        Assert.Equal(["Turchia", "Mar Mediterraneo", "Hatay", "Antiochia"], derived.Levels.Select(l => l.Nome));
+        Assert.Equal(["Stato", "Regione", "Provincia", "Distretto"], derived.Levels.Select(l => l.Tipo));
+        Assert.Equal("Antiochia di Siria", derived.HistoricName);
+        Assert.True(derived.Confident);
+        Assert.Equal(string.Empty, antioch.HistoricBuildingName);
+
+        ImportFixtures.AssertMatchesSnapshot(page, r);
+    }
+
+    [Fact]
     public async Task Tiberio()
     {
         const string page = "Tiberio";

@@ -1034,7 +1034,7 @@ public class GeographyResolverTests : IDisposable
         { "Tirana", ["Albania", "Prefettura di Tirana", "Municipalità di Tirana", "Tirana"] },
         { "Nauplia", ["Grecia", "Peloponneso", "Argolide", "Comune di Nauplia", "Nauplia"] },
         { "Sibiu", ["Romania", "Distretto di Sibiu", "Sibiu"] },
-        { "Bursa", ["Turchia", "Provincia di Bursa", "Bursa"] },
+        { "Bursa", ["Turchia", "Marmara", "Bursa", "Bursa"] },
         { "Leopoli", ["Ucraina", "Oblast di Leopoli", "Distretto di Leopoli", "Comunità di Leopoli", "Leopoli"] },
         { "Kazan", ["Russia", "Tatarstan", "Kazan"] },
         { "Reykjavík", ["Islanda", "Regione della Capitale", "Reykjavíkurborg", "Reykjavík"] },

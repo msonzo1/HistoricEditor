@@ -66,7 +66,7 @@ morte: Q383071 Aquae Cutiliae | Italia | tipo Sito archeologico | 42.380104, 13.
     divisione: Paese (P17) Italia Q38
     divisione: Unità amministrativa (P131) Italia Q38
     divisione: Paese (P17) Italia Q38
-    in archivio: Stato Italia > Regione Lazio > Provincia Provincia di Rieti > Comune Castel Sant’Angelo > luogo storico Aquae Cutiliae > luogo specifico Terme di Cotilia (Sito archeologico, In rovina) [automatico]
+    in archivio: Stato Italia > Regione Lazio > Provincia Provincia di Rieti > Comune Castel Sant’Angelo > luogo storico Aquae Cutiliae; resti nel luogo attuale: Terme di Cotilia (Sito archeologico, In rovina) [automatico]
 sepoltura: Q770847 Mausoleo di Augusto | Italia | tipo Sito archeologico | 41.90611, 12.47639
     divisione: Unità amministrativa (P131) Campo Marzio Q1031426
     divisione: Unità amministrativa (P131) Municipio Roma I Q550592

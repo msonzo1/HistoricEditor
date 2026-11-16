@@ -9,7 +9,9 @@ namespace HistoricEditor;
 //    attuale che lo contiene: di solito il comune, ma anche una provincia o una regione se il comune non si conosce.
 //  - LUOGO SPECIFICO = luogo che esiste ancora, anche solo come rovine: un edificio in rovina (Tempio del Divo Giulio)
 //    diventa un luogo specifico di tipo «Sito archeologico», in rovina; i resti di una località antica (Terme di
-//    Cotilia, Sito archeologico di Italica) diventano un luogo specifico dentro il luogo storico.
+//    Cotilia, Sito archeologico di Italica) diventano un luogo specifico nel luogo attuale che li contiene, con la nota
+//    «Resti di …» (2026-11-16: prima stavano dentro il luogo storico). Una città antica «sostituita da» (P1366) una città
+//    di oggi non ha resti visibili: stanno sotto la città moderna (Antiochia di Siria sotto Antiochia).
 // I nomi si cercano su Wikidata (etichette e alias in italiano e latino) e nelle voci di Wikipedia della persona
 // (introduzione e infobox in italiano), perché spesso Wikidata non li ha: Falacrine ha solo etichette straniere.
 public sealed partial class WikipediaImportService
@@ -160,11 +162,14 @@ public sealed partial class WikipediaImportService
     internal static bool IsRomanPlace(JsonElement entity)
         => ReadEntityIds(entity.GetPropertyOrDefault("claims"), "P17").Any(RomanStates.Contains);
 
-    // Una località antica di cui restano le rovine (sito archeologico, rovine) ha un luogo specifico al suo interno.
+    // Una località antica di cui restano le rovine (sito archeologico, rovine) ha un luogo specifico per i resti. Non se
+    // Wikidata la indica «sostituita da» (P1366) un altro luogo: Antiochia di Siria è un «sito archeologico», ma la città
+    // antica sta sotto quella moderna e non c'è un sito da visitare (2026-11-16).
     internal static bool HasVisibleRemains(JsonElement entity)
     {
         var claims = entity.GetPropertyOrDefault("claims");
-        return AllTypes(claims).Overlaps(RuinsTypes) || AllTypes(claims, "P5816").Overlaps(RemainsStates);
+        return (AllTypes(claims).Overlaps(RuinsTypes) || AllTypes(claims, "P5816").Overlaps(RemainsStates))
+            && AllTypes(claims, "P1366").Count == 0;
     }
 
     // Decide luogo storico / luogo specifico e dà i nomi italiano e latino ai luoghi storici; una richiesta per le
@@ -259,8 +264,9 @@ public sealed partial class WikipediaImportService
                     continue;
                 }
 
-                // Resti ancora visibili: un luogo specifico (in rovina) dentro il luogo storico. Il nome è quello
-                // dell'edificio se un nome italiano lo indica («Terme di Cotilia»), altrimenti «Sito archeologico di …».
+                // Resti ancora visibili: un luogo specifico (in rovina) nel luogo attuale che contiene il luogo storico. Il
+                // nome è quello dell'edificio se un nome italiano lo indica («Terme di Cotilia»), altrimenti «Sito
+                // archeologico di …».
                 if (chosen.Building.Length > 0 || HasVisibleRemains(entity))
                 {
                     place.HistoricBuildingName = chosen.Building.Length > 0 ? chosen.Building : $"{ArchaeologicalSiteType} di {place.HistoricName}";

@@ -1,0 +1,119 @@
+
+## Scheda
+Pagina: Germanico Giulio Cesare (https://it.wikipedia.org/wiki/Germanico_Giulio_Cesare)
+Wikidata: Q191039
+WikiTree: 
+Nome visualizzato: Germanico Giulio Cesare
+Nome / Cognome / Suffisso / Soprannome: Germanico Giulio Cesare /  /  / 
+Sesso: M
+Titolo principale: Senatore romano
+Famiglia: Dinastia Giulio-Claudia
+Gens: Gens Claudia › Claudii Nerones
+Gens d'adozione: Gens Giulia › Iulii Caesares
+Gens (forme): Q385338 nome Claudia | nomen Claudius | plurale Claudii | it  | plurale it  || ramo Q102259474 plurale Nerones | it  | cognomen 
+Gens d'adozione (forme): Q510193 nome Iulia | nomen Iulius | plurale Iulii | it Giulia | plurale it  || ramo Q3268376 plurale Caesares | it  | cognomen 
+Nascita: 24/05/15 a.C. [calendario: giuliano]
+Morte: 10/10/0019 [calendario: giuliano]
+Edizioni non lette: 
+
+## Nome romano
+Latino (praenomen / nomen / cognomen / agnomen): Nero GERMANICVS / Claudius Iūlius / Drusus Caesar / Germanicus
+Nome latino: Nero Claudius Drusus Germanicus
+Italiano (prenome / gentilizio / cognome / agnome): Nero / Claudius Iulius / Druso Cesare / Germanico
+Nome nel tempo: Nerone Claudio Druso | Nero Claudius Drusus | filiazione  | dal 15 a.C. | Nome alla nascita | Praenomen:Nero Nomen:Claudius Cognomen:Drusus
+Nome nel tempo: Nerone Claudio Druso Germanico | Nero Claudius Drusus Germanicus | filiazione  | dal  | Dal 9 a.C. al 4 | Praenomen:Nero Nomen:Claudius Cognomen:Drusus Agnomen:Germanicus
+Nome nel tempo ★: Germanico Giulio Cesare | Germanicus Iulius Caesar | filiazione  | dal  | Adozione | Praenomen:Germanicus Nomen:Iulius Cognomen:Caesar
+
+## Nomi nelle lingue
+it: Germanico Giulio Cesare | suffisso  | soprannome  | titolo senatore romano | parti  /  /  / 
+en: Germanicus | suffisso  | soprannome  | titolo ancient Roman senator | parti Nero Germanicus / Claudius Julius / Drusus Caesar / Germanicus
+de: Germanicus | suffisso  | soprannome  | titolo römischer Senator | parti Nero / Claudius Iulius / Drusus Caesar / Germanicus
+fr: Germanicus | suffisso  | soprannome  | titolo sénateur romain | parti Nero / Claudius Julius / Drusus Caesar / Germanicus
+es: Germánico | suffisso  | soprannome  | titolo senador romano | parti Nero / Claudius Iulius / Drusus Caesar / Germanicus
+nl: Germanicus Julius Caesar | suffisso  | soprannome  | titolo Romeins senator | parti  / Claudius / Drusus Caesar / Germanicus
+
+## Dinastie
+Q192841: Dinastia Giulio-Claudia [la: Domus Iulio-Claudia] ←  [la: ]
+
+## Date di nascita
+24/05/15 a.C.: giorno | preferred | giuliano | -0015-05-24T00:00:00Z | qualificatori  | fonti Q19938912, Q746368, Q25375223, Q45273998, Wikipedia in italiano, Wikipedia in inglese, Wikipedia in tedesco, Wikipedia in francese, Wikipedia in spagnolo, Wikipedia in olandese
+
+## Date di morte
+10/10/0019: giorno | preferred | giuliano | +0019-10-10T00:00:00Z | qualificatori  | fonti Q19938912, Q746368, Q25375223, Q24400143, Wikipedia in italiano, Wikipedia in inglese, Wikipedia in tedesco, Wikipedia in spagnolo
+
+## Date scartate (una sola fonte)
+Date discordanti: 
+
+## Luoghi
+nascita: Q220 Roma | Italia | tipo Città di confine | 41.893055555556, 12.482777777778
+    divisione: Unità amministrativa (P131) città metropolitana di Roma Capitale Q18288160
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Lazio Q1282
+    divisione: Paese (P17) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    nome storico: Colonia Lucia Annia Commodiana (la, 191 – 193)
+    in archivio: Stato Italia > Regione Lazio > Provincia Città metropolitana di Roma Capitale > Comune Roma [automatico]
+morte: Q200441 Antiochia di Siria | Turchia | tipo Città antica | 36.20472222222222, 36.181666666666665
+    divisione: Unità amministrativa (P131) Antiochia Q80561
+    divisione: Paese (P17) Turchia Q43
+    divisione: Unità amministrativa (P131) provincia di Hatay Q83274
+    divisione: Paese (P17) Turchia Q43
+    divisione: Paese (P17) Turchia Q43
+    divisione: Unità amministrativa (P131) Turchia Q43
+    divisione: Paese (P17) Turchia Q43
+    in archivio: Stato Turchia > Regione Mar Mediterraneo > Provincia Hatay > Distretto Antiochia > luogo storico Antiochia di Siria [automatico]
+sepoltura: Q770847 Mausoleo di Augusto | Italia | tipo Sito archeologico | 41.90611, 12.47639
+    divisione: Unità amministrativa (P131) Campo Marzio Q1031426
+    divisione: Unità amministrativa (P131) Municipio Roma I Q550592
+    divisione: Unità amministrativa (P131) Lazio Q1282
+    divisione: Unità amministrativa (P131) Roma Q220
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Roma Capitale Q3940419
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Roma Capitale Q3940419
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) città metropolitana di Roma Capitale Q18288160
+    divisione: Paese (P17) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) città metropolitana di Roma Capitale Q18288160
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Lazio Q1282
+    divisione: Paese (P17) Italia Q38
+    in archivio: Stato Italia > Regione Lazio > Provincia Città metropolitana di Roma Capitale > Comune Roma > luogo specifico Mausoleo di Augusto [automatico]
+
+## Titoli
+Senatore romano: n.  |  () –  () | Q20056508 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39):  – 
+Questore: n.  |  () –  () | Q189430 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39):  – 
+Console: n.  |  () –  () | Q40779 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39):  – 
+
+## Introduzioni di Wikipedia
+it: Germanico Giulio Cesare | nato 24/5/-15 a  [] | morto 10/10/19 a Antiochia di Siria [Q200441]
+en: Germanicus | nato 24/5/-15 a Rome, Italy [Q220] | morto 10/10/19 a Antioch, Syria [Q200441]
+de: Germanicus | nato 24/5/-15 a  [] | morto 10/10/19 a Daphne bei Antiochia am Orontes [Q200441]
+fr: Germanicus | nato 24/5/-15 a Rome [Q220] | morto // a Antioche [Q200441]
+es: Germánico | nato 24/5/-15 a  [] | morto 10/10/19 a  []
+nl: Germanicus Julius Caesar | nato //-15 a  [] | morto // a  []
+wikidata: Q191039 | nato 24/5/-15 a Roma [Q220] | morto 10/10/19 a Antiochia di Siria [Q200441]
+Concordanza: Green: Le edizioni di Wikipedia concordano su date e luoghi di nascita e morte.
+    italiano: 24 maggio 15 a.C., luogo non indicato – 10 ottobre 19, Antiochia di Siria | Concorda con la maggioranza.
+    inglese: 24 maggio 15 a.C., Rome, Italy – 10 ottobre 19, Antioch, Syria | Concorda con la maggioranza.
+    tedesco: 24 maggio 15 a.C., luogo non indicato – 10 ottobre 19, Daphne bei Antiochia am Orontes | Concorda con la maggioranza.
+    francese: 24 maggio 15 a.C., Rome – —, Antioche | Concorda con la maggioranza.
+    spagnolo: 24 maggio 15 a.C., luogo non indicato – 10 ottobre 19, luogo non indicato | Concorda con la maggioranza.
+    olandese: 15 a.C., luogo non indicato – —, luogo non indicato | Concorda con la maggioranza.
+    Wikidata: 24 maggio 15 a.C., Roma – 10 ottobre 19, Antiochia di Siria | Concorda con la maggioranza.
+
+## Parenti e relazioni
+Padre: Q156778
+Madre: Q229836
+Coniugi: Q229413
+Figli: Q1409, Q370363, Q241036, Q237629, Q165448, Q154732, Q91339267, Q91340775, Q91340806
+Relazioni: Q1407 Adozione
+Eventi: Q188468

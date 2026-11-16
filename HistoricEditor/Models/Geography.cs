@@ -114,7 +114,9 @@ public static class GeoSchemas
         ["Romania"] = ["Stato", "Distretto", "Comune"],
         ["Moldavia"] = ["Stato", "Distretto", "Comune"],
         ["Cipro"] = ["Stato", "Distretto", "Comune"],
-        ["Turchia"] = ["Stato", "Provincia", "Comune"],
+        // Turchia (2026-11-16, da Germanico): come l'infobox delle voci italiane, Stato › Regione › Provincia › Distretto;
+        // il comune solo per un paese dentro un distretto (TurkishDivisions).
+        ["Turchia"] = ["Stato", "Regione", "Provincia", "Distretto", "Comune"],
         ["Ucraina"] = ["Stato", "Oblast", "Distretto", "Comunità", "Comune"],
         ["Bielorussia"] = ["Stato", "Regione", "Comune"],
         ["Russia"] = ["Stato", "Soggetto federale", "Comune"],
@@ -514,10 +516,13 @@ public static class GeoSchemas
             // Città di Cipro, città, town, villaggio.
             ["Comune"] = new(StringComparer.Ordinal) { "Q29556224", "Q515", "Q3957", "Q532" },
         },
-        // I distretti (ilçe) non sono nella catena P131 delle città: vengono saltati.
+        // Le regioni non sono nella catena P131 (TurkishDivisions); una città messa direttamente nella provincia è il
+        // distretto (TurkishDivisions.Normalize).
         ["Turchia"] = new(StringComparer.OrdinalIgnoreCase)
         {
             ["Provincia"] = new(StringComparer.Ordinal) { "Q48336" },
+            // Distretto (ilçe).
+            ["Distretto"] = new(StringComparer.Ordinal) { "Q1147395" },
             // Comune metropolitano, città, grande città, town, villaggio.
             ["Comune"] = new(StringComparer.Ordinal) { "Q2716259", "Q6024226", "Q515", "Q1549591", "Q3957", "Q532" },
         },
@@ -560,6 +565,11 @@ public static class GeoSchemas
     // Le regioni della Norvegia (landsdeler) sono collegate alle contee solo tramite "parte di" (P361).
     private static readonly Dictionary<string, Dictionary<string, Dictionary<string, string>>> ImpliedLevelsByCountry = new(StringComparer.OrdinalIgnoreCase)
     {
+        // Le regioni geografiche della Turchia dalla provincia (2026-11-16).
+        ["Turchia"] = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Regione"] = new Dictionary<string, string>(TurkishDivisions.RegionByProvinceId, StringComparer.Ordinal),
+        },
         ["Norvegia"] = new(StringComparer.OrdinalIgnoreCase)
         {
             ["Regione"] = new(StringComparer.Ordinal)

@@ -141,7 +141,7 @@ internal static class ImportSnapshot
                     + (derived.SpecificName is { Length: > 0 } specific ? $" > luogo specifico {specific}{(p.SpecificCondition.Length > 0 ? $" ({p.SpecificCondition})" : string.Empty)}" : string.Empty)
                     + (derived.HistoricName is { Length: > 0 } historic
                         ? $" > luogo storico {historic}{(derived.LatinName.Length > 0 ? $" (latino: {derived.LatinName})" : string.Empty)}"
-                            + (p.HistoricBuildingName.Length > 0 ? $" > luogo specifico {p.HistoricBuildingName} ({p.HistoricBuildingType}{(p.SpecificCondition.Length > 0 ? $", {p.SpecificCondition}" : string.Empty)})" : string.Empty)
+                            + (p.HistoricBuildingName.Length > 0 ? $"; resti nel luogo attuale: {p.HistoricBuildingName} ({p.HistoricBuildingType}{(p.SpecificCondition.Length > 0 ? $", {p.SpecificCondition}" : string.Empty)})" : string.Empty)
                         : string.Empty)
                     + (derived.Confident ? " [automatico]" : " [da confermare]"));
             }
