@@ -226,6 +226,205 @@ public sealed partial class PeopleStore
         return (gens.Id, ramo.Id);
     }
 
+    // Pulizia delle dinastie (2026-11-16), a ogni caricamento e senza effetti se non c'è niente da fare:
+    //  - le gens salvate come dinastie prima della separazione (tipo «gens») escono dalle Dinastie con tutti i loro rami;
+    //    ciascuna diventa una gens (e i rami rami) se non c'è già tra le gentes, ritrovata per Wikidata o per nome.
+    //    Un ramo a cui è collegata una scheda come dinastia resta tra le dinastie, come dinastia principale;
+    //  - le dinastie scritte prima della regola della maiuscola («dinastia Giulio-Claudia») la prendono, anche nel campo
+    //    Famiglia delle schede collegate.
+    private void CleanUpDynasties()
+    {
+        var all = context.Dinastie.ToList();
+        var byId = all.ToDictionary(d => d.Id);
+        var gensRowIds = all.Where(d => d.Tipo == TipiDinastia.Gens).Select(d => d.Id).ToHashSet();
+        var changed = false;
+        var files = new List<string>();
+        if (gensRowIds.Count > 0)
+        {
+            // La gens più esterna sopra una dinastia (o la dinastia stessa), risalendo i superiori.
+            Dinastia? OuterGens(Dinastia row)
+            {
+                Dinastia? found = null;
+                var visited = new HashSet<int>();
+                for (var current = row; visited.Add(current.Id);)
+                {
+                    if (gensRowIds.Contains(current.Id))
+                    {
+                        found = current;
+                    }
+
+                    if (current.ParentId is not int p || !byId.TryGetValue(p, out var parent))
+                    {
+                        break;
+                    }
+
+                    current = parent;
+                }
+
+                return found;
+            }
+
+            var linked = context.PersoneDinastie.Select(l => l.DinastiaId).Distinct().ToHashSet();
+            var removed = new List<Dinastia>();
+            var gensOf = new Dictionary<int, GensRomana?>();
+            GensRomana? GensFor(Dinastia outer)
+            {
+                if (!gensOf.TryGetValue(outer.Id, out var gens))
+                {
+                    gens = EnsureLegacyGens(outer);
+                    gensOf[outer.Id] = gens;
+                }
+
+                return gens;
+            }
+
+            // Prima le gens, poi i rami (che ne completano il plurale).
+            foreach (var row in all.OrderBy(d => gensRowIds.Contains(d.Id) && d.ParentId is null ? 0 : 1))
+            {
+                if (OuterGens(row) is not { } outer)
+                {
+                    continue;
+                }
+
+                if (!gensRowIds.Contains(row.Id) && linked.Contains(row.Id))
+                {
+                    continue;
+                }
+
+                removed.Add(row);
+                if (GensFor(outer) is { } gens && row != outer)
+                {
+                    EnsureLegacyRamo(gens, row);
+                }
+            }
+
+            var removedIds = removed.Select(d => d.Id).ToHashSet();
+            foreach (var keep in all.Where(d => !removedIds.Contains(d.Id) && d.ParentId is int p && removedIds.Contains(p)))
+            {
+                keep.ParentId = null;
+            }
+
+            // Le schede perdono i nomi delle gens nel campo Famiglia: ora stanno nei campi della gens.
+            var links = context.PersoneDinastie.Where(l => removedIds.Contains(l.DinastiaId)).ToList();
+            var names = removed.Select(d => d.Nome.Trim()).ToHashSet(PeopleGrouping.FamilyComparer);
+            var personIds = links.Select(l => l.PersonaId).ToHashSet();
+            foreach (var person in context.People.Where(p => personIds.Contains(p.Id)))
+            {
+                person.Family = PeopleGrouping.JoinFamilyNames(PeopleGrouping.FamilyNames(person.Family).Where(n => !names.Contains(n)));
+            }
+
+            context.PersoneDinastie.RemoveRange(links);
+            files.AddRange(RemoveAttachmentRows(AmbitiAllegato.Dinastia, removedIds));
+            context.Dinastie.RemoveRange(removed);
+            all = [.. all.Where(d => !removedIds.Contains(d.Id))];
+            changed = true;
+        }
+
+        foreach (var dynasty in all)
+        {
+            var nome = DynastyNames.Capitalize(dynasty.Nome);
+            if (!string.Equals(nome, dynasty.Nome, StringComparison.Ordinal))
+            {
+                var oldName = dynasty.Nome.Trim();
+                var personIds = context.PersoneDinastie.Where(l => l.DinastiaId == dynasty.Id).Select(l => l.PersonaId).ToList();
+                foreach (var person in context.People.Where(p => personIds.Contains(p.Id)))
+                {
+                    person.Family = RenameFamily(person.Family, oldName, nome);
+                }
+
+                dynasty.Nome = nome;
+                changed = true;
+            }
+
+            var latino = DynastyNames.Capitalize(dynasty.NomeLatino);
+            if (!string.Equals(latino, dynasty.NomeLatino, StringComparison.Ordinal))
+            {
+                dynasty.NomeLatino = latino;
+                changed = true;
+            }
+        }
+
+        if (changed)
+        {
+            SaveOrRevert();
+            DeleteAttachmentFiles(files);
+        }
+        else
+        {
+            context.ChangeTracker.Clear();
+        }
+    }
+
+    private static string WithoutGensWord(string text)
+        => System.Text.RegularExpressions.Regex.Replace(text.Trim(), @"^gens\s+", string.Empty, System.Text.RegularExpressions.RegexOptions.IgnoreCase).Trim();
+
+    // Gens corrispondente a una vecchia dinastia di tipo gens: ritrovata per Wikidata o per nome latino, altrimenti creata.
+    private GensRomana? EnsureLegacyGens(Dinastia row)
+    {
+        var latin = WithoutGensWord(row.NomeLatino.Trim().Length > 0 ? row.NomeLatino : row.Nome);
+        var italian = WithoutGensWord(row.Nome);
+        if (latin.Length == 0)
+        {
+            return null;
+        }
+
+        var wikidata = row.WikidataId.Trim();
+        var gentes = context.Gentes.ToList();
+        var gens = (wikidata.Length > 0 ? gentes.FirstOrDefault(g => g.WikidataId == wikidata) : null)
+            ?? gentes.FirstOrDefault(g => GensComparer.Equals(g.Nome.Trim(), latin));
+        if (gens is null)
+        {
+            gens = new GensRomana
+            {
+                Nome = DynastyNames.Capitalize(latin),
+                NomeItaliano = GensComparer.Equals(italian, latin) ? string.Empty : DynastyNames.Capitalize(italian),
+                WikidataId = wikidata,
+                Note = row.Note,
+            };
+            context.Gentes.Add(gens);
+        }
+
+        return gens;
+    }
+
+    // Ramo corrispondente a una vecchia dinastia ramo di una gens: «Iulii Caesares» dà il plurale «Caesares» (e quello della
+    // gens, se manca); ritrovato per Wikidata o per plurale nella stessa gens, altrimenti creato.
+    private void EnsureLegacyRamo(GensRomana gens, Dinastia row)
+    {
+        var latin = (row.NomeLatino.Trim().Length > 0 ? row.NomeLatino : row.Nome).Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var italian = row.Nome.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (latin.Length == 0)
+        {
+            return;
+        }
+
+        if (latin.Length >= 2 && gens.Plurale.Trim().Length == 0)
+        {
+            gens.Plurale = DynastyNames.Capitalize(latin[0]);
+        }
+
+        var plural = string.Join(' ', latin.Length >= 2 ? latin[1..] : latin);
+        var italianPlural = string.Join(' ', italian.Length >= 2 ? italian[1..] : italian);
+        var wikidata = row.WikidataId.Trim();
+        // Anche i rami appena aggiunti e non ancora salvati (Local), per non crearne due uguali.
+        var rami = context.RamiGens.ToList().Concat(context.RamiGens.Local).Distinct().ToList();
+        var exists = (wikidata.Length > 0 && rami.Any(r => r.WikidataId == wikidata))
+            || rami.Any(r => (ReferenceEquals(r.Gens, gens) || (gens.Id != 0 && r.GensId == gens.Id)) && GensComparer.Equals(r.Plurale.Trim(), plural));
+        if (exists)
+        {
+            return;
+        }
+
+        context.RamiGens.Add(new RamoGens
+        {
+            Gens = gens,
+            Plurale = DynastyNames.Capitalize(plural),
+            NomeItaliano = GensComparer.Equals(italianPlural, plural) ? string.Empty : DynastyNames.Capitalize(italianPlural),
+            WikidataId = wikidata,
+            Note = row.Note,
+        });
+    }
+
     // Gens salvate come dinastie nei backup precedenti al 2026-11-15: diventano gentes e rami (il ramo è la dinastia che ha
     // una gens come superiore), e il testo della gens nelle schede diventa il collegamento. Le forme mancanti restano da
     // completare. Un ramo «Iulii Caesares» dà il plurale della gens («Iulii») e quello del ramo («Caesares»), come sono

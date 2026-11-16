@@ -26,7 +26,6 @@
 - [x] Documentato in README e DECISIONI.md.
 - [x] Import di Giulio Cesare (10/11): corretti la lettura delle introduzioni (it, fr, es, nl), il confronto dei luoghi contenuti in altri (en) e la lettura delle edizioni con «troppe richieste» (fr); verificato prima/dopo anche su Carlo V, Mussolini e Carlo Magno, invariati.
 - [x] Parti del nome nella lingua della scheda (Prenome, Nome gentilizio, Cognome, Agnome) per ogni lingua, latino nella tendina chiusa «Nome in latino»; migrazione `RomanNamesByLanguage`.
-- [ ] Provare l'app: import di Giulio Cesare (parti in italiano e inglese, tendina latina), Augusto, una donna (es. Livia Drusilla: Giulia/Livia al femminile) e un greco dell'epoca (deve poter passare a «Standard»).
 
 ## Date, Wikidata e luoghi antichi (2026-11-10, da Vespasiano e Tito)
 - [x] Stesso anno con giorni diversi: vince il giorno letto più volte (Vespasiano: «23/06/0079», non il 4 giugno di Wikidata); fonti solo compatibili.
@@ -35,15 +34,12 @@
 - [x] Calendario cliccabile accanto ai campi data (anche a.C. e calendario giuliano).
 - [x] Località antiche importate come luoghi storici nel comune attuale, con nome italiano e latino (tendina «Nome in latino»).
 - [x] Test: `DateFormatsTests`, `HistoricPlacesTests`, non regressione di Vespasiano/Tito/Cesare aggiornata (nuova richiesta registrata).
-- [ ] Provare l'app: calendario nei moduli (tema chiaro e scuro, tastiera), cambio del formato delle date, import di Vespasiano e Tito (Falacrine e Terme di Cotilia come luoghi storici, LED con la riga Wikidata).
 - [ ] Calendario anche per le date dei titoli (oggi sono celle di una tabella).
 - [x] Comune proposto dalle coordinate (Falacrine → Cittareale): latitudine, longitudine e nomi nelle altre lingue salvati anche dopo la conferma nella finestra dei luoghi (2026-11-11).
 - [x] «Nome del luogo all'epoca» nascosto nel contesto storico del luogo (i valori già scritti restano) (2026-11-11).
 - [x] Terme di Cotilia: luogo storico «Cotilia» (latino Aquae Cutiliae) e, al suo interno, il luogo specifico «Terme di Cotilia» di tipo Terme; regola generale per i nomi che cominciano con un edificio (2026-11-11).
 - [x] Vespasiano e Tito una volta sola nell'elenco: Dinastia flavia collegata come ramo di Flavii Sabini (gens Flavia) all'import (2026-11-11). *Superato il 2026-11-12*: gens e dinastia separate (vedi sotto).
-- [ ] Provare l'app: reimport di Vespasiano e Tito (Cittareale con coordinate dopo la conferma, Cotilia con le terme, Dinastia flavia sotto Flavii Sabini e persona una volta sola), contesto storico senza il nome all'epoca.
 - [x] Vespasiano: «Vespasianus» da agnomen a cognomen (su Wikidata manca un cognomen valido); senza cognomen l'agnomen diventa il cognomen (2026-11-13).
-- [ ] Provare l'app: reimport di Vespasiano, con Vespasiano nel campo Cognome e Agnome vuoto.
 - [ ] Schede importate prima: convertire in luoghi storici i luoghi specifici antichi già creati (oggi restano come sono; basta «Aggiorna da Wikipedia» e scegliere il nuovo luogo).
 
 ## Date discordanti, luoghi storici, gens e dinastia (2026-11-12, da Cesare, Vespasiano e Traiano)
@@ -59,31 +55,22 @@
 - [x] Modulo del nome a tabella: righe ordinate (Praenomen, Nomen, Cognomen, Agnomen, Titolo) con latino e italiano, «+ Aggiungi parte», ↑ ↓, forma epigrafica con i titoli (2026-11-14).
 - [x] Import dei nomi nel tempo dall'introduzione italiana (nato…, divenne…, il nome di…, nome iniziale come principale): Vespasiano e Marco Aurelio nei test di non regressione (2026-11-14).
 - [x] Nomi nel tempo dal campo «nome completo» dell'infobox italiana unito all'introduzione (un nome in entrambe una volta sola, gli altri aggiunti): Tito con tre nomi, Traiano con l'adozione, Imperator nei nomi da imperatore, titoli trionfali come agnomina (2026-11-14).
-- [ ] Provare l'app: import o «Aggiorna da Wikipedia» di Vespasiano e Marco Aurelio (nomi nel tempo, titoli, filiazione «Augusti filius»).
 - [x] Nome nelle altre lingue per riga, in ogni nome: «In altre lingue» con Lingua e Nome completo, modulo della lingua con le stesse righe, «+ Aggiungi lingua», «Copia dal latino» (2026-11-14).
-- [ ] Provare l'app: nome nelle altre lingue (aggiungere una lingua al principale e vederla in «Lingua visualizzata» dopo il salvataggio).
 - [x] Gens di nascita e gens d'adozione separate (campo GensAdozione, migrazione PersonAdoptiveGens): modulo «Dinastia e gens», avviso se manca la gens di nascita, import della gens adottiva, eredità ai figli (2026-11-14).
-- [ ] Provare l'app: «Aggiorna da Wikipedia» su Marco Aurelio (gens Annia di nascita, gens Aurelia d'adozione).
-- [ ] Provare l'app: scheda romana con più nomi (nuovo, modifica, elimina, principale), modulo «Dinastia e gens», parti nelle altre lingue nel modulo del nome principale, scheda di lettura.
-- [ ] Provare l'app: «Aggiorna da Wikipedia» su Marco Aurelio (nome italiano, campo Gens con gens Annia); la gens Aurelia già registrata resta in archivio e va tolta a mano se non serve.
 - [x] Barra del titolo scura ridisegnata subito all'apertura della scheda.
 - [x] Test di non regressione di Traiano; test su introduzioni, date scartate, luogo storico sotto la regione, raggruppamento gens/dinastia.
 - [x] Test di non regressione di Gneo Pompeo Magno: nota dell'infobox esclusa dai nomi, Regio V Picenum luogo storico sotto l'Italia, Pelusio luogo storico nel governatorato di Porto Said (2026-11-14).
 - [x] Finestra di conferma del luogo: un luogo storico si salva anche sotto il solo Stato (Regio V Picenum → Italia), con il test della finestra (2026-11-15).
-- [ ] Provare l'app: import di Pompeo, Regio V Picenum salvata sotto l'Italia con regione, provincia e comune vuoti.
 - [x] Modifica del luogo dal selettore dei luoghi: «Modifica luogo…» e F2, stessi campi della sezione Luoghi (controllo condiviso), avviso con i personaggi collegati, «Contenuto in» per spostare un luogo storico (2026-11-15).
 - [x] Tipo dei luoghi storici modificabile nella sezione Luoghi e in «Modifica luogo»; all'import le regioni antiche prendono il nome del tipo su Wikidata («Regioni dell'Italia augustea») invece di un testo fisso (2026-11-15).
-- [ ] Provare l'app: dal Luogo di nascita di Pompeo modificare la Regio V Picenum (tipo, periodo, nome latino, «Contenuto in»), anche chiudendo poi il selettore con «Annulla».
 - [ ] Nome latino epigrafico da Wikidata (P1559, «Cn. Pompeius Cn.f.Sex.n. Clu. Magnus») da scomporre in righe (filiazione, nepos, tribù); motivo e periodo del nome con Magnus (da Silla, 81 a.C.).
 - [x] Tema scuro: barra del titolo della scheda personaggio bianca all'apertura su Windows 10 (il ridisegno della cornice non bastava): la finestra si allarga di un pixel e torna com'era; verificato con una foto dello schermo (2026-11-13).
-- [ ] Provare l'app: import di Cesare, Vespasiano, Tito e Traiano (date discordanti nella riga Fonti e nel LED, icona del luogo storico, campi Gens e Dinastia, una sola riga per persona nell'elenco).
 - [ ] Nome italiano della «Nerva–Antonine dynasty»: Wikidata non ha né etichetta né voce italiana (oggi va rinominata a mano).
 - [ ] Indicare il luogo storico anche nella scheda di lettura e negli elenchi (oggi solo nei campi del modulo e nell'albero dei luoghi).
 
 ## Date incerte (2026-11-14)
 - [x] Forme fisse (giorno, mese, anno, secolo, «o», «tra», «prima», «dopo», «c.») con forma compatta nei campi e leggibile in elenchi e schede, ordinamento sul centro, filtro della mappa sull'intervallo (`UncertainDate`).
 - [x] Editor della data nel calendario accanto ai campi: tipo (una data, più date, tra, prima, dopo), precisione (giorno, mese, anno, secolo), «circa», date scelte con ×, anteprima del risultato.
-- [ ] Provare l'app: editor della data nei campi di nascita e morte (più date, intervallo, secolo, circa).
 - [ ] Estendere forma leggibile e intervalli alle altre date (titoli, eventi, unioni).
 
 ## Dinastie
@@ -102,7 +89,7 @@
 - [x] Tiberio: con due gens d'adozione su Wikidata (Gallia e Iulia) vale quella del ramo (Iulii Caesares → Gens Iulia), e un ramo non si attacca a una gens diversa dalla sua; test di non regressione di Tiberio (2026-11-16).
 - [x] Tiberio: luogo di nascita letto dalla Wikipedia francese («est né à Rome le … il est mort à Misène», senza virgola) diventava Misène; la frase della nascita si ferma anche a «il est mort» (2026-11-16).
 - [ ] Tiberio: Augusto (e Marco Gallio) indicati su Wikidata come padri con «tipo di parentela» padre adottivo: non devono diventare il padre (2026-11-16).
-- [ ] Archivio: togliere dalle Dinastie le vecchie gens e i loro rami rimasti da prima della separazione, e dare la maiuscola alle dinastie già salvate («dinastia Giulio-Claudia») (2026-11-16).
+- [x] Archivio: tolte dalle Dinastie le vecchie gens e i loro rami rimasti da prima della separazione (passano tra le gentes se mancano), maiuscola alle dinastie già salvate («dinastia Giulio-Claudia»), anche quando l'import le ritrova (2026-11-16).
 - [ ] Reimportare Nerone e verificare insieme le cose che non andavano nell'import precedente (segnalato il 2026-11-15).
 - [x] Leggere anche le Wikipedia tedesca/inglese/francese/spagnola/olandese: date discordanti tra lingue/fonti segnalate nella scheda (avviso + dettagli) e salvate.
 - [x] Nomi dei luoghi multilingua (it/en/de/fr/es/nl) per ogni livello, salvati sul luogo e consultabili dalla scheda.
@@ -121,7 +108,6 @@
 - [x] Musei (Met, AIC, Cleveland, Europeana) e scaricamento delle immagini: stesso stato delle richieste e stessi nuovi tentativi su 429/503 di Wikipedia (`HttpRetry` condiviso).
 - [x] Luoghi importati tenuti in memoria e creati solo al salvataggio della scheda, dell'evento o dell'opera, nella stessa transazione: annullando l'import non resta nulla (2026-11-15).
 - [x] Luogo in attesa visibile e modificabile nel selettore dei luoghi, come luogo nuovo al suo posto nell'albero; luogo specifico modificabile anche prima del salvataggio (2026-11-15).
-- [ ] Provare l'app: importare un personaggio con un luogo nuovo, annullare l'import (e poi chiudere senza salvare) e verificare nella sezione Luoghi che il luogo non c'è; poi reimportare e salvare. Stessa prova con un evento e un'opera.
 
 ## Interfaccia comune
 - [ ] Pulsanti piccoli a icona accanto ai campi al posto di «Scegli…» e «Nessuna»/«Rimuovi», con il suggerimento, uguali in tutta l'app come quello del calendario (2026-11-16).
@@ -133,7 +119,6 @@
 - [x] Livelli dedotti da tabella quando mancano in P131 (regioni di Norvegia e terre di Svezia).
 - [ ] Lavorare sui contesti storici dei luoghi di nascita/morte/sepoltura (nome all'epoca, entità politica, unità, periodo).
 - [x] Regioni e province italiane nel codice (`ItalianDivisions`, 20 regioni e 109 province, con codice Wikidata) come tendine nella finestra dei livelli, con le voci già in archivio segnate e «Nuova …» in fondo; nomi dell'elenco anche all'import; nessun luogo scritto all'avvio (2026-11-15).
-- [ ] Provare l'app: «Nuovo luogo…» con l'Italia (scelta della regione e delle sue province, «Nuova provincia…»), e un import con un luogo italiano incerto.
 - [ ] Tendine anche per le suddivisioni di altri Paesi, con lo stesso sistema dell'Italia.
 
 ### Mappatura Stato per Stato dei tipi Wikidata (P31) delle suddivisioni (`GeoSchemas.LevelTypesByCountry`)

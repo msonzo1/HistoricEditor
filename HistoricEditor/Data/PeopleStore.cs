@@ -197,6 +197,8 @@ public sealed partial class PeopleStore : IDisposable
             }
         }
 
+        CleanUpDynasties();
+
         return [.. context.People.AsNoTracking()];
     }
 
@@ -462,6 +464,20 @@ public sealed partial class PeopleStore : IDisposable
         }
 
         var changed = false;
+        // Una dinastia salvata prima della regola della maiuscola la prende quando l'import la ritrova (2026-11-16).
+        if (!string.Equals(entity.Nome, DynastyNames.Capitalize(entity.Nome), StringComparison.Ordinal))
+        {
+            var oldName = entity.Nome.Trim();
+            var linkedIds = context.PersoneDinastie.Where(l => l.DinastiaId == entity.Id).Select(l => l.PersonaId).ToList();
+            foreach (var person in context.People.Where(p => linkedIds.Contains(p.Id)))
+            {
+                person.Family = RenameFamily(person.Family, oldName, DynastyNames.Capitalize(oldName));
+            }
+
+            entity.Nome = DynastyNames.Capitalize(entity.Nome);
+            changed = true;
+        }
+
         if (entity.WikidataId.Length == 0 && wikidataId.Length > 0)
         {
             entity.WikidataId = wikidataId;

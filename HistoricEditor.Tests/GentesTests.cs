@@ -240,6 +240,69 @@ public class GentesTests
         }
     }
 
+    // Archivio di prima della separazione (2026-11-16, com'era quello dell'utente): tra le dinastie le gens Ottavia e Giulia
+    // con i loro rami, scritti a mano («Giulii Cesari») e importati («Iulii Caesares», tipo gens), e la «dinastia
+    // Giulio-Claudia» con la minuscola. Al caricamento le gens escono dalle Dinastie senza doppioni tra le gentes, e la
+    // dinastia prende la maiuscola anche nel campo Famiglia della scheda.
+    [Fact]
+    public void Load_RemovesOldGensDynastiesAndCapitalizes()
+    {
+        var dir = NewTempDir();
+        try
+        {
+            using (var store = new PeopleStore(dir))
+            {
+                var iulia = store.SaveGens(new GensRomana { Nome = "Iulia", Plurale = "Iulii", WikidataId = "Q510193" });
+                store.SaveRamo(new RamoGens { GensId = iulia, Plurale = "Caesares", WikidataId = "Q3268376" });
+                store.Add(new HistoricalPerson { Name = "Augusto", Family = "dinastia Giulio-Claudia" });
+            }
+
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+            using (var connection = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={Path.Combine(dir, "historic.db")};Pooling=False"))
+            {
+                connection.Open();
+                using var command = connection.CreateCommand();
+                command.CommandText = """
+                    INSERT INTO Dinastie (Id, Nome, NomeLatino, Tipo, WikidataId, ParentId, Note) VALUES
+                    (1, 'Gens Ottavia', 'Gens Octavia', 'gens', 'Q1759265', NULL, ''),
+                    (2, 'Ottavi Rufi', 'Octavii Rufi', '', '', 1, ''),
+                    (3, 'Gens Giulia', 'Gens Iulia', 'gens', 'Q510193', NULL, ''),
+                    (4, 'Giulii Cesari', 'Iulii Caesares', '', '', 3, ''),
+                    (5, 'dinastia Giulio-Claudia', 'domus Iulio-Claudia', '', 'Q192841', NULL, ''),
+                    (6, 'Iulii Caesares', 'Iulii Caesares', 'gens', 'Q3268376', 3, ''),
+                    (7, 'Octavii Rufi', 'Octavii Rufi', 'gens', 'Q105335230', 1, '');
+                    INSERT INTO PersoneDinastie (PersonaId, DinastiaId) SELECT Id, 5 FROM People;
+                    """;
+                command.ExecuteNonQuery();
+            }
+
+            using (var store = new PeopleStore(dir))
+            {
+                var people = store.LoadAll();
+                var dynasty = Assert.Single(store.GetDynasties());
+                Assert.Equal(("Dinastia Giulio-Claudia", "Domus Iulio-Claudia"), (dynasty.Nome, dynasty.NomeLatino));
+                Assert.Equal("Dinastia Giulio-Claudia", Assert.Single(people).Family);
+
+                // La Gens Iulia e il ramo Caesares c'erano già: nessun doppione; la Gens Octavia è nuova, con il ramo Rufi
+                // (scritto due volte, a mano e importato) una volta sola.
+                var gentes = store.GetGentes();
+                Assert.Equal(["Gens Iulia", "Gens Ottavia"], gentes.Select(g => g.Etichetta));
+                Assert.Equal(["Caesares"], gentes.Single(g => g.Nome == "Iulia").Rami.Select(r => r.Plurale));
+                var octavia = gentes.Single(g => g.Nome == "Octavia");
+                Assert.Equal(("Octavii", "Q1759265"), (octavia.Plurale, octavia.WikidataId));
+                Assert.Equal(["Rufi"], octavia.Rami.Select(r => r.Plurale));
+
+                // Al secondo caricamento non cambia più nulla.
+                store.LoadAll();
+                Assert.Equal(2, store.GetGentes().Count);
+            }
+        }
+        finally
+        {
+            Cleanup(dir);
+        }
+    }
+
     private static string NewTempDir()
     {
         var dir = Path.Combine(Path.GetTempPath(), $"historic-gentes-{Guid.NewGuid():N}");
