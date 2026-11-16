@@ -360,6 +360,10 @@ public class ImportRegressionTests
         Assert.Equal(("Q510193", "Iulia", "Iulii", "Q3268376"), (r.GensAdottiva!.WikidataId, r.GensAdottiva.Nome, r.GensAdottiva.Plurale, r.GensAdottiva.Ramo?.WikidataId));
         Assert.Equal("Dinastia Giulio-Claudia", r.Family);
 
+        // Nato a Roma in tutte le edizioni: la voce francese scrive «est né à Rome le 16 novembre 42 av. J.-C. il est mort à
+        // Misène», senza virgola, e il luogo di nascita diventava Misène (2026-11-16).
+        Assert.All(r.WikipediaLeads, l => Assert.Equal("Q220", l.BirthPlaceKey));
+
         ImportFixtures.AssertMatchesSnapshot(page, r);
     }
 

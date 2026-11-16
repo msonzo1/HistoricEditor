@@ -113,15 +113,15 @@ Augusto: n.  |  () –  () | Q211804 | prima   | dopo
 it: Tiberio | nato 16/11/-42 a Roma [Q220] | morto 16/3/37 a Miseno [Q401231]
 en: Tiberius | nato 16/11/-42 a Rome, Roman Republic [Q220] | morto 16/3/37 a Misenum, Roman Empire [Q401231]
 de: Tiberius | nato 16/11/-42 a Rom [Q220] | morto 16/3/37 a  []
-fr: Tibère | nato 16/11/-42 a Misène le [Q401231] | morto 16/3/37 a Misène (Italie) [Q401231]
+fr: Tibère | nato 16/11/-42 a Rome (Italie) [Q220] | morto 16/3/37 a Misène (Italie) [Q401231]
 es: Tiberio | nato 16/11/-42 a Roma [Q220] | morto // a Miseno, Italia, Imperio romano [Q401231]
 nl: Tiberius | nato 16/11/-42 a Rome [Q220] | morto 16/3/37 a Miseno [Q401231]
 wikidata: Q1407 | nato 16/11/-42 a Roma [Q220] | morto 16/3/37 a Miseno [Q401231]
-Concordanza: Orange: 1 edizione di Wikipedia ha date o luoghi diversi dalla maggioranza.
+Concordanza: Green: Le edizioni di Wikipedia concordano su date e luoghi di nascita e morte.
     italiano: 16 novembre 42 a.C., Roma – 16 marzo 37, Miseno | Concorda con la maggioranza.
     inglese: 16 novembre 42 a.C., Rome, Roman Republic – 16 marzo 37, Misenum, Roman Empire | Concorda con la maggioranza.
     tedesco: 16 novembre 42 a.C., Rom – 16 marzo 37, luogo non indicato | Concorda con la maggioranza.
-    francese: 16 novembre 42 a.C., Misène le – 16 marzo 37, Misène (Italie) | Diverso: luogo di nascita.
+    francese: 16 novembre 42 a.C., Rome (Italie) – 16 marzo 37, Misène (Italie) | Concorda con la maggioranza.
     spagnolo: 16 novembre 42 a.C., Roma – —, Miseno, Italia, Imperio romano | Concorda con la maggioranza.
     olandese: 16 novembre 42 a.C., Rome – 16 marzo 37, Miseno | Concorda con la maggioranza.
     Wikidata: 16 novembre 42 a.C., Roma – 16 marzo 37, Miseno | Concorda con la maggioranza.

@@ -2333,10 +2333,12 @@ public sealed partial class WikipediaImportService
         }
     }
 
+    // La frase si ferma anche a «il est mort» senza virgola («est né à Rome le 16 novembre 42 av. J.-C. il est mort à
+    // Misène»: prima il luogo di nascita diventava Misène, 2026-11-16).
     // Il punto di «av. J.-C.» non chiude la frase. Il nome di nascita può stare in mezzo:
     // «né sous le nom de Marcus Ulpius Traianus le 18 septembre 53 à Italica».
     private static readonly Regex FrenchBirthSentence = new(
-        @"\bnée?\s+(?:sous\s+le\s+nom\s+(?:de\s+|d['’])[^,;()]{1,80}?\s+)?(?<seg>(?:le|en|vers|à)\b.{0,160}?)(?=\s+et\s+(?:\p{L}+\s+)?morte?\b|\s*,\s*(?:et\s+)?morte?\b|\s*,\s*(?:est|était|fut|a\s+été)\b|\s*;\s|(?<!\b(?:av|apr|env|J\.-C|J))\.\s|$)",
+        @"\bnée?\s+(?:sous\s+le\s+nom\s+(?:de\s+|d['’])[^,;()]{1,80}?\s+)?(?<seg>(?:le|en|vers|à)\b.{0,160}?)(?=\s+et\s+(?:\p{L}+\s+)?morte?\b|\s*,\s*(?:et\s+)?morte?\b|\s*,?\s+(?:il|elle)\s+(?:est\s+|était\s+|fut\s+)?morte?\b|\s*,\s*(?:est|était|fut|a\s+été)\b|\s*;\s|(?<!\b(?:av|apr|env|J\.-C|J))\.\s|$)",
         RegexOptions.CultureInvariant | RegexOptions.Multiline);
 
     // «mort le …», ma anche «mort assassiné le …».
