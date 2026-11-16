@@ -69,7 +69,8 @@ public partial class PlaceTreeControl : UserControl
             SetMode(last.Kind switch
             {
                 PendingStepKind.Historic => true,
-                PendingStepKind.Specific => last.ExistingId is int s ? specifics.FirstOrDefault(x => x.Id == s) is { } x && PlaceNode.IsHistoricSpecific(x) : last.Distrutto,
+                PendingStepKind.Specific => pendingSteps.Any(p => p.Kind == PendingStepKind.Historic)
+                    || (last.ExistingId is int s ? specifics.FirstOrDefault(x => x.Id == s) is { } x && (PlaceNode.IsHistoricSpecific(x) || InsideHistoric(x.LuogoId)) : last.Distrutto),
                 _ => false,
             });
             Rebuild(null, false, selectPending: true);
@@ -80,7 +81,7 @@ public partial class PlaceTreeControl : UserControl
         if (selectId is int id)
         {
             bool? historic = selectSpecific
-                ? specifics.FirstOrDefault(s => s.Id == id) is { } specifico ? PlaceNode.IsHistoricSpecific(specifico) : null
+                ? specifics.FirstOrDefault(s => s.Id == id) is { } specifico ? PlaceNode.IsHistoricSpecific(specifico) || InsideHistoric(specifico.LuogoId) : null
                 : places.FirstOrDefault(l => l.Id == id)?.Storico;
             if (historic is bool value)
             {
@@ -92,6 +93,22 @@ public partial class PlaceTreeControl : UserControl
     }
 
     public void FocusSearch() => SearchBox.Focus();
+
+    // Vero se il luogo o uno dei suoi contenitori è un luogo storico.
+    private bool InsideHistoric(int luogoId)
+    {
+        var byId = places.ToDictionary(l => l.Id);
+        var visited = new HashSet<int>();
+        for (int? id = luogoId; id is int current && visited.Add(current) && byId.TryGetValue(current, out var luogo); id = luogo.ParentId)
+        {
+            if (luogo.Storico)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     private bool ShowHistoric => HistoricRadio.IsChecked == true;
 
@@ -125,7 +142,32 @@ public partial class PlaceTreeControl : UserControl
 
         var query = SearchBox.Text.Trim();
         var compare = CultureInfo.CurrentCulture.CompareInfo;
-        bool Matches(PlaceNode node) => node.IsHistoric == ShowHistoric
+        // Un luogo specifico dentro un luogo storico (le rovine di una città antica) sta nella vista dei luoghi storici:
+        // altrimenti tra quelli attuali compariva anche il luogo storico che lo contiene (2026-11-16, da Antiochia di Siria).
+        static bool InHistoricView(PlaceNode node)
+        {
+            if (node.IsHistoric)
+            {
+                return true;
+            }
+
+            if (!node.IsSpecific)
+            {
+                return false;
+            }
+
+            for (var ancestor = node.Parent; ancestor is not null; ancestor = ancestor.Parent)
+            {
+                if (ancestor.IsHistoric)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        bool Matches(PlaceNode node) => InHistoricView(node) == ShowHistoric
             && (query.Length == 0
                 || compare.IndexOf(node.Nome, query, SearchOptions) >= 0
                 || compare.IndexOf(node.Tipo, query, SearchOptions) >= 0);
