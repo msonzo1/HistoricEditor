@@ -183,8 +183,11 @@ public partial class GentesWindow : Window
             }
         }
 
+        // All'apertura tutte le gens sono aperte, con i rami in vista (2026-11-16): la freccia per aprirle si vede poco e i
+        // rami sembravano mancare. Dopo, a ogni modifica, resta aperto quello che era aperto.
+        var firstLoad = roots.Count == 0;
         roots = [.. nodes.OrderBy(n => n.Etichetta, Comparer)];
-        foreach (var node in roots.SelectMany(r => r.SelfAndDescendants()).Where(n => expanded.Contains(n.Etichetta)))
+        foreach (var node in roots.SelectMany(r => r.SelfAndDescendants()).Where(n => n.Rami.Count > 0 && (firstLoad || expanded.Contains(n.Etichetta))))
         {
             node.IsExpanded = true;
         }

@@ -89,6 +89,7 @@
 - [x] Tiberio: con due gens d'adozione su Wikidata (Gallia e Iulia) vale quella del ramo (Iulii Caesares → Gens Iulia), e un ramo non si attacca a una gens diversa dalla sua; test di non regressione di Tiberio (2026-11-16).
 - [x] Tiberio: luogo di nascita letto dalla Wikipedia francese («est né à Rome le … il est mort à Misène», senza virgola) diventava Misène; la frase della nascita si ferma anche a «il est mort» (2026-11-16).
 - [x] Genitori e figli adottivi: nuova relazione «Adozione» (Padre/Madre adottivo/a di, Figlio/Figlia adottivo/a di); all'import i padri, le madri e i figli con «tipo di parentela» adottivo diventano adozioni (con l'anno), non genitori o figli; proposti tra i parenti mancanti. Tiberio: Augusto padre adottivo dal 4, padre Tiberio Claudio Nerone (2026-11-16).
+- [x] Finestra «Gentes…»: all'apertura tutte le gens sono aperte con i loro rami (la freccia per aprirle si vede poco e dalla scheda i rami sembravano mancare) (2026-11-16).
 - [x] Archivio: tolte dalle Dinastie le vecchie gens e i loro rami rimasti da prima della separazione (passano tra le gentes se mancano), maiuscola alle dinastie già salvate («dinastia Giulio-Claudia»), anche quando l'import le ritrova (2026-11-16).
 - [ ] Reimportare Nerone e verificare insieme le cose che non andavano nell'import precedente (segnalato il 2026-11-15).
 - [x] Leggere anche le Wikipedia tedesca/inglese/francese/spagnola/olandese: date discordanti tra lingue/fonti segnalate nella scheda (avviso + dettagli) e salvate.
@@ -111,6 +112,8 @@
 
 ## Interfaccia comune
 - [x] Pulsanti a icona accanto ai campi (matita per scegliere, ✕ per togliere) al posto di «Scegli…» e «Nessuna»/«Rimuovi», con il suggerimento, uguali in tutta l'app; stesso stile anche per il pulsante del calendario (2026-11-16).
+- [ ] Matita anche per la dinastia: al posto del pulsante «Dinastia…» (scheda standard e «Dinastia e gens»), con il menu quando i nomi sono più d'uno (2026-11-16).
+- [ ] Riquadro «Note» grigio chiaro nel tema scuro quando è disattivato (es. gens o ramo in attesa nella finestra «Gentes…») (2026-11-16).
 
 ## Luoghi
 - [ ] Cambiare il luogo contenitore di un luogo storico dopo la creazione.
