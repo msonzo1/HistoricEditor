@@ -167,7 +167,7 @@
                             <StackPanel x:Name="FamilyPanel" Grid.Row="1" Grid.Column="2" Margin="0,0,0,14">
                                 <Label x:Name="FamilyLabel" Content="Famiglia" Target="{Binding ElementName=FamilyInput}" />
                                 <DockPanel>
-                                    <Button x:Name="DynastyButton" DockPanel.Dock="Right" Content="Dinastia…" Click="EditDynasty_Click" Height="34" Padding="10,0" Margin="6,0,0,0" ToolTip="Modifica la dinastia: ramo di, Wikidata, note" AutomationProperties.Name="Modifica la dinastia della famiglia" />
+                                    <Button x:Name="DynastyButton" DockPanel.Dock="Right" Style="{StaticResource IconButton}" Content="&#xE70F;" Click="EditDynasty_Click" ToolTip="Modifica la dinastia nell'archivio: nome latino, ramo di, Wikidata, note" AutomationProperties.Name="Modifica la dinastia" />
                                     <ComboBox x:Name="FamilyInput" Height="34" IsEditable="True" IsTextSearchEnabled="True" VerticalContentAlignment="Center" TextBoxBase.TextChanged="FamilyInput_TextChanged" AutomationProperties.Name="Famiglia" AutomationProperties.HelpText="{Binding Text, ElementName=DynastyPathText}" ToolTip="Scegli una dinastia registrata o scrivi un nome nuovo: verrà aggiunto alle dinastie al salvataggio" />
                                 </DockPanel>
                                 <TextBlock x:Name="DynastyPathText" FontSize="11" Foreground="{DynamicResource QuietBrush}" TextWrapping="Wrap" Margin="2,4,0,0" />

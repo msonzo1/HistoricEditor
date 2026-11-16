@@ -457,7 +457,7 @@ public partial class PersonEditorWindow : Window
     private void UpdateDynastyPath()
     {
         DynastyPathText.Text = DynastyDescriptions.Hint(dynasties, FamilyInput.Text, gens: false);
-        DynastyButton.Content = DynastyMenu.ButtonText("Dinastia…", FamilyInput.Text);
+        DynastyMenu.UpdateButton(DynastyButton, FamilyInput.Text);
         UpdateRomanFamily();
     }
 

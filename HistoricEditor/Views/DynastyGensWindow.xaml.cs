@@ -51,7 +51,7 @@ public partial class DynastyGensWindow : Window
     private void UpdatePaths()
     {
         DynastyPathText.Text = DynastyDescriptions.Hint(dynasties, DynastyInput.Text, gens: false);
-        DynastyButton.Content = DynastyMenu.ButtonText("Dinastia…", DynastyInput.Text);
+        DynastyMenu.UpdateButton(DynastyButton, DynastyInput.Text);
         Show(GensText, GensPathText, ClearGensButton, birth, "Non indicata: è quasi sempre nota (la scheda si salva comunque).");
         Show(AdoptiveGensText, AdoptiveGensPathText, ClearAdoptiveGensButton, adoptive, string.Empty);
     }

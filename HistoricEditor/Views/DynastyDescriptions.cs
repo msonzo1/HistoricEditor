@@ -80,8 +80,19 @@ internal static class DynastyDescriptions
 // nome latino accanto («gens Giulia (gens Iulia)»); con un nome solo (o nessuno) l'archivio si apre subito.
 internal static class DynastyMenu
 {
-    public static string ButtonText(string label, string fieldText)
-        => PeopleGrouping.FamilyNames(fieldText).Count > 1 ? $"{label} ▾" : label;
+    // Matita come gli altri pulsanti accanto ai campi (2026-11-17); con più dinastie nel campo il clic apre il menu per
+    // scegliere quale modificare, e il suggerimento lo dice.
+    public static void UpdateButton(System.Windows.Controls.Button button, string fieldText)
+    {
+        button.ToolTip = ButtonToolTip(fieldText);
+        System.Windows.Automation.AutomationProperties.SetName(button,
+            PeopleGrouping.FamilyNames(fieldText).Count > 1 ? "Modifica una delle dinastie" : "Modifica la dinastia");
+    }
+
+    public static string ButtonToolTip(string fieldText)
+        => PeopleGrouping.FamilyNames(fieldText).Count > 1
+            ? "Modifica una delle dinastie nell'archivio (nome latino, ramo di, Wikidata, note): si sceglie dal menu"
+            : "Modifica la dinastia nell'archivio: nome latino, ramo di, Wikidata, note";
 
     public static void Choose(System.Windows.Controls.Button button, IReadOnlyList<Dinastia> dynasties, string fieldText, Action<string?> open)
     {

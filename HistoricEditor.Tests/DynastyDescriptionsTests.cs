@@ -56,8 +56,9 @@ public class DynastyDescriptionsTests
         Assert.Equal(string.Empty, DynastyDescriptions.MissingLatin(dynasties, "Iulii Caesares; Casa d'Asburgo"));
         Assert.Equal("Nome latino da completare nell'archivio delle dinastie: Gens Ottavia", DynastyDescriptions.MissingLatin(dynasties, "Gens Ottavia"));
         Assert.Equal("Gens Giulia (Gens Iulia); Casa d'Asburgo; Gens Nuova", Dinastia.WithLatinNames("Gens Giulia; Casa d'Asburgo; Gens Nuova", dynasties));
-        Assert.Equal("Dinastia…", DynastyMenu.ButtonText("Dinastia…", "Casa d'Asburgo"));
-        Assert.Equal("Gens… ▾", DynastyMenu.ButtonText("Gens…", "Gens Giulia; Iulii Caesares"));
+        // La matita della dinastia (2026-11-17): con più nomi il suggerimento dice che si sceglie dal menu.
+        Assert.DoesNotContain("menu", DynastyMenu.ButtonToolTip("Casa d'Asburgo"));
+        Assert.EndsWith("si sceglie dal menu", DynastyMenu.ButtonToolTip("Asburgo; Lorena"));
     }
 
     // Nome latino delle famiglie dalle etichette incoerenti di Wikidata (2026-11-14).
