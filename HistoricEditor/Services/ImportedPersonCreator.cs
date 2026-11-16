@@ -274,7 +274,7 @@ public static class ImportedPersonCreator
 
             try
             {
-                store.SaveRelation(new Relazione { Persona1Id = persona1, Persona2Id = persona2, Tipo = relation.Tipo, Note = "Importata da Wikidata." });
+                store.SaveRelation(new Relazione { Persona1Id = persona1, Persona2Id = persona2, Tipo = relation.Tipo, Inizio = relation.Inizio, Note = "Importata da Wikidata." });
                 linked++;
             }
             catch (Exception ex) when (ex is InvalidOperationException or DbUpdateException)
@@ -311,6 +311,8 @@ public static class ImportedPersonCreator
             .Concat(import.MotherIds.Select(id => new MissingRelative(id, "madre")))
             .Concat(import.SpouseIds.Select(id => new MissingRelative(id, "coniuge")))
             .Concat(import.ChildIds.Select(id => new MissingRelative(id, "figlio o figlia")))
+            // Genitori e figli adottivi (2026-11-16): dopo l'import diventano relazioni «Adozione».
+            .Concat(import.Relations.Where(r => r.Tipo == "Adozione").Select(r => new MissingRelative(r.WikidataId, r.Attivo ? "figlio o figlia adottivi" : "genitore adottivo")))
             .Where(r => r.WikidataId.Length > 0 && !string.Equals(r.WikidataId, import.WikidataId, StringComparison.Ordinal))
             .DistinctBy(r => r.WikidataId, StringComparer.Ordinal)
             .ToList();

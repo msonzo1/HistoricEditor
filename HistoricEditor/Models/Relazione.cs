@@ -61,6 +61,8 @@ public static class Relazioni
         new("Reggenza", "Reggente per", "Reggente per", "Sotto la reggenza di", "Sotto la reggenza di"),
         new("Maestro e allievo", "Maestro di", "Maestra di", "Allievo di", "Allieva di"),
         new("Influenza", "Ha influenzato", "Ha influenzato", "Influenzato da", "Influenzata da"),
+        // Adozione (2026-11-16): Persona1 è il genitore adottivo. Padre e madre della scheda restano quelli naturali.
+        new("Adozione", "Padre adottivo di", "Madre adottiva di", "Figlio adottivo di", "Figlia adottiva di"),
     ];
 
     public static RelazioneTipo? Find(string? tipo)

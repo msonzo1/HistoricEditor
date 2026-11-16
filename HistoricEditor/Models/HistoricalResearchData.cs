@@ -236,13 +236,14 @@ public sealed class WikipediaImportResult
     // Edizioni di Wikipedia (nomi delle lingue) che non è stato possibile leggere, ad esempio per troppe richieste.
     public List<string> UnreadEditions { get; init; } = [];
 
-    // Identificativi Wikidata dei parenti (P22 padre, P25 madre, P26 coniugi, P40 figli).
+    // Identificativi Wikidata dei parenti (P22 padre, P25 madre, P26 coniugi, P40 figli). Genitori e figli adottivi non
+    // ci sono: stanno nelle relazioni, di tipo «Adozione» (2026-11-16).
     public List<string> FatherIds { get; init; } = [];
     public List<string> MotherIds { get; init; } = [];
     public List<string> SpouseIds { get; init; } = [];
     public List<string> ChildIds { get; init; } = [];
 
-    // Relazioni non familiari lette da Wikidata (maestri, allievi, influenze).
+    // Relazioni non familiari lette da Wikidata (maestri, allievi, influenze, adozioni).
     public List<ImportedRelation> Relations { get; init; } = [];
 
     // Eventi del personaggio (P793 evento significativo, P1344 partecipò a, P607 conflitto).
@@ -252,5 +253,6 @@ public sealed class WikipediaImportResult
 // Persona Wikidata non ancora in archivio, proposta per un import completo.
 public sealed record WikidataPersonSummary(string WikidataId, string Nome, string Descrizione, string ItalianTitle);
 
-// Attivo: il personaggio importato è la parte attiva della relazione (es. il maestro).
-public sealed record ImportedRelation(string WikidataId, string Tipo, bool Attivo);
+// Attivo: il personaggio importato è la parte attiva della relazione (es. il maestro, il genitore adottivo). Inizio: data
+// di inizio, se Wikidata la indica (l'anno dell'adozione).
+public sealed record ImportedRelation(string WikidataId, string Tipo, bool Attivo, string Inizio = "");

@@ -127,9 +127,9 @@ Concordanza: Green: Le edizioni di Wikipedia concordano su date e luoghi di nasc
     Wikidata: 16 novembre 42 a.C., Roma – 16 marzo 37, Miseno | Concorda con la maggioranza.
 
 ## Parenti e relazioni
-Padre: Q342512, Q2165262, Q1405
+Padre: Q342512
 Madre: Q469701
 Coniugi: Q232090, Q2259
-Figli: Q313737, Q118275074, Q4222774, Q191039
-Relazioni: 
+Figli: Q313737, Q118275074, Q4222774
+Relazioni: Q2165262 Adozione, Q1405 Adozione dal 0004, Q191039 Adozione (attivo)
 Eventi: Q188468

@@ -660,6 +660,7 @@ public sealed partial class WikipediaImportService
             MotherIds = ReadRelativeIds(claims, "P25"),
             SpouseIds = ReadRelativeIds(claims, "P26"),
             ChildIds = ReadRelativeIds(claims, "P40"),
+            // Le relazioni comprendono le adozioni (ReadAdoptions), tolte da padri, madri e figli.
             Relations = ReadRelations(claims),
             EventIds = ReadEventIds(claims),
             Sesso = sexId switch
@@ -1072,8 +1073,64 @@ public sealed partial class WikipediaImportService
     private static IEnumerable<string> ReadEntityIds(JsonElement claims, string propertyId) =>
         ReadEntityStatements(claims, propertyId).Select(statement => statement.EntityId).Distinct(StringComparer.Ordinal);
 
-    internal static List<string> ReadRelativeIds(JsonElement claims, string propertyId) =>
-        [.. ReadEntityStatements(claims, propertyId, keepEnded: true).Select(statement => statement.EntityId).Distinct(StringComparer.Ordinal)];
+    // Parenti di una proprietà (P22, P25, P26, P40), senza quelli adottivi: un padre con «tipo di parentela» (P1039) padre
+    // adottivo non è il padre (Augusto per Tiberio, 2026-11-16).
+    internal static List<string> ReadRelativeIds(JsonElement claims, string propertyId)
+    {
+        var adoptive = ReadAdoptiveStatements(claims, propertyId).Select(a => a.Id).ToHashSet(StringComparer.Ordinal);
+        return [.. ReadEntityStatements(claims, propertyId, keepEnded: true).Select(statement => statement.EntityId)
+            .Where(id => !adoptive.Contains(id)).Distinct(StringComparer.Ordinal)];
+    }
+
+    // «Tipo di parentela» (P1039) di un'adozione: padre, madre e genitore adottivo per P22/P25; figlio, figlia, figlio
+    // adottivo generico, figliastro e figliastra adottati per P40 (Tiberio, figliastro adottato di Augusto).
+    private static readonly HashSet<string> AdoptiveKinship = new(StringComparer.Ordinal)
+    {
+        "Q61740757", "Q61740758", "Q20746742",
+        "Q20746725", "Q20746728", "Q25858158", "Q130320631", "Q130320665",
+    };
+
+    // Genitori o figli adottivi di una proprietà, con l'eventuale inizio (P580) dell'adozione.
+    private static List<(string Id, string Inizio)> ReadAdoptiveStatements(JsonElement claims, string propertyId)
+    {
+        var result = new List<(string, string)>();
+        if (!claims.TryGetProperty(propertyId, out var values) || values.ValueKind != JsonValueKind.Array)
+        {
+            return result;
+        }
+
+        foreach (var statement in values.EnumerateArray())
+        {
+            if (GetString(statement, "rank") == "deprecated")
+            {
+                continue;
+            }
+
+            var qualifiers = statement.GetPropertyOrDefault("qualifiers");
+            if (qualifiers.ValueKind != JsonValueKind.Object || !qualifiers.TryGetProperty("P1039", out var kinship) || kinship.ValueKind != JsonValueKind.Array
+                || !kinship.EnumerateArray().Any(k => AdoptiveKinship.Contains(GetString(k.GetPropertyOrDefault("datavalue").GetPropertyOrDefault("value"), "id"))))
+            {
+                continue;
+            }
+
+            var id = GetString(statement.GetPropertyOrDefault("mainsnak").GetPropertyOrDefault("datavalue").GetPropertyOrDefault("value"), "id");
+            if (IsEntityId(id) && !result.Any(r => r.Item1 == id))
+            {
+                result.Add((id, ReadQualifierDate(qualifiers, "P580")));
+            }
+        }
+
+        return result;
+    }
+
+    // Adozioni come relazioni (2026-11-16): i genitori adottivi (P22/P25) sono la parte attiva, i figli adottivi (P40)
+    // quella passiva.
+    internal static List<ImportedRelation> ReadAdoptions(JsonElement claims) =>
+    [
+        .. ReadAdoptiveStatements(claims, "P22").Concat(ReadAdoptiveStatements(claims, "P25"))
+            .Select(a => new ImportedRelation(a.Id, "Adozione", Attivo: false, a.Inizio)),
+        .. ReadAdoptiveStatements(claims, "P40").Select(a => new ImportedRelation(a.Id, "Adozione", Attivo: true, a.Inizio)),
+    ];
 
     // P1066 «allievo di», P802 «studente/allievo», P737 «influenzato da».
     internal static List<ImportedRelation> ReadRelations(JsonElement claims) =>
@@ -1081,6 +1138,7 @@ public sealed partial class WikipediaImportService
         .. ReadRelativeIds(claims, "P1066").Select(id => new ImportedRelation(id, "Maestro e allievo", Attivo: false)),
         .. ReadRelativeIds(claims, "P802").Select(id => new ImportedRelation(id, "Maestro e allievo", Attivo: true)),
         .. ReadRelativeIds(claims, "P737").Select(id => new ImportedRelation(id, "Influenza", Attivo: false)),
+        .. ReadAdoptions(claims),
     ];
 
     // P793 «evento significativo», P1344 «partecipò a», P607 «conflitto».

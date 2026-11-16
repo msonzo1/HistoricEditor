@@ -126,9 +126,9 @@ Concordanza: Orange: 2 edizioni di Wikipedia hanno date o luoghi diversi dalla m
     Wikidata: 18 settembre 53, Italica – 8 agosto 117, Selinunte | Concorda con la maggioranza.
 
 ## Parenti e relazioni
-Padre: Q714856, Q1424
+Padre: Q714856
 Madre: Q3132611
 Coniugi: Q239448
-Figli: Q1427
-Relazioni: 
+Figli: 
+Relazioni: Q1424 Adozione, Q1427 Adozione (attivo)
 Eventi: 

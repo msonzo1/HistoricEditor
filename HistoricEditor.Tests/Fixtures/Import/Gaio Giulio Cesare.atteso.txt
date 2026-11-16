@@ -131,6 +131,6 @@ Concordanza: Green: Le edizioni di Wikipedia concordano su date e luoghi di nasc
 Padre: Q314710
 Madre: Q232725
 Coniugi: Q235423, Q234825, Q235627
-Figli: Q235087, Q39589, Q1405
-Relazioni: 
+Figli: Q235087, Q39589
+Relazioni: Q1405 Adozione (attivo)
 Eventi: Q17768966, Q106648268, Q1238338, Q202161

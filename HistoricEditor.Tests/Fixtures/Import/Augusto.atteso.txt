@@ -126,9 +126,9 @@ Concordanza: Green: Le edizioni di Wikipedia concordano su date e luoghi di nasc
     Wikidata: 23 settembre 63 a.C., Roma – 19 agosto 14, Nola | Concorda con la maggioranza.
 
 ## Parenti e relazioni
-Padre: Q363084, Q1048
+Padre: Q363084
 Madre: Q231696
 Coniugi: Q237618, Q233444, Q469701
-Figli: Q2259, Q298162, Q313735, Q1407, Q325906
-Relazioni: 
+Figli: Q2259
+Relazioni: Q1048 Adozione dal 44 a.C., Q298162 Adozione (attivo), Q313735 Adozione (attivo), Q1407 Adozione (attivo), Q325906 Adozione (attivo)
 Eventi: Q138008589

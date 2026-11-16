@@ -110,9 +110,9 @@ Concordanza: Green: Le edizioni di Wikipedia concordano su date e luoghi di nasc
     Wikidata: 26 aprile 121, Roma – 17 marzo 180, Vindobona | Concorda con la maggioranza.
 
 ## Parenti e relazioni
-Padre: Q1292169, Q1429
+Padre: Q1292169
 Madre: Q1815905
 Coniugi: Q236936
 Figli: Q1434, Q567222, Q3655950, Q2055853, Q242466, Q441706, Q3656003, Q16167328, Q12278990
-Relazioni: Q2834170 Maestro e allievo, Q311879 Maestro e allievo, Q317055 Maestro e allievo, Q18999 Maestro e allievo, Q717647 Maestro e allievo
+Relazioni: Q2834170 Maestro e allievo, Q311879 Maestro e allievo, Q317055 Maestro e allievo, Q18999 Maestro e allievo, Q717647 Maestro e allievo, Q1429 Adozione
 Eventi: 

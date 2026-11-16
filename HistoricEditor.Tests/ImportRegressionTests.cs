@@ -73,7 +73,9 @@ public class ImportRegressionTests
         Assert.Equal(5, r.Titles.Count(t => t.Titolo == "Console"));
         Assert.Equal(["Q314710"], r.FatherIds);
         Assert.Equal(["Q232725"], r.MotherIds);
-        Assert.Contains("Q1405", r.ChildIds);
+        // Augusto è il figlio adottivo (Wikidata: «tipo di parentela» figlio adottivo): una relazione, non un figlio (2026-11-16).
+        Assert.DoesNotContain("Q1405", r.ChildIds);
+        Assert.Contains(new ImportedRelation("Q1405", "Adozione", Attivo: true), r.Relations);
 
         ImportFixtures.AssertMatchesSnapshot(page, r);
     }
@@ -262,7 +264,9 @@ public class ImportRegressionTests
         Assert.Equal(("Divi Nervae filius", TipiParteNome.Agnomen), (r.NomiNelTempo[2].Filiazione, r.NomiNelTempo[2].Parti[^1].Tipo));
 
         Assert.Equal("Imperatore romano", r.MainTitle);
-        Assert.Contains("Q1427", r.ChildIds);
+        // Adriano è il figlio adottivo: una relazione «Adozione», non un figlio (2026-11-16).
+        Assert.DoesNotContain("Q1427", r.ChildIds);
+        Assert.Contains(r.Relations, x => x is { WikidataId: "Q1427", Tipo: "Adozione", Attivo: true });
         ImportFixtures.AssertMatchesSnapshot(page, r);
     }
 
@@ -363,6 +367,14 @@ public class ImportRegressionTests
         // Nato a Roma in tutte le edizioni: la voce francese scrive «est né à Rome le 16 novembre 42 av. J.-C. il est mort à
         // Misène», senza virgola, e il luogo di nascita diventava Misène (2026-11-16).
         Assert.All(r.WikipediaLeads, l => Assert.Equal("Q220", l.BirthPlaceKey));
+
+        // Augusto e Marco Gallio sono i padri adottivi (2026-11-16): il padre è Tiberio Claudio Nerone; l'adozione di Augusto
+        // ha l'anno. Germanico è il figlio adottivo.
+        Assert.Equal(["Q342512"], r.FatherIds);
+        Assert.Contains(new ImportedRelation("Q1405", "Adozione", Attivo: false, "0004"), r.Relations);
+        Assert.Contains(new ImportedRelation("Q2165262", "Adozione", Attivo: false), r.Relations);
+        Assert.Contains(new ImportedRelation("Q191039", "Adozione", Attivo: true), r.Relations);
+        Assert.DoesNotContain("Q191039", r.ChildIds);
 
         ImportFixtures.AssertMatchesSnapshot(page, r);
     }

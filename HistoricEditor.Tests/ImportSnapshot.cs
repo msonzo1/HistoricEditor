@@ -101,7 +101,7 @@ internal static class ImportSnapshot
         Line("Madre", string.Join(", ", r.MotherIds));
         Line("Coniugi", string.Join(", ", r.SpouseIds));
         Line("Figli", string.Join(", ", r.ChildIds));
-        Line("Relazioni", string.Join(", ", r.Relations.Select(x => $"{x.WikidataId} {x.Tipo}{(x.Attivo ? " (attivo)" : string.Empty)}")));
+        Line("Relazioni", string.Join(", ", r.Relations.Select(x => $"{x.WikidataId} {x.Tipo}{(x.Attivo ? " (attivo)" : string.Empty)}{(x.Inizio.Length > 0 ? $" dal {x.Inizio}" : string.Empty)}")));
         Line("Eventi", string.Join(", ", r.EventIds));
         return text.ToString();
 
