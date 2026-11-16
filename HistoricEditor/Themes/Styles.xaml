@@ -44,6 +44,39 @@
         </Setter>
     </Style>
 
+    <!--
+        Testo formattato (note): stesso aspetto delle caselle di testo (2026-11-17). Senza questo stile, da disattivato
+        (gens o ramo in attesa nella finestra «Gentes…») prendeva il grigio chiaro di Windows anche nel tema scuro.
+    -->
+    <Style TargetType="RichTextBox">
+        <Setter Property="Background" Value="{DynamicResource AppControlBg}" />
+        <Setter Property="Foreground" Value="{DynamicResource InkBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource AppControlBorder}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CaretBrush" Value="{DynamicResource InkBrush}" />
+        <Setter Property="SelectionBrush" Value="{DynamicResource GreenBrush}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RichTextBox">
+                    <Border x:Name="Bd" CornerRadius="8" Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
+                            SnapsToDevicePixels="True">
+                        <ScrollViewer x:Name="PART_ContentHost" Focusable="False" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource GreenBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Bd" Property="Opacity" Value="0.6" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- ================= Label ================= -->
     <Style TargetType="Label">
         <Setter Property="Padding" Value="0,0,0,5" />

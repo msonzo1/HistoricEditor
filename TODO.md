@@ -116,7 +116,7 @@
 ## Interfaccia comune
 - [x] Pulsanti a icona accanto ai campi (matita per scegliere, ✕ per togliere) al posto di «Scegli…» e «Nessuna»/«Rimuovi», con il suggerimento, uguali in tutta l'app; stesso stile anche per il pulsante del calendario (2026-11-16).
 - [x] Matita anche per la dinastia: al posto del pulsante «Dinastia…» (scheda standard e «Dinastia e gens»), con il menu quando i nomi sono più d'uno (2026-11-17).
-- [ ] Riquadro «Note» grigio chiaro nel tema scuro quando è disattivato (es. gens o ramo in attesa nella finestra «Gentes…») (2026-11-16).
+- [x] Riquadro «Note» grigio chiaro nel tema scuro quando è disattivato (es. gens o ramo in attesa nella finestra «Gentes…»): stesso stile delle caselle di testo (2026-11-17).
 
 ## Luoghi
 - [ ] Cambiare il luogo contenitore di un luogo storico dopo la creazione.
