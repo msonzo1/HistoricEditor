@@ -99,8 +99,9 @@ public static class HistoricalMap
                 return (sLat, sLon, false);
             }
 
-            luogoId ??= specifico.LuogoId;
-            if (ResolveCoordinates(specifico.LuogoId, null, places, specifics) is { } fromPlace)
+            // Senza coordinate vale il luogo: quello indicato insieme al luogo specifico (il luogo storico di cui il sito
+            // sono i resti, 2026-11-17) o quello che lo contiene.
+            if (ResolveCoordinates(luogoId ?? specifico.LuogoId, null, places, specifics) is { } fromPlace)
             {
                 return (fromPlace.Lat, fromPlace.Lon, true);
             }
@@ -143,7 +144,7 @@ public static class HistoricalMap
             if (specificoId is int s && specificsById.TryGetValue(s, out var specifico))
             {
                 parts.Add(specifico.Nome);
-                luogoId = specifico.LuogoId;
+                luogoId ??= specifico.LuogoId;
             }
 
             if (luogoId is int l && placesById.TryGetValue(l, out var luogo))

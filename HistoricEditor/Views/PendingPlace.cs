@@ -66,9 +66,13 @@ public sealed class PendingPlace
         }
     }
 
-    // Luogo specifico letto dall'import: un luogo non amministrativo (castello, monastero…). Per un luogo storico nessuno:
-    // i suoi resti si creano a parte, nel luogo attuale (2026-11-16).
-    internal string ImportedSpecific => IsHistoric ? string.Empty : Derived.SpecificName?.Trim() ?? string.Empty;
+    // Luogo specifico letto dall'import: un luogo non amministrativo (castello, monastero…) oppure, per un luogo storico, i
+    // suoi resti (Sito archeologico di Pelusio), che stanno nel luogo attuale che lo contiene se esistono ancora
+    // (2026-11-16) e sono comunque il luogo specifico della scheda (2026-11-17).
+    internal string ImportedSpecific => IsHistoric ? Place.HistoricBuildingName.Trim() : Derived.SpecificName?.Trim() ?? string.Empty;
+
+    // I resti di un luogo storico che esistono ancora: il luogo specifico non sta dentro il luogo storico.
+    internal bool SpecificOutside => IsHistoric && SpecificCondition != CondizioniLuogo.Distrutto;
 
     internal string ImportedSpecificType => IsHistoric
         ? Place.HistoricBuildingType
@@ -82,7 +86,12 @@ public sealed class PendingPlace
 
     internal string SpecificCondition => SpecificDraft?.Condizione ?? Place.SpecificCondition;
 
-    public PlaceDescription Description => new(string.Join(", ", Parts.Select(p => p.Nome)), Specific);
+    public PlaceDescription Description => new(string.Join(", ", Parts.Select(p => p.Nome)), Specific, SpecificOutside && Specific.Length > 0);
+
+    // Il luogo che conterrà il luogo specifico: il luogo attuale per i resti di un luogo storico, altrimenti il luogo.
+    internal string SpecificContainer => SpecificOutside
+        ? string.Join(", ", Parts.Where(p => !p.Storico).Select(p => p.Nome))
+        : Description.Classic;
 
     // Per il confronto delle modifiche non salvate: cambia con ogni correzione, anche delle sole coordinate.
     internal string ChangeKey => string.Join("|",
@@ -109,6 +118,7 @@ public sealed class PendingPlace
                 Condizione = CondizioniLuogo.Tutte.Contains(Place.SpecificCondition) ? Place.SpecificCondition : CondizioniLuogo.Esistente,
                 Latitudine = Place.Latitudine,
                 Longitudine = Place.Longitudine,
+                Note = IsHistoric ? $"Resti di {Derived.HistoricName!.Trim()}." : string.Empty,
                 WikidataId = Place.WikidataId,
             };
     }
@@ -149,7 +159,7 @@ internal static class PendingPlaceEditing
     // Aggiunge o corregge il luogo specifico, che resta in memoria e si crea dentro il luogo nuovo al salvataggio.
     public static bool EditSpecific(PeopleStore store, PendingPlace pending, Window owner)
     {
-        var editor = new SpecificPlaceEditorWindow(store, pending.SpecificProposal(), pending.Description.Classic) { Owner = owner };
+        var editor = new SpecificPlaceEditorWindow(store, pending.SpecificProposal(), pending.SpecificContainer) { Owner = owner };
         if (editor.ShowDialog() != true || editor.ResultDraft is not { } draft)
         {
             return false;

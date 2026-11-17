@@ -58,8 +58,22 @@ internal static class ImportedPlaceResolver
             }
         }
 
-        return steps.Count == 0 ? (null, null, null)
-            : steps[^1].Kind == PendingStepKind.Specific ? (null, steps[^1].ExistingId, nearest)
+        if (steps.Count == 0)
+        {
+            return (null, null, null);
+        }
+
+        // I resti di un luogo storico stanno nel luogo che lo contiene, fuori dalla catena: se mancano si creano al
+        // salvataggio e il luogo resta in attesa.
+        if (pending.SpecificOutside && pending.Specific is { Length: > 0 } remains)
+        {
+            var containerId = steps.Count > 1 ? steps[^2].ExistingId : null;
+            return containerId is int id && store.FindSpecificPlace(remains, id, pending.SpecificWikidataId) is int remainsId
+                ? (steps[^1].ExistingId, remainsId, nearest)
+                : (null, null, nearest);
+        }
+
+        return steps[^1].Kind == PendingStepKind.Specific ? (null, steps[^1].ExistingId, nearest)
             : (steps[^1].ExistingId, null, nearest);
     }
 
@@ -92,7 +106,8 @@ internal static class ImportedPlaceResolver
             steps.Add(new PendingStep(historicName, HistoricType(place), PendingStepKind.Historic, id));
         }
 
-        if (pending.Specific is { Length: > 0 } specificName)
+        // I resti ancora visibili di un luogo storico non stanno dentro di esso: nel selettore non compaiono sotto il luogo.
+        if (pending.Specific is { Length: > 0 } specificName && !pending.SpecificOutside)
         {
             var id = found && parentId is int containerId ? store.FindSpecificPlace(specificName, containerId, pending.SpecificWikidataId) : null;
             steps.Add(new PendingStep(specificName, pending.SpecificType, PendingStepKind.Specific, id, pending.SpecificCondition == CondizioniLuogo.Distrutto));
@@ -124,17 +139,10 @@ internal static class ImportedPlaceResolver
             containerId = store.EnsureHistoricPlace(historicName, derived.LatinName, HistoricType(place), luogoId, place.WikidataId, place.Latitudine, place.Longitudine,
                 formerName: place.HistoricBuildingName);
             store.MergePlaceHistoricNames(containerId, place.HistoricalNames, place.WikidataId);
-            // I resti ancora visibili (Terme di Cotilia, Sito archeologico di Pelusio) sono un luogo specifico nel luogo
-            // attuale che contiene il luogo storico, con la nota «Resti di …»; resti scomparsi stanno nel luogo storico
-            // (2026-11-16). La scheda resta nel luogo storico: il personaggio è nato o morto nella città, non nel sito.
-            if (place.HistoricBuildingName.Trim() is { Length: > 0 } remains)
-            {
-                var remainsContainer = place.SpecificCondition == CondizioniLuogo.Distrutto ? containerId : luogoId;
-                store.EnsureSpecificPlace(remains, remainsContainer, place.WikidataId, place.Latitudine, place.Longitudine, place.HistoricBuildingType,
-                    place.SpecificCondition, note: $"Resti di {historicName}.");
-            }
+            return pending?.SpecificRemoved == true ? (containerId, null) : (containerId, Remains(store, place, historicName, containerId, luogoId, pending?.SpecificDraft));
         }
-        else if (derived.SpecificName is { Length: > 0 } name)
+
+        if (derived.SpecificName is { Length: > 0 } name)
         {
             (specificName, specificType) = (name.Trim(), place.TypeLabel.Length > 0 ? place.TypeLabel : SpecificPlaceTypes.Describe(place.TypeIds));
         }
@@ -171,6 +179,41 @@ internal static class ImportedPlaceResolver
         return specificName.Length > 0
             ? (null, store.EnsureSpecificPlace(specificName, containerId, place.WikidataId, place.Latitudine, place.Longitudine, specificType, place.SpecificCondition))
             : (containerId, null);
+    }
+
+    // I resti di un luogo storico (Terme di Cotilia, Sito archeologico di Pelusio): un luogo specifico nel luogo attuale
+    // che contiene il luogo storico, con la nota «Resti di …»; resti scomparsi stanno nel luogo storico (2026-11-16). La
+    // scheda indica sia il luogo storico (il personaggio è nato o morto nella città) sia i resti (2026-11-17). Con una
+    // correzione fatta prima del salvataggio vale quella.
+    private static int? Remains(PeopleStore store, HistoricalPlaceRecord place, string historicName, int historicId, int currentId, LuogoSpecifico? draft)
+    {
+        if (draft is not null)
+        {
+            var container = draft.Condizione == CondizioniLuogo.Distrutto ? historicId : currentId;
+            return store.FindSpecificPlace(draft.Nome, container, draft.WikidataId.Trim())
+                ?? store.SaveSpecificPlace(new LuogoSpecifico
+                {
+                    Nome = draft.Nome,
+                    Tipo = draft.Tipo,
+                    LuogoId = container,
+                    Indirizzo = draft.Indirizzo,
+                    Condizione = draft.Condizione,
+                    DataDistruzione = draft.DataDistruzione,
+                    Latitudine = draft.Latitudine,
+                    Longitudine = draft.Longitudine,
+                    Note = draft.Note,
+                    WikidataId = draft.WikidataId,
+                });
+        }
+
+        if (place.HistoricBuildingName.Trim() is not { Length: > 0 } remains)
+        {
+            return null;
+        }
+
+        var remainsContainer = place.SpecificCondition == CondizioniLuogo.Distrutto ? historicId : currentId;
+        return store.EnsureSpecificPlace(remains, remainsContainer, place.WikidataId, place.Latitudine, place.Longitudine, place.HistoricBuildingType,
+            place.SpecificCondition, note: $"Resti di {historicName}.");
     }
 }
 

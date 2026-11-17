@@ -35,6 +35,9 @@ public partial class PlaceFieldControl : UserControl
         }
     }
 
+    // Di solito uno solo dei due: il luogo specifico porta con sé il luogo che lo contiene. Entrambi quando il luogo
+    // specifico sta altrove (2026-11-17): Pompeo è morto nel luogo storico Pelusio, il cui sito archeologico sta nel
+    // governatorato, accanto a Pelusio.
     public int? LuogoId { get; private set; }
     public int? LuogoSpecificoId { get; private set; }
 
@@ -58,9 +61,12 @@ public partial class PlaceFieldControl : UserControl
         Pending = null;
         existingImport = null;
         LuogoSpecificoId = specificoId;
-        LuogoId = specificoId is null ? luogoId : null;
+        LuogoId = specificoId is int id && (luogoId is null || Store?.GetSpecificPlace(id)?.LuogoId == luogoId) ? null : luogoId;
         Refresh();
     }
+
+    // Il luogo del campo, anche quando è indicato solo il luogo specifico (il luogo che lo contiene).
+    private int? MainPlaceId => LuogoId ?? (LuogoSpecificoId is int id ? Store?.GetSpecificPlace(id)?.LuogoId : null);
 
     public void SetPending(PendingPlace pending)
     {
@@ -137,8 +143,7 @@ public partial class PlaceFieldControl : UserControl
     // «Aquae Cutiliae, Castel Sant'Angelo, provincia di Rieti, Lazio, Italia».
     private void ShowClassic(string text)
     {
-        int? placeId = LuogoSpecificoId is int specificId ? Store?.GetSpecificPlace(specificId)?.LuogoId : LuogoId;
-        var parts = text.Length > 0 && Store is not null ? Store.DescribePlaceParts(placeId).Select(p => (p.Nome, p.Storico)).ToList() : [];
+        var parts = text.Length > 0 && Store is not null ? Store.DescribePlaceParts(MainPlaceId).Select(p => (p.Nome, p.Storico)).ToList() : [];
         ShowParts(text, parts);
     }
 
@@ -227,10 +232,31 @@ public partial class PlaceFieldControl : UserControl
             return;
         }
 
-        var editor = new SpecificPlaceEditorWindow(Store, LuogoSpecificoId, LuogoId) { Owner = Window.GetWindow(this) };
+        // Il luogo specifico di un luogo storico (i suoi resti) sta nei luoghi attuali: si sceglie nel selettore, aperto sul
+        // luogo che contiene il luogo storico (2026-11-17).
+        if (MainPlaceId is int mainId && Store.GetPlace(mainId) is { Storico: true } historicPlace)
+        {
+            var picker = new PlacePickerWindow(Store, $"{Title}: luogo specifico", allowSpecific: true, historicPlace.ParentId, LuogoSpecificoId, allowClear: false)
+            {
+                Owner = Window.GetWindow(this),
+                SpecificOnly = true,
+            };
+            if (picker.ShowDialog() == true && picker.ResultSpecificoId is int pickedId)
+            {
+                SetPlace(mainId, pickedId);
+            }
+            else if (picker.PlacesEdited)
+            {
+                Refresh();
+            }
+
+            return;
+        }
+
+        var editor = new SpecificPlaceEditorWindow(Store, LuogoSpecificoId, MainPlaceId) { Owner = Window.GetWindow(this) };
         if (editor.ShowDialog() == true && editor.ResultId is int id)
         {
-            SetPlace(null, id);
+            SetPlace(MainPlaceId, id);
         }
     }
 
@@ -246,7 +272,7 @@ public partial class PlaceFieldControl : UserControl
         }
 
         var (luogoId, specificoId) = ImportedPlaceResolver.Create(Store, imported);
-        return (specificoId is null ? luogoId : null, specificoId);
+        return specificoId is int id && (luogoId is null || Store.GetSpecificPlace(id)?.LuogoId == luogoId) ? (null, id) : (luogoId, specificoId);
     }
 
     // Toglie solo il luogo specifico, mantenendo il luogo che lo contiene.
@@ -259,8 +285,7 @@ public partial class PlaceFieldControl : UserControl
             return;
         }
 
-        int? parentId = LuogoSpecificoId is int id ? Store?.GetSpecificPlace(id)?.LuogoId : LuogoId;
-        SetPlace(parentId, null);
+        SetPlace(MainPlaceId, null);
     }
 
     private void Edit_Click(object sender, RoutedEventArgs e)
@@ -272,14 +297,21 @@ public partial class PlaceFieldControl : UserControl
 
         // Un luogo in attesa compare nel selettore come luogo nuovo, al suo posto nell'albero (2026-11-15), e lì si
         // corregge; un luogo storico (Falacrine) si mostra tra i luoghi storici, che il selettore apre per primi.
-        var historic = LuogoSpecificoId is null && LuogoId is int luogoId && Store.GetPlace(luogoId)?.Storico == true;
-        var dialog = new PlacePickerWindow(Store, Title, allowSpecific: true, LuogoId, LuogoSpecificoId, allowClear: true, startHistoric: historic, pending: Pending)
+        // Con un luogo specifico separato (i resti di un luogo storico) il selettore si apre sul luogo; scegliendo di nuovo
+        // lo stesso luogo il luogo specifico resta.
+        var separate = LuogoId is not null && LuogoSpecificoId is not null;
+        var historic = (LuogoSpecificoId is null || separate) && LuogoId is int luogoId && Store.GetPlace(luogoId)?.Storico == true;
+        var dialog = new PlacePickerWindow(Store, Title, allowSpecific: true, LuogoId, separate ? null : LuogoSpecificoId, allowClear: true, startHistoric: historic, pending: Pending)
         {
             Owner = Window.GetWindow(this),
         };
         if (dialog.ShowDialog() == true)
         {
             if (dialog.ResultPending)
+            {
+                Refresh();
+            }
+            else if (separate && dialog.ResultSpecificoId is null && dialog.ResultLuogoId == LuogoId)
             {
                 Refresh();
             }

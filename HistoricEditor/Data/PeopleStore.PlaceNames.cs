@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace HistoricEditor;
 
@@ -81,6 +81,12 @@ public sealed partial class PeopleStore
 
         if (specificoId is int id && context.LuoghiSpecifici.AsNoTracking().FirstOrDefault(s => s.Id == id) is { } specifico)
         {
+            if (luogoId is int placeId && placeId != specifico.LuogoId)
+            {
+                var names = PlaceChain(specifico.LuogoId).Select(l => HistoricalPlaceNames.Describe(l.Nome, l.NomiStorici, year)).ToList();
+                return new PlaceDescription(DescribePlaceAt(placeId, year), SeparateSpecific(specifico, placeId, names), true);
+            }
+
             return new PlaceDescription(DescribePlaceAt(specifico.LuogoId, year), specifico.Nome);
         }
 

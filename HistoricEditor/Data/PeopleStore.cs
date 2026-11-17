@@ -5,11 +5,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HistoricEditor;
 
-public sealed record PlaceDescription(string Classic, string Specific)
+public sealed record PlaceDescription(string Classic, string Specific, bool Separate = false)
 {
-    // Testo mostrato nell'elenco e salvato nella scheda: "Luogo specifico (Comune, ..., Stato)".
+    // Testo mostrato nell'elenco e salvato nella scheda: "Luogo specifico (Comune, ..., Stato)". Un luogo specifico che non
+    // sta nel luogo (i resti di un luogo storico, 2026-11-17) va dopo il luogo, con la sola parte di percorso diversa:
+    // "Pelusio, Governatorato di Porto Said, Egitto (Sito archeologico di Pelusio)".
     public string DisplayText => Specific.Length == 0 ? Classic
         : Classic.Length == 0 ? Specific
+        : Separate ? $"{Classic} ({Specific})"
         : $"{Specific} ({Classic})";
 }
 
@@ -944,10 +947,54 @@ public sealed partial class PeopleStore : IDisposable
     {
         if (specificoId is int id && context.LuoghiSpecifici.Find(id) is { } specifico)
         {
-            return new PlaceDescription(DescribePlace(specifico.LuogoId), specifico.Nome);
+            return luogoId is int placeId && placeId != specifico.LuogoId
+                ? new PlaceDescription(DescribePlace(placeId), SeparateSpecific(specifico, placeId, PlaceChain(specifico.LuogoId).Select(l => l.Nome).ToList()), true)
+                : new PlaceDescription(DescribePlace(specifico.LuogoId), specifico.Nome);
         }
 
         return new PlaceDescription(DescribePlace(luogoId), string.Empty);
+    }
+
+    // Luogo specifico separato dal luogo (2026-11-17): il nome e i luoghi che lo contengono finché non si arriva a uno che
+    // contiene anche il luogo, compreso questo, così si vede dove sta. «Sito archeologico di Pelusio» se sta direttamente
+    // nel Governatorato di Porto Said come Pelusio; «Sito X, Amatrice, Rieti» per un sito di Amatrice e un luogo di
+    // Cittareale. Senza nessun luogo in comune, il percorso intero. names: i nomi dei luoghi che contengono il luogo
+    // specifico, dal più piccolo allo Stato, come vanno mostrati (anche con il nome dell'epoca).
+    private string SeparateSpecific(LuogoSpecifico specifico, int luogoId, IReadOnlyList<string> names)
+    {
+        var placeChain = PlaceChain(luogoId).Select(l => l.Id).ToHashSet();
+        var specificChain = PlaceChain(specifico.LuogoId);
+        var parts = new List<string> { specifico.Nome };
+        for (var i = 0; i < specificChain.Count && i < names.Count; i++)
+        {
+            if (placeChain.Contains(specificChain[i].Id))
+            {
+                if (i > 0)
+                {
+                    parts.Add(names[i]);
+                }
+
+                break;
+            }
+
+            parts.Add(names[i]);
+        }
+
+        return string.Join(", ", parts);
+    }
+
+    // Il luogo e quelli che lo contengono, fino allo Stato.
+    private List<Luogo> PlaceChain(int? luogoId)
+    {
+        var chain = new List<Luogo>();
+        var current = luogoId is int id ? context.Luoghi.AsNoTracking().FirstOrDefault(l => l.Id == id) : null;
+        while (current is not null && chain.Count < 32)
+        {
+            chain.Add(current);
+            current = current.ParentId is int parentId ? context.Luoghi.AsNoTracking().FirstOrDefault(l => l.Id == parentId) : null;
+        }
+
+        return chain;
     }
 
     // tipo null: il tipo resta com'è (luoghi attuali, dove dipende dal livello).

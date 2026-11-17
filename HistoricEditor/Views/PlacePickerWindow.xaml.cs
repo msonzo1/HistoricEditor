@@ -16,6 +16,10 @@ public partial class PlacePickerWindow : Window
     // Vero se è stato scelto il luogo in attesa (2026-11-15): resta in memoria e si crea al salvataggio.
     public bool ResultPending { get; private set; }
 
+    // Solo un luogo specifico (2026-11-17): il luogo specifico di un luogo storico, scelto nei luoghi attuali (i resti
+    // ancora visibili, come il Sito archeologico di Pelusio).
+    public bool SpecificOnly { get; init; }
+
     // Con un luogo importato non ancora nell'archivio (pending), le parti che mancano compaiono come luoghi nuovi e il
     // selettore si apre su di esse.
     public PlacePickerWindow(PeopleStore store, string title, bool allowSpecific, int? luogoId, int? specificoId, bool allowClear, bool startHistoric = false, PendingPlace? pending = null)
@@ -158,6 +162,12 @@ public partial class PlacePickerWindow : Window
         if (node.IsPending)
         {
             PickerMessage.Text = $"«{node.Nome}» sarà creato insieme al luogo nuovo: selezionare il luogo nuovo o un luogo già nell’archivio.";
+            return;
+        }
+
+        if (SpecificOnly && !node.IsSpecific)
+        {
+            PickerMessage.Text = "Selezionare un luogo specifico (un sito, un edificio…) oppure crearne uno con «Nuovo luogo…».";
             return;
         }
 

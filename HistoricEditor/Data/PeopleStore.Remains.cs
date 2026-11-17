@@ -2,13 +2,13 @@ namespace HistoricEditor;
 
 // Resti di un luogo storico (2026-11-16): un luogo specifico che esiste ancora (Sito archeologico di Pelusio, in rovina)
 // sta nel luogo attuale che contiene il luogo storico, non dentro di esso. Restano nel luogo storico solo i luoghi
-// specifici scomparsi (distrutti).
+// specifici scomparsi (distrutti). Le schede indicano sia il luogo storico sia i resti (2026-11-17).
 public sealed partial class PeopleStore
 {
     // A ogni caricamento, senza effetti se non c'è niente da fare: i resti salvati prima dentro un luogo storico passano al
-    // luogo che lo contiene, con la nota «Resti di …» se non ne hanno una. Le schede e gli eventi che li indicavano passano
-    // al luogo storico (il personaggio è nato o morto nella città, non nel sito); le opere restano nel sito, che per loro è
-    // la collocazione.
+    // luogo che lo contiene, con la nota «Resti di …» se non ne hanno una. Le schede che li indicavano indicano anche il
+    // luogo storico (il personaggio è nato o morto nella città, e lì ci sono i resti), gli eventi solo il luogo storico; le
+    // opere restano nel sito, che per loro è la collocazione.
     private void MoveRemainsOutOfHistoricPlaces()
     {
         var historic = context.Luoghi.Where(l => l.Storico && l.ParentId != null).ToDictionary(l => l.Id);
@@ -45,17 +45,17 @@ public sealed partial class PeopleStore
         {
             if (person.BirthLuogoSpecificoId is int birth && historicOf.TryGetValue(birth, out var birthPlace))
             {
-                (person.BirthLuogoId, person.BirthLuogoSpecificoId) = (birthPlace, null);
+                person.BirthLuogoId = birthPlace;
             }
 
             if (person.DeathLuogoSpecificoId is int death && historicOf.TryGetValue(death, out var deathPlace))
             {
-                (person.DeathLuogoId, person.DeathLuogoSpecificoId) = (deathPlace, null);
+                person.DeathLuogoId = deathPlace;
             }
 
             if (person.BurialLuogoSpecificoId is int burial && historicOf.TryGetValue(burial, out var burialPlace))
             {
-                (person.BurialLuogoId, person.BurialLuogoSpecificoId) = (burialPlace, null);
+                person.BurialLuogoId = burialPlace;
             }
         }
 
