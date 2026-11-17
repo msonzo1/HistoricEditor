@@ -63,7 +63,7 @@ morte: Q200441 Antiochia di Siria | Turchia | tipo Città antica | 36.2047222222
     divisione: Paese (P17) Turchia Q43
     divisione: Unità amministrativa (P131) Turchia Q43
     divisione: Paese (P17) Turchia Q43
-    in archivio: Stato Turchia > Regione Mar Mediterraneo > Provincia Hatay > Distretto Antiochia > luogo storico Antiochia di Siria [automatico]
+    in archivio: Stato Turchia > Regione Mar Mediterraneo > Provincia Hatay > Distretto Antiochia > luogo storico Antiochia di Siria (latino: Antiochia ad Orontem) [automatico]
 sepoltura: Q770847 Mausoleo di Augusto | Italia | tipo Sito archeologico | 41.90611, 12.47639
     divisione: Unità amministrativa (P131) Campo Marzio Q1031426
     divisione: Unità amministrativa (P131) Municipio Roma I Q550592

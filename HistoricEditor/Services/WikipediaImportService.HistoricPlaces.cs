@@ -26,6 +26,14 @@ public sealed partial class WikipediaImportService
         "Q42834", // Impero romano d'Occidente
     };
 
+    // Città antiche: hanno un nome latino anche quando Wikidata indica come Paese solo lo Stato di oggi (Antium, «Anzio»
+    // in italiano, ha come Paese l'Italia e l'etichetta latina «Antium», 2026-11-17).
+    private static readonly HashSet<string> AncientCityTypes = new(StringComparer.Ordinal)
+    {
+        "Q15661340", // città antica
+        "Q2202509", // città romana
+    };
+
     // Insediamenti e siti (non edifici: un teatro o una villa restano luoghi specifici).
     private static readonly HashSet<string> SettlementTypes = new(StringComparer.Ordinal)
     {
@@ -160,7 +168,8 @@ public sealed partial class WikipediaImportService
         => ReadEntityIds(entity.GetPropertyOrDefault("claims"), "P31").Any(HistoricRegionTypes.Contains);
 
     internal static bool IsRomanPlace(JsonElement entity)
-        => ReadEntityIds(entity.GetPropertyOrDefault("claims"), "P17").Any(RomanStates.Contains);
+        => ReadEntityIds(entity.GetPropertyOrDefault("claims"), "P17").Any(RomanStates.Contains)
+            || ReadEntityIds(entity.GetPropertyOrDefault("claims"), "P31").Any(AncientCityTypes.Contains);
 
     // Una località antica di cui restano le rovine (sito archeologico, rovine) ha un luogo specifico per i resti. Non se
     // Wikidata la indica «sostituita da» (P1366) un altro luogo: Antiochia di Siria è un «sito archeologico», ma la città
@@ -212,7 +221,15 @@ public sealed partial class WikipediaImportService
             {
                 if (ApiProperty(document.RootElement, "entities").TryGetProperty(id, out var entity))
                 {
-                    names[id] = (ReadLabels(entity), ReadAliases(entity));
+                    // L'etichetta latina è chiesta apposta: ReadLabels legge solo le lingue delle edizioni, e il latino
+                    // restava fuori (Antium, 2026-11-17).
+                    var labels = ReadLabels(entity);
+                    if (GetString(entity.GetPropertyOrDefault("labels").GetPropertyOrDefault("la"), "value") is { Length: > 0 } latinLabel)
+                    {
+                        labels["la"] = latinLabel;
+                    }
+
+                    names[id] = (labels, ReadAliases(entity));
                 }
             }
         }

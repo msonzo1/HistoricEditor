@@ -385,6 +385,8 @@ public class ImportRegressionTests
         var derived = ImportSnapshot.DerivePlace(antium);
         Assert.Equal(["Italia", "Lazio", "Città metropolitana di Roma Capitale", "Anzio"], derived.Levels.Select(l => l.Nome));
         Assert.Equal(("Anzio", true), (derived.HistoricName, derived.Confident));
+        // Nome latino dall'etichetta latina di Wikidata, anche se il Paese indicato è solo l'Italia: è una città antica.
+        Assert.Equal("Antium", antium.LatinName);
         Assert.Equal(("Sito archeologico di Anzio", CondizioniLuogo.InRovina), (antium.HistoricBuildingName, antium.SpecificCondition));
 
         ImportFixtures.AssertMatchesSnapshot(page, r);
