@@ -1,0 +1,119 @@
+
+## Scheda
+Pagina: Nerone (https://it.wikipedia.org/wiki/Nerone)
+Wikidata: Q1413
+WikiTree: 
+Nome visualizzato: Nerone
+Nome / Cognome / Suffisso / Soprannome: Nerone /  /  / 
+Sesso: M
+Titolo principale: Imperatore romano
+Famiglia: Dinastia Giulio-Claudia
+Gens: Gens Domizia › Domitii Ahenobarbi
+Gens d'adozione: Gens Claudia › Claudii Nerones
+Gens (forme): Q908366 nome Domitia | nomen Domitius | plurale Domitii | it Domizia | plurale it  || ramo Q101992764 plurale Ahenobarbi | it  | cognomen 
+Gens d'adozione (forme): Q385338 nome Claudia | nomen Claudius | plurale Claudii | it  | plurale it  || ramo Q102259474 plurale Nerones | it  | cognomen 
+Nascita: 15/12/0037 [calendario: giuliano]
+Morte: 09/06/0068 [calendario: giuliano]
+Edizioni non lette: 
+
+## Nome romano
+Latino (praenomen / nomen / cognomen / agnomen): Nero / Claudius / Caesar Germanicus / 
+Nome latino: Nero Claudius Cæsar Augustus Germanicus
+Italiano (prenome / gentilizio / cognome / agnome): Nerone / Claudio / Cesare Augusto / 
+Nome nel tempo: Lucio Domizio Enobarbo | Lucius Domitius Ahenobarbus | filiazione  | dal 37 | Nome alla nascita | Praenomen:Lucius Nomen:Domitius Cognomen:Ahenobarbus
+Nome nel tempo: Nerone Claudio Cesare Druso Germanico | Nero Claudius Caesar Drusus Germanicus | filiazione  | dal  | Adozione | Praenomen:Nero Nomen:Claudius Cognomen:Caesar Cognomen:Drusus Agnomen:Germanicus
+Nome nel tempo ★: Nerone Claudio Cesare Augusto Germanico | Nero Claudius Caesar Augustus Germanicus | filiazione  | dal 54 | Assunzione del potere | Praenomen:Nero Nomen:Claudius Cognomen:Caesar Augustus:Augustus Agnomen:Germanicus
+
+## Nomi nelle lingue
+it: Nerone | suffisso  | soprannome  | titolo imperatore romano | parti  /  /  / 
+en: Nero | suffisso  | soprannome  | titolo Roman emperor | parti Nero / Claudius / Caesar Augustus / 
+de: Nero | suffisso  | soprannome  | titolo römischer Kaiser | parti Nero / Claudius / Caesar Augustus / 
+fr: Néron | suffisso  | soprannome  | titolo empereur romain | parti Nero / Claudius / Caesar Augustus / 
+es: Nerón | suffisso  | soprannome  | titolo emperador romano | parti Nerón / Claudio / César Augusto / 
+nl: Nero | suffisso  | soprannome  | titolo Romeinse keizer | parti Nero, / Emperor / of Roma / 
+
+## Dinastie
+Q192841: Dinastia Giulio-Claudia [la: Domus Iulio-Claudia] ←  [la: ]
+
+## Date di nascita
+15/12/0037: giorno | normal | giuliano | +0037-12-15T00:00:00Z | qualificatori  | fonti Riferimento Wikidata, Q45186993, Q746368, Wikipedia in italiano, Wikipedia in inglese, Wikipedia in tedesco, Wikipedia in spagnolo, Wikipedia in olandese
+
+## Date di morte
+09/06/0068: giorno | normal | giuliano | +0068-06-09T00:00:00Z | qualificatori  | fonti Riferimento Wikidata, Q746368, Wikipedia in italiano, Wikipedia in inglese, Wikipedia in tedesco, Wikipedia in spagnolo, Wikipedia in olandese
+
+## Date scartate (una sola fonte)
+11/06/0068: giorno | normal | giuliano | +0068-06-11T00:00:00Z | qualificatori  | fonti Wikipedia in tedesco
+Date discordanti: Morte: 09/06/0068 (7 fonti); scartata perché indicata da una sola fonte: 11/06/0068 (Wikipedia in tedesco).
+
+## Luoghi
+nascita: Q16010710 Anzio | Italia | tipo Sito archeologico | 41.44830555555556, 12.62861111111111
+    divisione: Unità amministrativa (P131) città metropolitana di Roma Capitale Q18288160
+    divisione: Unità amministrativa (P131) Anzio Q241717
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Lazio Q1282
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) città metropolitana di Roma Capitale Q18288160
+    divisione: Paese (P17) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    in archivio: Stato Italia > Regione Lazio > Provincia Città metropolitana di Roma Capitale > Comune Anzio > luogo storico Anzio; resti nel luogo attuale: Sito archeologico di Anzio (Sito archeologico, In rovina) [automatico]
+morte: Q220 Roma | Italia | tipo Città di confine | 41.893055555556, 12.482777777778
+    divisione: Unità amministrativa (P131) città metropolitana di Roma Capitale Q18288160
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Lazio Q1282
+    divisione: Paese (P17) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    nome storico: Colonia Lucia Annia Commodiana (la, 191 – 193)
+    in archivio: Stato Italia > Regione Lazio > Provincia Città metropolitana di Roma Capitale > Comune Roma [automatico]
+sepoltura: Q3955643 Sepolcro dei Domizi | Italia | tipo Scultura | 41.91137778, 12.47644722
+    divisione: Unità amministrativa (comune più vicino, dalle coordinate) Roma Q220
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) città metropolitana di Roma Capitale Q18288160
+    divisione: Paese (P17) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Lazio Q1282
+    divisione: Paese (P17) Italia Q38
+    divisione: Unità amministrativa (P131) Italia Q38
+    divisione: Paese (P17) Italia Q38
+    in archivio: Stato Italia > Regione Lazio > Provincia Città metropolitana di Roma Capitale > Comune Roma > luogo specifico Sepolcro dei Domizi [da confermare]
+
+## Titoli
+Imperatore romano: n. 5 | 13/10/0054 () – 09/06/0068 () | Q842606 | prima Claudio Q1411 | dopo Galba Q1414
+    fonte: Wikidata · carica ricoperta (P39): 13/10/0054 – 09/06/0068
+    fonte: Wikipedia it · infobox: 13/10/0054 – 09/06/0068
+    fonte: Wikipedia en · infobox: 13/10/0054 – 09/06/0068
+    fonte: Wikipedia es · infobox: 13/10/0054 – 09/06/0068
+Senatore romano: n.  |  () –  () | Q20056508 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39):  – 
+Console: n.  |  () –  () | Q40779 | prima   | dopo  
+    fonte: Wikidata · carica ricoperta (P39):  – 
+Augusto: n.  |  () –  () | Q211804 | prima   | dopo  
+    fonte: Wikidata · titolo nobiliare (P97):  – 
+
+## Introduzioni di Wikipedia
+it: Nerone | nato 15/12/37 a Anzio [Q16010710] | morto 9/6/68 a Roma [Q220]
+en: Nero | nato 15/12/37 a Antium, Italy, Roman Empire [Q16010710] | morto 9/6/68 a outside Rome, Italy [Q220]
+de: Nero | nato 15/12/37 a Antium [Q16010710] | morto 11/6/68 a Rom [Q220]
+fr: Néron | nato // a Antium (Italie) [Q16010710] | morto // a Rome [Q220]
+es: Nerón | nato 15/12/37 a Anzio, Italia [Q16010710] | morto 9/6/68 a Roma, Italia [Q220]
+nl: Nero (keizer) | nato 15/12/37 a Antium [Q16010710] | morto 9/6/68 a  []
+wikidata: Q1413 | nato 15/12/37 a Anzio [Q16010710] | morto 9/6/68 a Roma [Q220]
+Concordanza: Green: Le edizioni di Wikipedia concordano su date e luoghi di nascita e morte.
+    italiano: 15 dicembre 37, Anzio – 9 giugno 68, Roma | Concorda con la maggioranza.
+    inglese: 15 dicembre 37, Antium, Italy, Roman Empire – 9 giugno 68, outside Rome, Italy | Concorda con la maggioranza.
+    tedesco: 15 dicembre 37, Antium – 9 o 11 giugno 68, Rom | Concorda con la maggioranza.
+    francese: —, Antium (Italie) – —, Rome | Concorda con la maggioranza.
+    spagnolo: 15 dicembre 37, Anzio, Italia – 9 giugno 68, Roma, Italia | Concorda con la maggioranza.
+    olandese: 15 dicembre 37, Antium – 9 giugno 68, luogo non indicato | Concorda con la maggioranza.
+    Wikidata: 15 dicembre 37, Anzio – 9 giugno 68, Roma | Concorda con la maggioranza.
+
+## Parenti e relazioni
+Padre: Q351503
+Madre: Q154732
+Coniugi: Q231262, Q230716, Q241445, Q2329627, Q2403916
+Figli: Q1275952
+Relazioni: Q136344496 Maestro e allievo, Q1411 Adozione
+Eventi: 

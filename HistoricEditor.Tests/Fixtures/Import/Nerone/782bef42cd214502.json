@@ -1,0 +1,18 @@
+{"url":"https://query.wikidata.org/sparql?format=json\u0026query=SELECT%20%3Fitem%20%3Fdist%20WHERE%20%7B%20SERVICE%20wikibase%3Aaround%20%7B%20%3Fitem%20wdt%3AP625%20%3Flocation%20.%20bd%3AserviceParam%20wikibase%3Acenter%20%22Point%2812.47644722%2041.91137778%29%22%5E%5Egeo%3AwktLiteral%20.%20bd%3AserviceParam%20wikibase%3Aradius%20%2215%22%20.%20bd%3AserviceParam%20wikibase%3Adistance%20%3Fdist%20.%20%7D%20VALUES%20%3Ftype%20%7B%20wd%3AQ747074%20wd%3AQ954172%20%7D%20%3Fitem%20wdt%3AP31%20%3Ftype%20.%20FILTER%20NOT%20EXISTS%20%7B%20%3Fitem%20wdt%3AP576%20%3Fend%20.%20%7D%20%7D%20ORDER%20BY%20%3Fdist%20LIMIT%201","response":{
+  "head" : {
+    "vars" : [ "item", "dist" ]
+  },
+  "results" : {
+    "bindings" : [ {
+      "item" : {
+        "type" : "uri",
+        "value" : "http://www.wikidata.org/entity/Q220"
+      },
+      "dist" : {
+        "datatype" : "http://www.w3.org/2001/XMLSchema#double",
+        "type" : "literal",
+        "value" : "2.104"
+      }
+    } ]
+  }
+}}

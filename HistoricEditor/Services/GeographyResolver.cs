@@ -216,8 +216,10 @@ public static class GeographyResolver
             }
 
             leaf = ancestors[leafPosition];
-            // Città contenuta nel comune omonimo (es. Amsterdam): non è un luogo specifico.
-            specificName = string.Equals(leaf.Name, self.Name, StringComparison.OrdinalIgnoreCase) ? null : self.Name;
+            // Città contenuta nel comune omonimo (es. Amsterdam): non è un luogo specifico. Una località antica invece resta
+            // distinta dal comune di oggi con lo stesso nome: Antium, «Anzio» in italiano, sta nel comune di Anzio
+            // (2026-11-17), e senza il comune il luogo storico finiva nella provincia.
+            specificName = string.Equals(leaf.Name, self.Name, StringComparison.OrdinalIgnoreCase) && place.HistoricName.Trim().Length == 0 ? null : self.Name;
         }
 
         // I livelli si assegnano dal basso: ognuno all'antenato più vicino sopra quello del livello inferiore

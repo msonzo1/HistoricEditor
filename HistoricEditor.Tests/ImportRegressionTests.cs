@@ -371,6 +371,26 @@ public class ImportRegressionTests
     }
 
     [Fact]
+    public async Task Nerone()
+    {
+        const string page = "Nerone";
+        var r = await ImportFixtures.ImportAsync(page);
+
+        Assert.Equal("Q1413", r.WikidataId);
+        // Nato ad Antium, la città antica («Anzio» per Wikidata in italiano), che Wikidata mette nel comune di Anzio: il luogo
+        // storico sta nel comune omonimo, non nella città metropolitana (2026-11-17), e i resti sono il Sito archeologico
+        // di Anzio, nel comune.
+        var antium = Assert.Single(r.BirthPlaces);
+        Assert.Equal("Q16010710", antium.WikidataId);
+        var derived = ImportSnapshot.DerivePlace(antium);
+        Assert.Equal(["Italia", "Lazio", "Città metropolitana di Roma Capitale", "Anzio"], derived.Levels.Select(l => l.Nome));
+        Assert.Equal(("Anzio", true), (derived.HistoricName, derived.Confident));
+        Assert.Equal(("Sito archeologico di Anzio", CondizioniLuogo.InRovina), (antium.HistoricBuildingName, antium.SpecificCondition));
+
+        ImportFixtures.AssertMatchesSnapshot(page, r);
+    }
+
+    [Fact]
     public async Task Tiberio()
     {
         const string page = "Tiberio";

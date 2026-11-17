@@ -1,0 +1,1 @@
+{"url":"https://es.wikipedia.org/w/api.php?action=query\u0026prop=pageprops\u0026ppprop=wikibase_item\u0026redirects=1\u0026format=json\u0026formatversion=2\u0026titles=Anexo%3AEmperadores%20romanos","response":{"batchcomplete":true,"query":{"pages":[{"pageid":38709,"ns":104,"title":"Anexo:Emperadores romanos","pageprops":{"wikibase_item":"Q125740"}}]}}}
