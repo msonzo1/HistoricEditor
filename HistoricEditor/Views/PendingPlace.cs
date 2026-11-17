@@ -35,6 +35,24 @@ public sealed class PendingPlace
 
     internal bool IsHistoric => Derived.HistoricName is { Length: > 0 };
 
+    // Dati del luogo storico corretti prima del salvataggio nella finestra «Modifica luogo» (2026-11-17); null finché non
+    // si correggono.
+    internal PendingHistoricDetails? HistoricDetails { get; private set; }
+
+    internal string HistoricName => HistoricDetails?.Nome ?? Derived.HistoricName?.Trim() ?? string.Empty;
+
+    internal string HistoricLatin => HistoricDetails?.Latino ?? Derived.LatinName.Trim();
+
+    internal string HistoricType => HistoricDetails?.Tipo
+        ?? (Place.TypeLabel.Length > 0 ? Place.TypeLabel : SpecificPlaceTypes.Describe(Place.TypeIds));
+
+    // Coordinate del luogo storico (quelle lette da Wikidata per il luogo stesso, non quelle del comune).
+    internal double? HistoricLatitude => HistoricDetails is { } d ? d.Latitudine : Place.Latitudine;
+
+    internal double? HistoricLongitude => HistoricDetails is { } d ? d.Longitudine : Place.Longitudine;
+
+    internal void SetHistoricDetails(PendingHistoricDetails details) => HistoricDetails = details;
+
     internal void SetLevels(IReadOnlyList<GeoLevel> levels, double? latitude, double? longitude)
     {
         Levels = levels;
@@ -56,9 +74,9 @@ public sealed class PendingPlace
         get
         {
             var parts = new List<(string Nome, bool Storico)>();
-            if (Derived.HistoricName is { Length: > 0 } historic)
+            if (IsHistoric)
             {
-                parts.Add((historic, true));
+                parts.Add((HistoricName, true));
             }
 
             parts.AddRange(Levels.Where(l => !l.Assente && l.Nome.Trim().Length > 0).Reverse().Select(l => (l.Nome.Trim(), false)));
@@ -98,7 +116,8 @@ public sealed class PendingPlace
         Description.DisplayText,
         string.Join(";", Levels.Select(l => $"{l.Tipo}={l.Nome}{(l.Assente ? "-" : string.Empty)}")),
         Latitude, Longitude,
-        SpecificDraft is { } d ? $"{d.Tipo}|{d.Indirizzo}|{d.Condizione}|{d.DataDistruzione}|{d.Latitudine}|{d.Longitudine}|{d.Note}|{d.WikidataId}" : string.Empty);
+        SpecificDraft is { } d ? $"{d.Tipo}|{d.Indirizzo}|{d.Condizione}|{d.DataDistruzione}|{d.Latitudine}|{d.Longitudine}|{d.Note}|{d.WikidataId}" : string.Empty,
+        HistoricDetails?.ToString() ?? string.Empty);
 
     // Proposta per la finestra del luogo specifico: la correzione già fatta o i dati letti dall'import.
     internal LuogoSpecifico SpecificProposal()
@@ -118,7 +137,7 @@ public sealed class PendingPlace
                 Condizione = CondizioniLuogo.Tutte.Contains(Place.SpecificCondition) ? Place.SpecificCondition : CondizioniLuogo.Esistente,
                 Latitudine = Place.Latitudine,
                 Longitudine = Place.Longitudine,
-                Note = IsHistoric ? $"Resti di {Derived.HistoricName!.Trim()}." : string.Empty,
+                Note = IsHistoric ? $"Resti di {HistoricName}." : string.Empty,
                 WikidataId = Place.WikidataId,
             };
     }
@@ -143,18 +162,25 @@ internal static class PendingPlaceEditing
     // Riapre la finestra dei livelli (la stessa della conferma dell'import) per cambiare dove sta il luogo nuovo.
     public static bool EditLevels(PeopleStore store, PendingPlace pending, Window owner)
     {
-        var notice = pending.Derived.HistoricName is { Length: > 0 } historic
-            ? $"«{historic}» non esiste più e sarà salvato come luogo storico. Indicare il luogo attuale che lo contiene: il comune, oppure la provincia, la regione o soltanto lo Stato (i livelli più bassi si possono lasciare vuoti). Il luogo sarà creato al salvataggio."
+        var notice = pending.IsHistoric
+            ? $"«{pending.HistoricName}» non esiste più e sarà salvato come luogo storico. Indicare il luogo attuale che lo contiene: il comune, oppure la provincia, la regione o soltanto lo Stato (i livelli più bassi si possono lasciare vuoti). Il luogo sarà creato al salvataggio."
             : $"Nuovo luogo «{pending.Description.Classic}»: correggere i livelli. Il luogo sarà creato al salvataggio.";
-        var editor = new PlacesEditorWindow(pending.Levels, pending.Latitude, pending.Longitude, notice, store, allowPartial: pending.IsHistoric) { Owner = owner };
+        // Per un luogo storico le coordinate nella finestra sarebbero quelle del comune che lo contiene, non del luogo: si
+        // nascondono (le coordinate dei livelli lette all'import restano), come nella conferma dell'import (2026-11-17).
+        var editor = new PlacesEditorWindow(pending.Levels, pending.Latitude, pending.Longitude, notice, store, allowPartial: pending.IsHistoric, showCoordinates: !pending.IsHistoric) { Owner = owner };
         if (editor.ShowDialog() != true)
         {
             return false;
         }
 
-        pending.SetLevels(editor.ResultLevels, editor.ResultLatitude, editor.ResultLongitude);
+        pending.SetLevels(editor.ResultLevels, pending.IsHistoric ? pending.Latitude : editor.ResultLatitude, pending.IsHistoric ? pending.Longitude : editor.ResultLongitude);
         return true;
     }
+
+    // Il luogo storico in attesa nella stessa finestra dei luoghi salvati (2026-11-17): tipo, nome, coordinate, luogo che lo
+    // contiene, periodo, nome latino e note. Senza allegati e nomi storici, che si salverebbero subito nell'archivio.
+    public static bool EditHistoric(PeopleStore store, PendingPlace pending, Window owner)
+        => new PlaceEditorWindow(store, pending) { Owner = owner }.ShowDialog() == true;
 
     // Aggiunge o corregge il luogo specifico, che resta in memoria e si crea dentro il luogo nuovo al salvataggio.
     public static bool EditSpecific(PeopleStore store, PendingPlace pending, Window owner)
@@ -169,3 +195,6 @@ internal static class PendingPlaceEditing
         return true;
     }
 }
+
+// Dati di un luogo storico in attesa corretti dall'utente: sostituiscono quelli letti dall'import al salvataggio.
+internal sealed record PendingHistoricDetails(string Nome, string Tipo, string Latino, double? Latitudine, double? Longitudine, string Periodo, string Note);

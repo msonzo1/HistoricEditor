@@ -81,8 +81,10 @@ public partial class PlacePickerWindow : Window
 
         if (node.IsPending && pending is not null)
         {
-            var edited = node.IsSpecific
-                ? PendingPlaceEditing.EditSpecific(store, pending, this)
+            // Il luogo storico in attesa (Anzio) si corregge con gli stessi campi dei luoghi salvati (2026-11-17); un
+            // livello in attesa sopra di esso nella finestra dei livelli.
+            var edited = node.IsSpecific ? PendingPlaceEditing.EditSpecific(store, pending, this)
+                : pending.IsHistoric && ReferenceEquals(node, PlacesTree.PendingTarget) ? PendingPlaceEditing.EditHistoric(store, pending, this)
                 : PendingPlaceEditing.EditLevels(store, pending, this);
             if (edited)
             {

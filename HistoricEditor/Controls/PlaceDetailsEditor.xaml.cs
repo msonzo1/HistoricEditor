@@ -13,6 +13,11 @@ public partial class PlaceDetailsEditor : UserControl
     private PlaceNode? node;
     private int? parentId;
 
+    // Luogo storico in attesa (2026-11-17): i dati si correggono in memoria e il luogo che lo contiene sono i livelli
+    // dell'import, scelti nella finestra dei livelli.
+    private PendingPlace? pending;
+    private List<GeoLevel>? pendingLevels;
+
     public PlaceDetailsEditor()
     {
         InitializeComponent();
@@ -42,6 +47,9 @@ public partial class PlaceDetailsEditor : UserControl
     {
         store = peopleStore;
         node = selected;
+        pending = null;
+        pendingLevels = null;
+        ShowArchiveOnlyParts(true);
         Feedback.Info(Message, string.Empty);
 
         if (selected?.Source is not { } luogo)
@@ -96,6 +104,46 @@ public partial class PlaceDetailsEditor : UserControl
         }
     }
 
+    // Il luogo storico letto dall'import e non ancora nell'archivio (Anzio), con gli stessi campi dei luoghi salvati.
+    public void LoadPending(PeopleStore peopleStore, PendingPlace place)
+    {
+        store = peopleStore;
+        node = null;
+        pending = place;
+        pendingLevels = [.. place.Levels];
+        Feedback.Info(Message, string.Empty);
+
+        EditPanel.IsEnabled = true;
+        PathText.Text = "Nuovo luogo storico: sarà creato al salvataggio della scheda.";
+        UsageText.Visibility = Visibility.Collapsed;
+        TipoText.Visibility = Visibility.Collapsed;
+        TipoBox.Visibility = Visibility.Visible;
+        TipoBox.ItemsSource = store.GetHistoricPlaceTypes();
+        TipoBox.Text = place.HistoricType;
+        NomeBox.Text = place.HistoricName;
+        LatBox.Text = CoordinateText.Format(place.HistoricLatitude);
+        LonBox.Text = CoordinateText.Format(place.HistoricLongitude);
+        StoricoBox.IsChecked = true;
+        SenzaLivelloBox.IsChecked = false;
+        SenzaLivelloBox.Visibility = Visibility.Collapsed;
+        PeriodoBox.Text = place.HistoricDetails?.Periodo ?? string.Empty;
+        LatinBox.Text = place.HistoricLatin;
+        LatinExpander.IsExpanded = false;
+        NoteEditor.Text = place.HistoricDetails?.Note ?? string.Empty;
+        ParentPanel.Visibility = Visibility.Visible;
+        UpdateParent();
+        ShowArchiveOnlyParts(false);
+    }
+
+    // Nomi storici e allegati si salvano subito nell'archivio: non per un luogo in attesa, che resta storico.
+    private void ShowArchiveOnlyParts(bool show)
+    {
+        HistoricNamesPanel.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+        AttachmentsPanel.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+        PendingNotice.Visibility = show ? Visibility.Collapsed : Visibility.Visible;
+        StoricoBox.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+    }
+
     public void FocusName()
     {
         NomeBox.Focus();
@@ -104,7 +152,7 @@ public partial class PlaceDetailsEditor : UserControl
 
     public bool Save()
     {
-        if (store is null || node is not { Source: not null } selected)
+        if (store is null || (pending is null && node is not { Source: not null }))
         {
             return false;
         }
@@ -131,6 +179,18 @@ public partial class PlaceDetailsEditor : UserControl
             return false;
         }
 
+        if (pending is { } place)
+        {
+            if (pendingLevels is { } levels && !levels.SequenceEqual(place.Levels))
+            {
+                place.SetLevels(levels, place.Latitude, place.Longitude);
+            }
+
+            place.SetHistoricDetails(new PendingHistoricDetails(nome, TipoBox.Text.Trim(), LatinBox.Text.Trim(), lat, lon, PeriodoBox.Text.Trim(), NoteEditor.Text.Trim()));
+            return true;
+        }
+
+        var selected = node!;
         var storico = StoricoBox.IsChecked == true;
         var senzaLivello = SenzaLivelloBox.Visibility == Visibility.Visible && SenzaLivelloBox.IsChecked == true;
         if (ReadHistoricNames() is not { } names)
@@ -173,7 +233,9 @@ public partial class PlaceDetailsEditor : UserControl
 
     private void UpdateParent()
     {
-        var text = store?.DescribePlace(parentId) ?? string.Empty;
+        var text = pendingLevels is { } levels
+            ? string.Join(", ", levels.Where(l => !l.Assente && l.Nome.Trim().Length > 0).Reverse().Select(l => l.Nome.Trim()))
+            : store?.DescribePlace(parentId) ?? string.Empty;
         ParentText.Text = text.Length > 0 ? text : "Nessuno (luogo di primo livello)";
     }
 
@@ -181,6 +243,20 @@ public partial class PlaceDetailsEditor : UserControl
     {
         if (store is null)
         {
+            return;
+        }
+
+        // Luogo in attesa: i livelli dell'import nella finestra dei livelli, senza coordinate (sono del luogo storico).
+        if (pending is not null && pendingLevels is { } levels)
+        {
+            var notice = $"Luogo attuale che contiene «{NomeBox.Text.Trim()}»: il comune, oppure la provincia, la regione o soltanto lo Stato (i livelli più bassi si possono lasciare vuoti).";
+            var editor = new PlacesEditorWindow(levels, notice: notice, store: store, allowPartial: true, showCoordinates: false) { Owner = Window.GetWindow(this) };
+            if (editor.ShowDialog() == true)
+            {
+                pendingLevels = editor.ResultLevels;
+                UpdateParent();
+            }
+
             return;
         }
 

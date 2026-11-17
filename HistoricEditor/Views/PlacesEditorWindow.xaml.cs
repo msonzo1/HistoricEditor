@@ -44,11 +44,17 @@ public partial class PlacesEditorWindow : Window
     public double? ResultLatitude { get; private set; }
     public double? ResultLongitude { get; private set; }
 
-    public PlacesEditorWindow(IEnumerable<GeoLevel> prefill, double? latitude = null, double? longitude = null, string? notice = null, PeopleStore? store = null, bool allowPartial = false)
+    // showCoordinates false: senza latitudine e longitudine, per il luogo che contiene un luogo storico (2026-11-17), dove
+    // sembrerebbero quelle del luogo storico; le coordinate dei livelli lette all'import restano.
+    private readonly bool showCoordinates;
+
+    public PlacesEditorWindow(IEnumerable<GeoLevel> prefill, double? latitude = null, double? longitude = null, string? notice = null, PeopleStore? store = null, bool allowPartial = false, bool showCoordinates = true)
     {
         InitializeComponent();
         this.store = store;
         this.allowPartial = allowPartial;
+        this.showCoordinates = showCoordinates;
+        CoordinatesPanel.Visibility = showCoordinates ? Visibility.Visible : Visibility.Collapsed;
 
         var levels = prefill.ToList();
         foreach (var level in levels)
@@ -354,6 +360,15 @@ public partial class PlacesEditorWindow : Window
             }
 
             previousAbsent = isAbsent;
+        }
+
+        if (!showCoordinates)
+        {
+            ResultLevels = levels;
+            ResultLatitude = null;
+            ResultLongitude = null;
+            DialogResult = true;
+            return;
         }
 
         if (!CoordinateText.TryParse(LatitudeBox.Text, out var lat))

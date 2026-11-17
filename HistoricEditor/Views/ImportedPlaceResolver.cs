@@ -26,7 +26,8 @@ internal static class ImportedPlaceResolver
                 : derived.SpecificName is null
                     ? $"{role}: la gerarchia di «{place.CurrentName}» è incompleta o incerta. Verificarla prima di salvare."
                     : $"{role}: «{place.CurrentName}» non è un’unità amministrativa e sarà salvato come luogo specifico. Verificare il luogo che lo contiene.";
-            var editor = new PlacesEditorWindow(derived.Levels, notice: notice, store: store, allowPartial: derived.HistoricName is { Length: > 0 }) { Owner = owner };
+            var historicPlace = derived.HistoricName is { Length: > 0 };
+            var editor = new PlacesEditorWindow(derived.Levels, notice: notice, store: store, allowPartial: historicPlace, showCoordinates: !historicPlace) { Owner = owner };
             return editor.ShowDialog() == true
                 ? new PendingPlace(place, derived, editor.ResultLevels, editor.ResultLatitude, editor.ResultLongitude)
                 : null;
@@ -98,12 +99,12 @@ internal static class ImportedPlaceResolver
         }
 
         var place = pending.Place;
-        if (pending.Derived.HistoricName is { Length: > 0 } historicName)
+        if (pending.IsHistoric && pending.HistoricName is { Length: > 0 } historicName)
         {
-            var id = found && parentId is int luogoId ? store.FindHistoricPlace(historicName, HistoricType(place), luogoId, place.WikidataId) : null;
+            var id = found && parentId is int luogoId ? store.FindHistoricPlace(historicName, pending.HistoricType, luogoId, place.WikidataId) : null;
             found = id is not null;
             parentId = id;
-            steps.Add(new PendingStep(historicName, HistoricType(place), PendingStepKind.Historic, id));
+            steps.Add(new PendingStep(historicName, pending.HistoricType, PendingStepKind.Historic, id));
         }
 
         // I resti ancora visibili di un luogo storico non stanno dentro di esso: nel selettore non compaiono sotto il luogo.
@@ -134,11 +135,19 @@ internal static class ImportedPlaceResolver
         var containerId = luogoId;
         var specificName = string.Empty;
         var specificType = string.Empty;
-        if (derived.HistoricName is { Length: > 0 } historicName)
+        if (derived.HistoricName is { Length: > 0 })
         {
-            containerId = store.EnsureHistoricPlace(historicName, derived.LatinName, HistoricType(place), luogoId, place.WikidataId, place.Latitudine, place.Longitudine,
-                formerName: place.HistoricBuildingName);
+            // Con un luogo in attesa valgono i dati corretti nella finestra «Modifica luogo» (2026-11-17).
+            var historicName = pending?.HistoricName ?? derived.HistoricName.Trim();
+            containerId = store.EnsureHistoricPlace(historicName, pending?.HistoricLatin ?? derived.LatinName, pending?.HistoricType ?? HistoricType(place), luogoId,
+                place.WikidataId, pending?.HistoricLatitude ?? place.Latitudine, pending?.HistoricLongitude ?? place.Longitudine, formerName: place.HistoricBuildingName);
             store.MergePlaceHistoricNames(containerId, place.HistoricalNames, place.WikidataId);
+            if (pending?.HistoricDetails is { } details)
+            {
+                store.UpdatePlace(containerId, details.Nome, details.Latitudine, details.Longitudine, true, details.Periodo, details.Note, false, details.Tipo);
+                store.SetPlaceLatinName(containerId, details.Latino);
+            }
+
             return pending?.SpecificRemoved == true ? (containerId, null) : (containerId, Remains(store, place, historicName, containerId, luogoId, pending?.SpecificDraft));
         }
 

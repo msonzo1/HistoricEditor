@@ -41,7 +41,7 @@
             <StackPanel x:Name="LevelsPanel" />
         </ScrollViewer>
 
-        <Grid Grid.Row="3" Margin="0,10,0,0">
+        <Grid x:Name="CoordinatesPanel" Grid.Row="3" Margin="0,10,0,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="12" />

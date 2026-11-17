@@ -261,6 +261,43 @@ public class PendingPlaceTests
         ],
     };
 
+    // Nerone, nato ad Antium (2026-11-17): il luogo storico in attesa ha come luogo specifico i resti, che stanno nel comune;
+    // i dati corretti nella finestra «Modifica luogo» (nome, tipo, latino, coordinate, periodo, note, luogo che lo
+    // contiene) si scrivono nell'archivio solo al salvataggio.
+    [Fact]
+    public async Task PendingHistoricPlace_KeepsCorrectionsUntilSaved()
+    {
+        var import = await ImportFixtures.ImportAsync("Nerone");
+        var dir = NewTempDir();
+        try
+        {
+            using var store = new PeopleStore(dir);
+            var pending = ImportedPlaceResolver.Prepare(store, Assert.Single(import.BirthPlaces), "Luogo di nascita", null!)!;
+            Assert.Equal("Anzio, Anzio, Città metropolitana di Roma Capitale, Lazio, Italia (Sito archeologico di Anzio)", pending.Description.DisplayText);
+            Assert.Equal((41.44830555555556, 12.62861111111111), (pending.HistoricLatitude!.Value, pending.HistoricLongitude!.Value));
+
+            pending.SetHistoricDetails(new PendingHistoricDetails("Anzio antica", "Città antica", "Antium", 41.45, 12.63, "V sec. a.C. – V sec.", "Città dei Volsci."));
+            Assert.StartsWith("Anzio antica, Anzio,", pending.Description.DisplayText);
+            Assert.Empty(store.GetAllPlaces());
+
+            var (luogoId, specificoId) = ImportedPlaceResolver.Create(store, pending);
+            var antium = store.GetPlace(luogoId!.Value)!;
+            Assert.Equal(("Anzio antica", "Città antica", true, "V sec. a.C. – V sec.", "Città dei Volsci."), (antium.Nome, antium.Tipo, antium.Storico, antium.Periodo, antium.Note));
+            Assert.Equal((41.45, 12.63), (antium.Latitudine!.Value, antium.Longitudine!.Value));
+            Assert.Equal("Antium", HistoricPlaceLatin.Get(antium));
+            Assert.Equal("Anzio", store.GetPlace(antium.ParentId!.Value)!.Nome);
+
+            var site = store.GetSpecificPlace(specificoId!.Value)!;
+            Assert.Equal(("Sito archeologico di Anzio", antium.ParentId!.Value, "Resti di Anzio antica."), (site.Nome, site.LuogoId, site.Note));
+            Assert.Equal("Anzio antica, Anzio, Città metropolitana di Roma Capitale, Lazio, Italia (Sito archeologico di Anzio)", store.DescribeRole(luogoId, specificoId).DisplayText);
+            Assert.Equal((luogoId, specificoId, luogoId), ImportedPlaceResolver.FindExisting(store, pending));
+        }
+        finally
+        {
+            Cleanup(dir);
+        }
+    }
+
     private static string NewTempDir()
     {
         var dir = Path.Combine(Path.GetTempPath(), $"historic-pending-place-{Guid.NewGuid():N}");
