@@ -49,7 +49,7 @@ Q3202662: Nerva–Antonine dynasty [la: ] ←  [la: ]
 Date discordanti: Nascita: 18/09/0053 (21 fonti); scartata perché indicata da una sola fonte: 15/09/0053 (Fonte Wikidata Q5375741). | Morte: 08/08/0117 (15 fonti) o 09/08/0117 (15 fonti) o 07/08/0117 (12 fonti); scartata perché indicata da una sola fonte: 11/08/0117 (Wikipedia in spagnolo).
 
 ## Luoghi
-nascita: Q658893 Italica | Spagna | tipo Sito archeologico | 37.44119, -6.0445003
+nascita: Q658893 Italica | Spagna | tipo Località antica | 37.44119, -6.0445003
     divisione: Unità amministrativa (P131) Santiponce Q568278
     divisione: Unità amministrativa (P131) Hispania Ulterior Q747040
     divisione: Unità amministrativa (P131) Betica Q219415
@@ -70,7 +70,7 @@ nascita: Q658893 Italica | Spagna | tipo Sito archeologico | 37.44119, -6.044500
     divisione: Unità amministrativa (P131) Spagna Q29
     divisione: Paese (P17) Spagna Q29
     in archivio: Stato Spagna > Comunità autonoma Andalusia > Provincia provincia di Siviglia > Comune Santiponce > luogo storico Italica; resti nel luogo attuale: Sito archeologico di Italica (Sito archeologico, In rovina) [automatico]
-morte: Q1424724 Selinunte | Turchia | tipo Sito archeologico | 36.26111111, 32.28472222
+morte: Q1424724 Selinunte | Turchia | tipo Località antica | 36.26111111, 32.28472222
     divisione: Unità amministrativa (P131) Gazipaşa Q844779
     divisione: Unità amministrativa (P131) provincia di Adalia Q40249
     divisione: Paese (P17) Turchia Q43

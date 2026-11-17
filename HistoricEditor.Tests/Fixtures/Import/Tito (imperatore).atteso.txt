@@ -55,7 +55,7 @@ nascita: Q220 Roma | Italia | tipo Città di confine | 41.893055555556, 12.48277
     divisione: Paese (P17) Italia Q38
     nome storico: Colonia Lucia Annia Commodiana (la, 191 – 193)
     in archivio: Stato Italia > Regione Lazio > Provincia Città metropolitana di Roma Capitale > Comune Roma [automatico]
-morte: Q383071 Aquae Cutiliae | Italia | tipo Sito archeologico | 42.380104, 13.008757
+morte: Q383071 Aquae Cutiliae | Italia | tipo Località antica | 42.380104, 13.008757
     divisione: Unità amministrativa (P131) Castel Sant’Angelo Q223509
     divisione: Paese (P17) antica Roma Q1747689
     divisione: Paese (P17) Italia Q38

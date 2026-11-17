@@ -59,7 +59,7 @@ nascita: Q927670 Falacrine | Italia | tipo Villaggio | 42.59361111, 13.17055556
     divisione: Unità amministrativa (P131) Lazio Q1282
     divisione: Paese (P17) Italia Q38
     in archivio: Stato Italia > Regione Lazio > Provincia Provincia di Rieti > Comune Cittareale > luogo storico Falacrine (latino: Vicus Phalacrinae) [da confermare]
-morte: Q383071 Aquae Cutiliae | Italia | tipo Sito archeologico | 42.380104, 13.008757
+morte: Q383071 Aquae Cutiliae | Italia | tipo Località antica | 42.380104, 13.008757
     divisione: Unità amministrativa (P131) Castel Sant’Angelo Q223509
     divisione: Paese (P17) antica Roma Q1747689
     divisione: Paese (P17) Italia Q38

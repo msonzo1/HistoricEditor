@@ -239,6 +239,7 @@ public sealed partial class WikipediaImportService
         }
 
         var italianLead = leadDates.GetValueOrDefault("it");
+        var articles = new Dictionary<string, HistoricPlaceArticle>(StringComparer.Ordinal);
         foreach (var (places, role) in new[] { (birthPlaces, 0), (deathPlaces, 1), (burialPlaces, 2) })
         {
             for (var i = 0; i < places.Count; i++)
@@ -281,6 +282,29 @@ public sealed partial class WikipediaImportService
                     continue;
                 }
 
+                // Tipo, nome latino e periodo anche dalla voce italiana del luogo (2026-11-17). Il tipo viene da Wikidata
+                // senza «sito archeologico», che vale per i resti (Antium: «città antica»); se non ne resta nessuno, dal
+                // modello dell'infobox se è «Città antica» (per Pelusio e Antiochia di Siria la voce usa «Sito
+                // archeologico», che descrive le rovine), altrimenti «Località antica». Il latino da «Nome originale» solo se Wikidata non lo dà.
+                var article = await ReadHistoricPlaceArticleAsync(entity, articles, cancellationToken);
+                var settlementType = SpecificPlaceTypes.Describe(place.TypeIds.Where(t => !RuinsTypes.Contains(t)), typeLabels);
+                if (settlementType.Length > 0)
+                {
+                    place.TypeLabel = settlementType;
+                }
+                else
+                {
+                    place.TypeLabel = article.Template == AncientCityTemplate ? AncientCityTemplate : AncientSettlementType;
+                }
+
+                if (place.LatinName.Length == 0 && LooksLatin(article.OriginalName)
+                    && !string.Equals(article.OriginalName, place.HistoricName, StringComparison.OrdinalIgnoreCase))
+                {
+                    place.LatinName = article.OriginalName;
+                }
+
+                place.HistoricPeriod = article.Period;
+
                 // Resti ancora visibili: un luogo specifico (in rovina) nel luogo attuale che contiene il luogo storico. Il
                 // nome è quello dell'edificio se un nome italiano lo indica («Terme di Cotilia»), altrimenti «Sito
                 // archeologico di …».
@@ -292,6 +316,69 @@ public sealed partial class WikipediaImportService
                 }
             }
         }
+    }
+
+    // Modello dell'infobox delle città antiche su it.wikipedia («{{Città antica»): anche il nome del tipo.
+    private const string AncientCityTemplate = "Città antica";
+
+    // Tipo di una località antica che Wikidata indica solo come sito archeologico e la cui voce non usa il modello
+    // «Città antica» (Italica, Selinunte, Vindobona, Aquae Cutiliae).
+    private const string AncientSettlementType = "Località antica";
+
+    // Dati della voce italiana di un luogo storico: modello dell'infobox, nome originale e periodo.
+    internal sealed record HistoricPlaceArticle(string Template, string OriginalName, string Period)
+    {
+        public static readonly HistoricPlaceArticle Empty = new(string.Empty, string.Empty, string.Empty);
+    }
+
+    // Una richiesta per voce (la sezione iniziale, con l'infobox); nessuna se il luogo non ha una voce italiana.
+    private static async Task<HistoricPlaceArticle> ReadHistoricPlaceArticleAsync(JsonElement entity, Dictionary<string, HistoricPlaceArticle> cache, CancellationToken cancellationToken)
+    {
+        var title = GetString(entity.GetPropertyOrDefault("sitelinks").GetPropertyOrDefault("itwiki"), "title");
+        if (title.Length == 0)
+        {
+            return HistoricPlaceArticle.Empty;
+        }
+
+        if (!cache.TryGetValue(title, out var article))
+        {
+            article = ParseHistoricPlaceArticle(await ReadInfoboxWikitextAsync("it", title, cancellationToken));
+            cache[title] = article;
+        }
+
+        return article;
+    }
+
+    // «{{Città antica |Nome originale = ''Antĭum'' |Fondazione = [[IX secolo a.C.]] |Fine = [[VI secolo d.C.]]»: modello
+    // «Città antica», nome «Antium» (senza i segni di quantità), periodo «IX secolo a.C. – VI secolo d.C.».
+    internal static HistoricPlaceArticle ParseHistoricPlaceArticle(string? wikitext)
+    {
+        if (string.IsNullOrWhiteSpace(wikitext))
+        {
+            return HistoricPlaceArticle.Empty;
+        }
+
+        var text = Regex.Replace(wikitext, @"<!--.*?-->", string.Empty, RegexOptions.Singleline);
+        var template = Regex.IsMatch(text, @"\{\{\s*Città antica\s*(\||\n|\}\})", RegexOptions.IgnoreCase) ? AncientCityTemplate : string.Empty;
+        var original = WithoutQuantityMarks(InfoboxParam(text, ["Nome originale"]));
+        var from = InfoboxParam(text, ["Fondazione"]);
+        var to = InfoboxParam(text, ["Fine"]);
+        var period = (from.Length > 0, to.Length > 0) switch
+        {
+            (true, true) => $"{from} – {to}",
+            (true, false) => $"dal {from}",
+            (false, true) => $"fino al {to}",
+            _ => string.Empty,
+        };
+        return new HistoricPlaceArticle(template, original, period);
+    }
+
+    // «Antĭum» → «Antium»: brevi e lunghe dei nomi latini (segni diacritici combinati, dopo la scomposizione).
+    private static string WithoutQuantityMarks(string text)
+    {
+        var decomposed = text.Normalize(System.Text.NormalizationForm.FormD);
+        var kept = decomposed.Where(c => System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c) != System.Globalization.UnicodeCategory.NonSpacingMark);
+        return new string([.. kept]).Normalize(System.Text.NormalizationForm.FormC).Trim();
     }
 
     // Edifici che danno il nome a una località antica e ne restano come rovine: tipo del luogo specifico.

@@ -872,7 +872,8 @@ public sealed partial class PeopleStore : IDisposable
     // stesso contenitore; completa coordinate e nome latino solo se mancano, per non sovrascrivere correzioni manuali.
     // formerName: nome che un import precedente dava al luogo («Terme di Cotilia», prima che le terme diventassero un
     // luogo specifico); se il luogo ha ancora quel nome prende il nuovo, altrimenti il nome scritto a mano resta.
-    public int EnsureHistoricPlace(string nome, string latino, string tipo, int? parentId, string wikidataId, double? latitudine, double? longitudine, string formerName = "")
+    // periodo: dalla voce italiana del luogo («IX secolo a.C. – VI secolo d.C.»), scritto solo se manca.
+    public int EnsureHistoricPlace(string nome, string latino, string tipo, int? parentId, string wikidataId, double? latitudine, double? longitudine, string formerName = "", string periodo = "")
     {
         nome = nome.Trim();
         latino = latino.Trim();
@@ -888,6 +889,11 @@ public sealed partial class PeopleStore : IDisposable
 
         existing.Latitudine ??= latitudine;
         existing.Longitudine ??= longitudine;
+        if (string.IsNullOrWhiteSpace(existing.Periodo) && periodo.Trim().Length > 0)
+        {
+            existing.Periodo = periodo.Trim();
+        }
+
         if (existing.WikidataId.Length == 0)
         {
             existing.WikidataId = wikidataId;

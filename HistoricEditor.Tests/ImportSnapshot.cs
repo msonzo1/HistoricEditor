@@ -140,7 +140,7 @@ internal static class ImportSnapshot
                 Line("    in archivio", string.Join(" > ", derived.Levels.Select(l => l.Assente ? $"({l.Tipo} assente)" : $"{l.Tipo} {l.Nome}"))
                     + (derived.SpecificName is { Length: > 0 } specific ? $" > luogo specifico {specific}{(p.SpecificCondition.Length > 0 ? $" ({p.SpecificCondition})" : string.Empty)}" : string.Empty)
                     + (derived.HistoricName is { Length: > 0 } historic
-                        ? $" > luogo storico {historic}{(derived.LatinName.Length > 0 ? $" (latino: {derived.LatinName})" : string.Empty)}"
+                        ? $" > luogo storico {historic}{(derived.LatinName.Length > 0 ? $" (latino: {derived.LatinName})" : string.Empty)}{(p.HistoricPeriod.Length > 0 ? $" (periodo: {p.HistoricPeriod})" : string.Empty)}"
                             + (p.HistoricBuildingName.Length > 0 ? $"; resti nel luogo attuale: {p.HistoricBuildingName} ({p.HistoricBuildingType}{(p.SpecificCondition.Length > 0 ? $", {p.SpecificCondition}" : string.Empty)})" : string.Empty)
                         : string.Empty)
                     + (derived.Confident ? " [automatico]" : " [da confermare]"));

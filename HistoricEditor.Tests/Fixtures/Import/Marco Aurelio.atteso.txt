@@ -58,7 +58,7 @@ nascita: Q220 Roma | Italia | tipo Città di confine | 41.893055555556, 12.48277
     divisione: Paese (P17) Italia Q38
     nome storico: Colonia Lucia Annia Commodiana (la, 191 – 193)
     in archivio: Stato Italia > Regione Lazio > Provincia Città metropolitana di Roma Capitale > Comune Roma [automatico]
-morte: Q871525 Vindobona | Austria | tipo Sito archeologico | 48.210833333333, 16.370277777778
+morte: Q871525 Vindobona | Austria | tipo Località antica | 48.210833333333, 16.370277777778
     divisione: Unità amministrativa (P131) Vienna Q1741
     divisione: Paese (P17) Austria Q40
     divisione: Unità amministrativa (P131) Austria Q40

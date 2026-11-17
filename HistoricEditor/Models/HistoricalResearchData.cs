@@ -55,6 +55,11 @@ public sealed class HistoricalPlaceRecord
     [System.Text.Json.Serialization.JsonIgnore]
     public string HistoricBuildingType { get; set; } = string.Empty;
 
+    // Periodo di un luogo storico, dall'infobox della sua voce italiana: «IX secolo a.C. – VI secolo d.C.» da
+    // «Fondazione» e «Fine» (Anzio, 2026-11-17). Vuoto se la voce non li indica.
+    [System.Text.Json.Serialization.JsonIgnore]
+    public string HistoricPeriod { get; set; } = string.Empty;
+
     // Condizione del luogo specifico creato all'import (CondizioniLuogo): «In rovina» per i resti ancora visibili
     // (Tempio del Divo Giulio, Terme di Cotilia, Sito archeologico di Italica). Vuoto = esistente.
     [System.Text.Json.Serialization.JsonIgnore]

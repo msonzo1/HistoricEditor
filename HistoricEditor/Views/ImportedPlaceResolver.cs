@@ -140,7 +140,8 @@ internal static class ImportedPlaceResolver
             // Con un luogo in attesa valgono i dati corretti nella finestra «Modifica luogo» (2026-11-17).
             var historicName = pending?.HistoricName ?? derived.HistoricName.Trim();
             containerId = store.EnsureHistoricPlace(historicName, pending?.HistoricLatin ?? derived.LatinName, pending?.HistoricType ?? HistoricType(place), luogoId,
-                place.WikidataId, pending?.HistoricLatitude ?? place.Latitudine, pending?.HistoricLongitude ?? place.Longitudine, formerName: place.HistoricBuildingName);
+                place.WikidataId, pending?.HistoricLatitude ?? place.Latitudine, pending?.HistoricLongitude ?? place.Longitudine, formerName: place.HistoricBuildingName,
+                periodo: place.HistoricPeriod);
             store.MergePlaceHistoricNames(containerId, place.HistoricalNames, place.WikidataId);
             if (pending?.HistoricDetails is { } details)
             {

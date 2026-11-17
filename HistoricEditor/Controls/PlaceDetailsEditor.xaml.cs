@@ -126,7 +126,7 @@ public partial class PlaceDetailsEditor : UserControl
         StoricoBox.IsChecked = true;
         SenzaLivelloBox.IsChecked = false;
         SenzaLivelloBox.Visibility = Visibility.Collapsed;
-        PeriodoBox.Text = place.HistoricDetails?.Periodo ?? string.Empty;
+        PeriodoBox.Text = place.HistoricDetails?.Periodo ?? place.Place.HistoricPeriod;
         LatinBox.Text = place.HistoricLatin;
         LatinExpander.IsExpanded = false;
         NoteEditor.Text = place.HistoricDetails?.Note ?? string.Empty;

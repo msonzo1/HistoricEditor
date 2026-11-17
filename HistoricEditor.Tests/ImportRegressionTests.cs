@@ -387,6 +387,9 @@ public class ImportRegressionTests
         Assert.Equal(("Anzio", true), (derived.HistoricName, derived.Confident));
         // Nome latino dall'etichetta latina di Wikidata, anche se il Paese indicato è solo l'Italia: è una città antica.
         Assert.Equal("Antium", antium.LatinName);
+        // Tipo e periodo (2026-11-17): «città antica», il secondo tipo su Wikidata, perché «sito archeologico» vale per i
+        // resti; periodo da «Fondazione» e «Fine» dell'infobox della voce «Anzio (città antica)».
+        Assert.Equal(("Città antica", "IX secolo a.C. – VI secolo d.C."), (antium.TypeLabel, antium.HistoricPeriod));
         Assert.Equal(("Sito archeologico di Anzio", CondizioniLuogo.InRovina), (antium.HistoricBuildingName, antium.SpecificCondition));
 
         ImportFixtures.AssertMatchesSnapshot(page, r);
